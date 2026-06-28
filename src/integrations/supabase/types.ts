@@ -142,6 +142,54 @@ export type Database = {
           },
         ]
       }
+      duelos: {
+        Row: {
+          aposta_creditos: number | null
+          categoria: string | null
+          challenger_id: string
+          created_at: string
+          id: string
+          opponent_email: string | null
+          opponent_id: string | null
+          prazo: string | null
+          progresso_challenger: number | null
+          progresso_opponent: number | null
+          status: string
+          titulo: string
+          winner_id: string | null
+        }
+        Insert: {
+          aposta_creditos?: number | null
+          categoria?: string | null
+          challenger_id: string
+          created_at?: string
+          id?: string
+          opponent_email?: string | null
+          opponent_id?: string | null
+          prazo?: string | null
+          progresso_challenger?: number | null
+          progresso_opponent?: number | null
+          status?: string
+          titulo: string
+          winner_id?: string | null
+        }
+        Update: {
+          aposta_creditos?: number | null
+          categoria?: string | null
+          challenger_id?: string
+          created_at?: string
+          id?: string
+          opponent_email?: string | null
+          opponent_id?: string | null
+          prazo?: string | null
+          progresso_challenger?: number | null
+          progresso_opponent?: number | null
+          status?: string
+          titulo?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -170,11 +218,14 @@ export type Database = {
           descricao: string | null
           foto_capa_url: string | null
           id: string
+          motivacao: string | null
           prazo: string | null
           progresso: number
           status: string
           titulo: string
           user_id: string
+          valor_custodia: number | null
+          valor_destino: string | null
         }
         Insert: {
           categoria: string
@@ -182,11 +233,14 @@ export type Database = {
           descricao?: string | null
           foto_capa_url?: string | null
           id?: string
+          motivacao?: string | null
           prazo?: string | null
           progresso?: number
           status?: string
           titulo: string
           user_id: string
+          valor_custodia?: number | null
+          valor_destino?: string | null
         }
         Update: {
           categoria?: string
@@ -194,11 +248,14 @@ export type Database = {
           descricao?: string | null
           foto_capa_url?: string | null
           id?: string
+          motivacao?: string | null
           prazo?: string | null
           progresso?: number
           status?: string
           titulo?: string
           user_id?: string
+          valor_custodia?: number | null
+          valor_destino?: string | null
         }
         Relationships: [
           {
