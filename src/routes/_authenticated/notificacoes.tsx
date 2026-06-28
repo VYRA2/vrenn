@@ -9,15 +9,17 @@ export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: Notificacoes,
 });
 
-const ICONS: Record<string, any> = {
-  like: Heart,
-  comment: MessageCircle,
-  follow: UserPlus,
-  achievement: Trophy,
-  convite_arbitro: Shield,
-  checkin_para_validar: Target,
-  checkin_validado: CheckCircle2,
-  checkin_questionado: AlertCircle,
+const TYPE_STYLES: Record<string, { icon: any; color: string; bg: string }> = {
+  like:                  { icon: Heart,         color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
+  comment:               { icon: MessageCircle, color: "#A855F7", bg: "rgba(168,85,247,0.15)" },
+  follow:                { icon: UserPlus,      color: "#38BDF8", bg: "rgba(56,189,248,0.15)" },
+  achievement:           { icon: Trophy,        color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  convite_arbitro:       { icon: Shield,        color: "#A855F7", bg: "rgba(168,85,247,0.15)" },
+  checkin_para_validar:  { icon: Target,        color: "#7B3FF2", bg: "rgba(123,63,242,0.15)" },
+  checkin_validado:      { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
+  checkin_questionado:   { icon: AlertCircle,   color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  arbitro_aceitou:       { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
+  arbitro_recusou:       { icon: AlertCircle,   color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
 };
 
 function Notificacoes() {
@@ -86,19 +88,20 @@ function Notificacoes() {
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</h2>
             <div className="space-y-2">
               {list.map((n) => {
-                const Icon = ICONS[n.tipo] ?? Bell;
+                const style = TYPE_STYLES[n.tipo] ?? { icon: Bell, color: "#A855F7", bg: "rgba(168,85,247,0.15)" };
+                const Icon = style.icon;
                 const isConvite = n.tipo === "convite_arbitro" && !n.lida;
                 return (
-                  <div key={n.id} className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/40" : ""}`}>
+                  <div key={n.id} className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-light">
-                        <Icon size={16} />
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: style.bg, color: style.color }}>
+                        <Icon size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">{n.mensagem}</p>
+                        <p className="text-sm font-semibold leading-snug">{n.mensagem}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
                       </div>
-                      {!n.lida && <span className="mt-1 h-2 w-2 rounded-full bg-primary" />}
+                      {!n.lida && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />}
                     </div>
                     {isConvite && (
                       <div className="mt-3 grid grid-cols-2 gap-2">
