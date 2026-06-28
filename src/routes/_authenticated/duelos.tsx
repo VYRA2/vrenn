@@ -26,7 +26,7 @@ function Duelos() {
     queryFn: async () => {
       const { data } = await supabase
         .from("duelos")
-        .select("*, challenger:challenger_id(nome,username,avatar_url), opponent:opponent_id(nome,username,avatar_url)" as any)
+        .select("*, challenger:profiles!duelos_challenger_profile_fk(nome,username,avatar_url), opponent:profiles!duelos_opponent_profile_fk(nome,username,avatar_url)" as any)
         .or(`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`)
         .order("created_at", { ascending: false });
       return data ?? [];
