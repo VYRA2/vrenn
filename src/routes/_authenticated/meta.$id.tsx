@@ -15,6 +15,7 @@ function MetaDetail() {
   const { id } = Route.useParams();
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
+  const [showCheckinModal, setShowCheckinModal] = useState(false);
 
   const { data: meta, isLoading } = useQuery({
     queryKey: ["meta", id],
