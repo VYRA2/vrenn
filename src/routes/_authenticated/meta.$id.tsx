@@ -107,8 +107,6 @@ function MetaDetail() {
 
         <ArbitrosSection metaId={id} isOwner={isOwner} arbitros={arbitros ?? []} onChange={() => qc.invalidateQueries({ queryKey: ["arbitros", id] })} ownerId={meta.user_id} />
 
-        {isOwner && <CheckinForm metaId={id} userId={user.id} ownerId={meta.user_id} acceptedArbitros={acceptedArbitros} onCreated={() => qc.invalidateQueries({ queryKey: ["checkins", id] })} />}
-
         <section>
           <h3 className="mb-3 text-sm font-bold">Últimas publicações</h3>
           <div className="space-y-3">
@@ -130,7 +128,32 @@ function MetaDetail() {
             ))}
           </div>
         </section>
+
+        {isOwner && (
+          <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto flex max-w-md gap-2 px-4">
+            <button
+              onClick={() => setShowCheckinModal(true)}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
+            >
+              <Camera size={16} /> Publicar atualização
+            </button>
+          </div>
+        )}
       </div>
+
+      {showCheckinModal && (
+        <CheckinModal
+          metaId={id}
+          userId={user.id}
+          acceptedArbitros={acceptedArbitros}
+          onClose={() => setShowCheckinModal(false)}
+          onCreated={() => {
+            qc.invalidateQueries({ queryKey: ["checkins", id] });
+            qc.invalidateQueries({ queryKey: ["feed-metas"] });
+            setShowCheckinModal(false);
+          }}
+        />
+      )}
     </main>
   );
 }
