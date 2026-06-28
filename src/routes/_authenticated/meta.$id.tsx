@@ -250,10 +250,16 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${m.c}`}>{m.l}</span>;
 }
 
-function CheckinForm({ metaId, userId, ownerId, acceptedArbitros, onCreated }: any) {
+function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: any) {
   const [msg, setMsg] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function pickFile(f: File | null) {
+    setFile(f);
+    setPreview(f ? URL.createObjectURL(f) : null);
+  }
 
   async function submit() {
     if (!msg.trim() && !file) return toast.error("Adicione uma mensagem ou foto");
@@ -271,7 +277,6 @@ function CheckinForm({ metaId, userId, ownerId, acceptedArbitros, onCreated }: a
         meta_id: metaId, user_id: userId, mensagem: msg, foto_url,
       });
       if (error) throw error;
-      // Notify arbiters
       for (const a of acceptedArbitros) {
         await supabase.from("notificacoes").insert({
           user_id: a.arbitro_id,
@@ -281,27 +286,37 @@ function CheckinForm({ metaId, userId, ownerId, acceptedArbitros, onCreated }: a
         });
       }
       toast.success("Check-in publicado!");
-      setMsg(""); setFile(null); onCreated();
+      onCreated();
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-      <h3 className="text-sm font-bold">Publicar check-in</h3>
-      <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} placeholder="O que você fez hoje?"
-        className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
-      <div className="flex items-center justify-between gap-2">
-        <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-primary-light cursor-pointer">
-          <Camera size={16} /> {file ? file.name.slice(0, 20) : "Adicionar foto"}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        </label>
-        {file && <button onClick={() => setFile(null)} className="text-muted-foreground"><X size={16}/></button>}
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Publicar atualização</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18}/></button>
+        </div>
+        <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} placeholder="O que você fez hoje? Conte sua evolução…"
+          className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        {preview && (
+          <div className="relative">
+            <img src={preview} alt="" className="w-full h-48 rounded-xl object-cover" />
+            <button onClick={() => pickFile(null)} className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"><X size={14}/></button>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
+            <Camera size={16} /> {file ? "Trocar foto" : "Adicionar foto"}
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
+          </label>
+        </div>
+        <button onClick={submit} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
+          {loading && <Loader2 size={14} className="animate-spin"/>} Publicar check-in
+        </button>
       </div>
-      <button onClick={submit} disabled={loading} className="w-full rounded-3xl bg-gradient-primary py-3 text-sm font-semibold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
-        {loading && <Loader2 size={14} className="animate-spin"/>} Publicar atualização
-      </button>
-    </section>
+    </div>
   );
 }
 
