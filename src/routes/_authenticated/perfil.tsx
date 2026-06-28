@@ -200,7 +200,65 @@ function Perfil() {
       </div>
 
       <BottomNav />
+
+      {showUsernameModal && (
+        <UsernameModal
+          userId={user.id}
+          currentName={profile?.nome ?? ""}
+          onClose={() => setShowUsernameModal(false)}
+          onSaved={() => { refetchProfile(); setShowUsernameModal(false); }}
+        />
+      )}
     </main>
+  );
+}
+
+function UsernameModal({ userId, currentName, onClose, onSaved }: { userId: string; currentName: string; onClose: () => void; onSaved: () => void }) {
+  const [username, setUsername] = useState("");
+  const [nome, setNome] = useState(currentName);
+  const [loading, setLoading] = useState(false);
+
+  async function save() {
+    const clean = username.trim().replace(/^@/, "").toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(clean)) return toast.error("Use 3-20 caracteres: letras, números ou _");
+    setLoading(true);
+    const { data: exists } = await supabase.from("profiles").select("id").eq("username", clean).neq("id", userId).maybeSingle();
+    if (exists) { setLoading(false); return toast.error("Username já em uso"); }
+    const { error } = await supabase.from("profiles").update({ username: clean, nome: nome || currentName }).eq("id", userId);
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Username salvo!");
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 space-y-4">
+        <div>
+          <h3 className="text-lg font-bold">Escolha seu @username</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Esse será seu identificador único no VYRA.</p>
+        </div>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold">Nome de exibição</span>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold">Username</span>
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3">
+            <span className="text-sm text-muted-foreground">@</span>
+            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="seuusername"
+              className="flex-1 bg-transparent py-2.5 text-sm outline-none" />
+          </div>
+        </label>
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-muted-foreground">Depois</button>
+          <button onClick={save} disabled={loading} className="flex-1 rounded-xl bg-gradient-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60">
+            {loading ? "Salvando…" : "Salvar"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
