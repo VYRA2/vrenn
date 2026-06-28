@@ -1,8 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { Award, Edit3, LogOut, Settings } from "lucide-react";
+import { VyraLogo } from "@/components/VyraLogo";
+import {
+  Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
+  CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: Perfil,
@@ -30,6 +34,7 @@ function Perfil() {
 
   const concluidas = (metas ?? []).filter(m => m.status === "concluida").length;
   const falhadas = (metas ?? []).filter(m => m.status === "falhada").length;
+  const disciplina = (concluidas + falhadas) > 0 ? Math.round((concluidas / (concluidas + falhadas)) * 100) : 0;
   const ativa = (metas ?? []).find(m => m.status === "em_andamento");
   const initial = (profile?.nome ?? "?")[0]?.toUpperCase();
 
@@ -40,69 +45,148 @@ function Perfil() {
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <div className="relative">
-        <div className="h-32 bg-gradient-primary" />
-        <div className="absolute right-4 top-4 flex gap-2">
-          <button className="rounded-full bg-card/80 p-2 backdrop-blur"><Settings size={18} /></button>
-          <button onClick={logout} className="rounded-full bg-card/80 p-2 backdrop-blur"><LogOut size={18} /></button>
+      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-3">
+        <VyraLogo size={32} />
+        <div className="flex items-center gap-1">
+          <button className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
+          <button className="rounded-full p-2 text-foreground/90"><Settings size={20} /></button>
+          <button onClick={logout} className="rounded-full p-2 text-foreground/90"><LogOut size={18} /></button>
         </div>
-      </div>
+      </header>
 
-      <div className="mx-auto max-w-md px-4 -mt-12">
-        <div className="flex items-end gap-4">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-gradient-primary text-3xl font-bold">
-            {initial}
+      <div className="mx-auto max-w-md px-5">
+        {/* Avatar + name */}
+        <section className="flex items-center gap-4">
+          <div className="relative">
+            <div className="h-24 w-24 rounded-full border-2 border-primary p-0.5">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold">{initial}</div>
+              )}
+            </div>
+            <button className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
+              <Edit3 size={13} />
+            </button>
           </div>
-          <div className="pb-2 flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold">{profile?.nome ?? "—"}</h1>
-              <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary-light">NÍVEL {profile?.nivel ?? 1}</span>
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-2xl font-bold">{profile?.nome ?? "—"}</h1>
+              <BadgeCheck size={18} className="text-primary-light fill-primary/20" />
             </div>
             <p className="text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-4 gap-2 rounded-2xl border border-border bg-card p-3">
-          <Stat label="Concluídas" value={concluidas} />
-          <Stat label="Falhadas" value={falhadas} />
-          <Stat label="Disciplina" value={`${calcDisciplina(concluidas, falhadas)}%`} />
-          <Stat label="Reputação" value={profile?.reputacao_pts ?? 0} />
-        </div>
-
-        <section className="mt-5 rounded-2xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold">Sua missão</h2>
-            <button className="text-muted-foreground hover:text-foreground"><Edit3 size={14} /></button>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">{profile?.bio ?? "Adicione uma bio para mostrar sua missão ao mundo."}</p>
-        </section>
-
-        <section className="mt-5">
-          <h2 className="mb-3 text-sm font-bold">Conquistas</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {["Primeira meta", "7 dias", "Streak 30", "Validado", "Mentor"].map((b, i) => (
-              <Badge key={b} label={b} unlocked={i < 1} />
-            ))}
-          </div>
-        </section>
-
-        {ativa && (
-          <section className="mt-5 rounded-2xl border border-border bg-card p-4">
-            <h2 className="text-sm font-bold">Meta em andamento</h2>
-            <p className="mt-1 text-base font-semibold">{ativa.titulo}</p>
-            <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden">
-              <div className="h-full bg-gradient-primary" style={{ width: `${ativa.progresso}%` }} />
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1">
+              <Gem size={12} className="text-primary-light" />
+              <span className="text-xs font-semibold text-primary-light">Nível Diamante</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{ativa.progresso}% completo</p>
-          </section>
-        )}
+          </div>
+        </section>
 
-        <section className="mt-5 mb-8 rounded-2xl border border-border bg-card p-4">
-          <h2 className="text-sm font-bold">Atividade</h2>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <Mini label="Streak" value={`${profile?.streak_dias ?? 0}d`} />
-            <Mini label="Créditos" value={profile?.creditos ?? 0} />
-            <Mini label="Metas" value={metas?.length ?? 0} />
+        {/* Stats row */}
+        <section className="mt-6 grid grid-cols-4 gap-2 border-y border-border py-4">
+          <BigStat value={concluidas} label="Metas concluídas" />
+          <BigStat value={falhadas} label="Falhadas" />
+          <BigStat value={`${disciplina}%`} label="Disciplina" />
+          <BigStat value={profile?.reputacao_pts ?? 0} label="Reputação" accent info />
+        </section>
+
+        {/* Mission */}
+        <section className="mt-5 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+              <Target size={18} className="text-primary-light" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-bold text-primary-light">Missão: Evoluir 1% todos os dias.</h3>
+                <button className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-light">
+                  Editar <Edit3 size={12} />
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Foco · Disciplina · Consistência</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Conquistas */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold">Conquistas</h2>
+            <button className="text-xs font-semibold text-primary-light">Ver todas</button>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Conquista icon={<Target size={22} />} label="Foco" sub="Nível 4" color="#A855F7" />
+            <Conquista icon={<Flame size={22} />} label="Sequência" sub="180 dias" color="#22D3A1" />
+            <Conquista icon={<Dumbbell size={22} />} label="Força Mental" sub="Nível 3" color="#F59E0B" />
+            <Conquista icon={<Users size={22} />} label="Líder" sub="Nível 2" color="#38BDF8" />
+            <Conquista icon={<Diamond size={22} />} label="Diamante" sub="Top 1%" color="#A855F7" />
+          </div>
+        </section>
+
+        {/* Meta em andamento */}
+        <section className="mt-6">
+          <h2 className="mb-3 text-sm font-bold">Meta em andamento</h2>
+          {ativa ? (
+            <Link to="/meta/$id" params={{ id: ativa.id }} className="block rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="flex">
+                {ativa.foto_capa_url ? (
+                  <img src={ativa.foto_capa_url} className="h-36 w-28 object-cover" />
+                ) : (
+                  <div className="h-36 w-28 bg-gradient-primary" />
+                )}
+                <div className="flex-1 p-4">
+                  <h3 className="text-lg font-bold">{ativa.titulo}</h3>
+                  <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-accent">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Em andamento
+                  </div>
+                  <div className="mt-3 flex items-end justify-between">
+                    <div className="flex-1">
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div className="h-full bg-gradient-primary" style={{ width: `${ativa.progresso}%` }} />
+                      </div>
+                    </div>
+                    <span className="ml-3 text-lg font-bold text-primary-light">{ativa.progresso}%</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-end text-xs text-muted-foreground">
+                    <ChevronRight size={14} className="text-primary-light" />
+                    <span className="text-primary-light font-semibold">Ver meta</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <Link to="/nova-meta" className="block rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              Nenhuma meta ativa. <span className="text-primary-light font-semibold">Criar uma agora</span>
+            </Link>
+          )}
+        </section>
+
+        {/* Resumo de atividade */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold">Resumo de atividade</h2>
+            <button className="text-xs font-semibold text-primary-light">Ver relatório</button>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            <ActivityTile icon={<CheckCircle2 size={20} />} value={metas?.length ?? 0} label="Publicações" color="#A855F7" />
+            <ActivityTile icon={<MessageCircle size={20} />} value={0} label="Comentários" color="#22D3A1" />
+            <ActivityTile icon={<Heart size={20} />} value={0} label="Curtidas recebidas" color="#F59E0B" />
+            <ActivityTile icon={<Users size={20} />} value={0} label="Seguidores" color="#38BDF8" />
+            <ActivityTile icon={<TrendingUp size={20} />} value={0} label="Seguindo" color="#A855F7" />
+          </div>
+        </section>
+
+        {/* Medalhas recentes */}
+        <section className="mt-6 mb-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold">Medalhas recentes</h2>
+            <button className="text-xs font-semibold text-primary-light">Ver todas</button>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            <Medal icon={<Flame size={16} />} title={`Sequência ${profile?.streak_dias ?? 0} dias`} sub="hoje" color="#A855F7" />
+            <Medal icon={<Trophy size={16} />} title="Meta Concluída" sub={`${concluidas} vezes`} color="#F59E0B" />
+            <Medal icon={<Sparkles size={16} />} title="Foco Inabalável" sub={`Nível ${profile?.nivel ?? 1}`} color="#22D3A1" />
+            <Medal icon={<Zap size={16} />} title="Disciplina Extrema" sub="Nível 3" color="#38BDF8" />
           </div>
         </section>
       </div>
@@ -112,37 +196,60 @@ function Perfil() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function BigStat({ value, label, accent, info }: { value: number | string; label: string; accent?: boolean; info?: boolean }) {
   return (
     <div className="text-center">
-      <div className="text-lg font-bold text-primary-light">{value}</div>
-      <div className="text-[10px] text-muted-foreground leading-tight">{label}</div>
-    </div>
-  );
-}
-
-function Mini({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="rounded-xl bg-secondary p-3">
-      <div className="text-base font-bold">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
-    </div>
-  );
-}
-
-function Badge({ label, unlocked }: { label: string; unlocked: boolean }) {
-  return (
-    <div className="flex shrink-0 flex-col items-center gap-1.5 w-20">
-      <div className={`relative flex h-16 w-14 items-center justify-center ${unlocked ? "text-accent" : "text-muted-foreground opacity-40"}`} style={{ clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)", background: unlocked ? "var(--gradient-primary)" : "var(--color-card)" }}>
-        <Award size={24} className="text-primary-foreground" />
+      <div className={`text-2xl font-bold ${accent ? "text-primary-light" : ""}`}>{value}</div>
+      <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground leading-tight">
+        {label} {info && <Info size={10} />}
       </div>
-      <span className="text-[10px] text-center text-muted-foreground">{label}</span>
     </div>
   );
 }
 
-function calcDisciplina(c: number, f: number) {
-  const total = c + f;
-  if (!total) return 0;
-  return Math.round((c / total) * 100);
+function Conquista({ icon, label, sub, color }: { icon: React.ReactNode; label: string; sub: string; color: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5 flex-1">
+      <div
+        className="flex h-14 w-14 items-center justify-center"
+        style={{
+          clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+          background: `linear-gradient(135deg, ${color}30, ${color}10)`,
+          border: `1px solid ${color}80`,
+          color,
+        }}
+      >
+        {icon}
+      </div>
+      <div className="text-center">
+        <div className="text-[11px] font-semibold">{label}</div>
+        <div className="text-[10px] text-muted-foreground">{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityTile({ icon, value, label, color }: { icon: React.ReactNode; value: number; label: string; color: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 text-center">
+      <div className="mx-auto mb-1.5 flex h-8 w-8 items-center justify-center" style={{ color }}>{icon}</div>
+      <div className="text-base font-bold">{value}</div>
+      <div className="text-[9px] text-muted-foreground leading-tight">{label}</div>
+    </div>
+  );
+}
+
+function Medal({ icon, title, sub, color }: { icon: React.ReactNode; title: string; sub: string; color: string }) {
+  return (
+    <div
+      className="flex shrink-0 items-center gap-2 rounded-2xl border bg-card px-3 py-2.5"
+      style={{ borderColor: `${color}50` }}
+    >
+      <span style={{ color }}>{icon}</span>
+      <div>
+        <div className="text-[11px] font-semibold" style={{ color }}>{title}</div>
+        <div className="text-[10px] text-muted-foreground">{sub}</div>
+      </div>
+    </div>
+  );
 }
