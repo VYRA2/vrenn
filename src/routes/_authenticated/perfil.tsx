@@ -15,8 +15,9 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 function Perfil() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
-  const { data: profile } = useQuery({
+  const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["profile", user.id],
     queryFn: async () => {
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
@@ -31,6 +32,11 @@ function Perfil() {
       return data ?? [];
     },
   });
+
+  // Detect auto-generated username (handle_new_user appends first 4 chars of UUID)
+  const autoSuffix = user.id.replace(/-/g, "").slice(0, 4);
+  const needsUsername = !!profile && (!profile.username || profile.username.endsWith(autoSuffix));
+  useEffect(() => { if (needsUsername) setShowUsernameModal(true); }, [needsUsername]);
 
   const concluidas = (metas ?? []).filter(m => m.status === "concluida").length;
   const falhadas = (metas ?? []).filter(m => m.status === "falhada").length;
