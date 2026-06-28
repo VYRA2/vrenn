@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/nova-meta")({
   component: NovaMeta,
@@ -27,16 +27,20 @@ function NovaMeta() {
   const [descricao, setDescricao] = useState("");
   const [motivacao, setMotivacao] = useState("");
   const [prazo, setPrazo] = useState("");
+  const [valorCustodia, setValorCustodia] = useState("");
 
   async function salvar() {
     if (!titulo || !categoria) return toast.error("Preencha título e categoria");
     setLoading(true);
+    const valor = parseFloat(valorCustodia.replace(",", ".")) || 0;
     const { data, error } = await supabase.from("metas").insert({
       user_id: user.id,
       titulo,
       categoria,
-      descricao: [descricao, motivacao && `Motivação: ${motivacao}`].filter(Boolean).join("\n\n"),
+      descricao,
+      motivacao,
       prazo: prazo ? new Date(prazo).toISOString() : null,
+      valor_custodia: valor,
     }).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -74,17 +78,28 @@ function NovaMeta() {
               </div>
             </div>
             <Textarea label="Descrição" value={descricao} onChange={setDescricao} placeholder="O que você vai fazer?" />
-            <Textarea label="Motivação pessoal" value={motivacao} onChange={setMotivacao} placeholder="Por que isso importa para você?" />
+            <Textarea label="Motivação pessoal (não aparece no feed)" value={motivacao} onChange={setMotivacao} placeholder="Por que isso importa para você?" />
           </div>
         )}
 
         {step === 2 && (
           <div className="space-y-4 mt-4">
             <div className="rounded-2xl border border-border bg-card p-4">
-              <h3 className="text-sm font-bold">Compromisso público</h3>
-              <p className="mt-1 text-xs text-muted-foreground">Sua meta será visível na rede. Quem te segue acompanhará seu progresso.</p>
+              <h3 className="text-sm font-bold inline-flex items-center gap-2"><Lock size={14} className="text-primary-light"/> Em jogo (custódia)</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Esse valor fica guardado enquanto você cumpre. Se concluir, recebe de volta.
+                Se abandonar, você decide o destino. Valor simbólico por ora.
+              </p>
+              <div className="mt-3 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary-light">R$</span>
+                <input
+                  type="text" inputMode="decimal" value={valorCustodia}
+                  onChange={(e) => setValorCustodia(e.target.value.replace(/[^0-9.,]/g, ""))}
+                  placeholder="0,00"
+                  className="w-full rounded-xl border border-border bg-background pl-10 pr-4 py-3.5 text-base font-bold outline-none focus:border-primary"
+                />
+              </div>
             </div>
-            <Textarea label="Aposta pessoal (opcional)" value={motivacao} onChange={setMotivacao} placeholder="Ex: vou doar R$ 100 se falhar" />
           </div>
         )}
 
@@ -103,6 +118,7 @@ function NovaMeta() {
             <ReviewRow label="Título" value={titulo || "—"} />
             <ReviewRow label="Categoria" value={CATEGORIAS.find(c => c.id === categoria)?.label ?? "—"} />
             <ReviewRow label="Descrição" value={descricao || "—"} />
+            <ReviewRow label="Em jogo" value={valorCustodia ? `R$ ${valorCustodia}` : "—"} />
             <ReviewRow label="Prazo" value={prazo || "Sem prazo"} />
           </div>
         )}
@@ -124,7 +140,7 @@ function NovaMeta() {
 }
 
 function Stepper({ step }: { step: number }) {
-  const labels = ["Detalhes", "Compromisso", "Cronograma", "Revisar"];
+  const labels = ["Detalhes", "Em jogo", "Cronograma", "Revisar"];
   return (
     <div className="flex items-center justify-between gap-2">
       {labels.map((l, i) => {
