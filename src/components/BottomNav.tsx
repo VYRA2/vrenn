@@ -6,7 +6,7 @@ export function BottomNav() {
 
   const left: Array<{ to: string; icon: typeof Home; label: string; dot?: boolean }> = [
     { to: "/feed", icon: Home, label: "Início" },
-    { to: "/perfil", icon: Target, label: "Metas" },
+    { to: "/duelos", icon: Target, label: "Duelos" },
   ];
   const right: Array<{ to: string; icon: typeof Home; label: string; dot?: boolean }> = [
     { to: "/notificacoes", icon: Bell, label: "Notificações", dot: true },
