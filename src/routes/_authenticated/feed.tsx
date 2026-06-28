@@ -28,6 +28,18 @@ function Feed() {
     },
   });
 
+  const { data: feedCheckins } = useQuery({
+    queryKey: ["feed-checkins"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("checkins")
+        .select("id, mensagem, foto_url, created_at, meta_id, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo)")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+  });
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg">
