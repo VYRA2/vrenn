@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Search, Bell, Heart, MessageCircle, Share2, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { Search, Bell, Heart, Bell as BellIcon, Swords, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/feed")({
@@ -25,18 +25,6 @@ function Feed() {
         .limit(20);
       if (error) throw error;
       return data;
-    },
-  });
-
-  const { data: feedCheckins } = useQuery({
-    queryKey: ["feed-checkins"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("checkins")
-        .select("id, mensagem, foto_url, created_at, meta_id, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo)")
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data ?? [];
     },
   });
 
@@ -75,29 +63,6 @@ function Feed() {
             <Link to="/nova-meta" className="mt-4 inline-block rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">Criar minha meta</Link>
           </div>
         )}
-        {feedCheckins && feedCheckins.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Check-ins recentes</h2>
-            {feedCheckins.map((c: any) => (
-              <Link key={c.id} to="/meta/$id" params={{ id: c.meta_id }} className="block rounded-2xl border border-border bg-card p-3 hover:border-primary/50">
-                <div className="flex items-start gap-3">
-                  {c.foto_url ? (
-                    <img src={c.foto_url} alt="" className="h-16 w-16 rounded-xl object-cover" />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-background text-xs font-bold text-primary-light">
-                      {(c.profiles?.nome || "?")[0].toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold">{c.profiles?.nome || "Usuário"} <span className="text-muted-foreground font-normal">em {c.metas?.titulo}</span></div>
-                    {c.mensagem && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{c.mensagem}</p>}
-                    <div className="mt-1 text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString("pt-BR")}</div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </section>
-        )}
         {metas?.map((m: any) => <MetaCard key={m.id} meta={m} />)}
       </div>
 
@@ -111,59 +76,71 @@ function MetaCard({ meta }: { meta: any }) {
   const initial = (profile?.nome || profile?.username || "?")[0].toUpperCase();
   const diasRestantes = meta.prazo ? Math.max(0, Math.ceil((new Date(meta.prazo).getTime() - Date.now()) / 86400000)) : null;
   return (
-    <Link to="/meta/$id" params={{ id: meta.id }} className="block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/50">
-      <div className="flex items-center gap-3">
-        {profile?.avatar_url ? (
-          <img src={profile.avatar_url} alt={profile.nome} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
-        ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold text-primary-foreground">
-            {initial}
+    <article className="rounded-2xl border border-border bg-card p-4">
+      <Link to="/meta/$id" params={{ id: meta.id }} className="block">
+        <div className="flex items-center gap-3">
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt={profile.nome} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold text-primary-foreground">
+              {initial}
+            </div>
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-1">
+              <span className="text-base font-bold">{profile?.nome ?? "Usuário"}</span>
+              <BadgeCheck size={16} className="text-primary-light fill-primary/20" />
+            </div>
+            <div className="text-xs text-muted-foreground">{formatWhen(meta.created_at)}</div>
+          </div>
+          <button onClick={(e) => e.preventDefault()} className="text-muted-foreground"><MoreHorizontal size={20} /></button>
+        </div>
+
+        {/* Title in bold, separate from description */}
+        <h3 className="mt-3 text-lg font-extrabold leading-tight">{meta.titulo}</h3>
+        {meta.descricao && (
+          <p className="mt-1.5 text-sm text-muted-foreground leading-snug">{meta.descricao}</p>
+        )}
+
+        {meta.foto_capa_url && (
+          <div className="mt-3 overflow-hidden rounded-xl">
+            <img src={meta.foto_capa_url} alt="" className="w-full h-48 object-cover" />
           </div>
         )}
-        <div className="flex-1">
-          <div className="flex items-center gap-1">
-            <span className="text-base font-bold">{profile?.nome ?? "Usuário"}</span>
-            <BadgeCheck size={16} className="text-primary-light fill-primary/20" />
+
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-end justify-between">
+            <div>
+              <span className="text-xs text-muted-foreground">Progresso</span>
+              <div className="text-xl font-bold text-primary-light leading-none mt-1">{meta.progresso}%</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs font-semibold text-primary-light">{diasRestantes !== null ? `${diasRestantes} dias restantes` : "Sem prazo"}</div>
+              {meta.prazo && <div className="text-[10px] text-muted-foreground mt-0.5">Até {new Date(meta.prazo).toLocaleDateString("pt-BR")}</div>}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">{formatWhen(meta.created_at)}</div>
-        </div>
-        <button className="text-muted-foreground"><MoreHorizontal size={20} /></button>
-      </div>
-
-      <h3 className="mt-3 text-base font-bold">{meta.titulo}</h3>
-      {meta.descricao && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{meta.descricao}</p>}
-
-      {meta.foto_capa_url && (
-        <div className="mt-3 overflow-hidden rounded-xl">
-          <img src={meta.foto_capa_url} alt="" className="w-full h-48 object-cover" />
-        </div>
-      )}
-
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-end justify-between">
-          <div>
-            <span className="text-xs text-muted-foreground">Progresso</span>
-            <div className="text-xl font-bold text-primary-light leading-none mt-1">{meta.progresso}%</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs font-semibold text-primary-light">{diasRestantes !== null ? `${diasRestantes} dias restantes` : "Sem prazo"}</div>
-            {meta.prazo && <div className="text-[10px] text-muted-foreground mt-0.5">Até {new Date(meta.prazo).toLocaleDateString("pt-BR")}</div>}
+          <div className="h-2 rounded-full bg-secondary overflow-hidden">
+            <div className="h-full bg-gradient-primary" style={{ width: `${meta.progresso}%` }} />
           </div>
         </div>
-        <div className="h-2 rounded-full bg-secondary overflow-hidden">
-          <div className="h-full bg-gradient-primary" style={{ width: `${meta.progresso}%` }} />
-        </div>
-      </div>
+      </Link>
 
-      <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm text-muted-foreground">
-        <div className="flex items-center gap-5">
-          <button className="inline-flex items-center gap-1.5 hover:text-primary-light"><Heart size={18} /> <span className="text-xs font-semibold">0</span></button>
-          <button className="inline-flex items-center gap-1.5 hover:text-primary-light"><MessageCircle size={18} /> <span className="text-xs font-semibold">0</span></button>
-          <button className="inline-flex items-center gap-1.5 hover:text-primary-light"><Share2 size={18} /></button>
-        </div>
-        <span className="text-xs font-semibold text-primary-light">Ver detalhes</span>
+      {/* Micro-actions: Apoiar, Cobrar, Desafiar */}
+      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3">
+        <MicroAction icon={<Heart size={16} />} label="Apoiar" color="text-rose-400" />
+        <MicroAction icon={<BellIcon size={16} />} label="Cobrar" color="text-amber-400" />
+        <MicroAction icon={<Swords size={16} />} label="Desafiar" color="text-primary-light" />
       </div>
-    </Link>
+    </article>
+  );
+}
+
+function MicroAction({ icon, label, color }: { icon: React.ReactNode; label: string; color: string }) {
+  return (
+    <button className={`inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-background py-2 text-xs font-semibold ${color} hover:border-primary/50 transition-colors`}>
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 }
 
