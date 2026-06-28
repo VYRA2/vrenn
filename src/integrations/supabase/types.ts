@@ -14,7 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkins: {
+        Row: {
+          created_at: string
+          data: string
+          foto_url: string | null
+          id: string
+          mensagem: string | null
+          meta_id: string
+          user_id: string
+          validado: boolean
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          foto_url?: string | null
+          id?: string
+          mensagem?: string | null
+          meta_id: string
+          user_id: string
+          validado?: boolean
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          foto_url?: string | null
+          id?: string
+          mensagem?: string | null
+          meta_id?: string
+          user_id?: string
+          validado?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      metas: {
+        Row: {
+          categoria: string
+          created_at: string
+          descricao: string | null
+          foto_capa_url: string | null
+          id: string
+          prazo: string | null
+          progresso: number
+          status: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          descricao?: string | null
+          foto_capa_url?: string | null
+          id?: string
+          prazo?: string | null
+          progresso?: number
+          status?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          foto_capa_url?: string | null
+          id?: string
+          prazo?: string | null
+          progresso?: number
+          status?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          link_id: string | null
+          mensagem: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link_id?: string | null
+          mensagem: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link_id?: string | null
+          mensagem?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          creditos: number
+          id: string
+          nivel: number
+          nome: string
+          reputacao_pts: number
+          streak_dias: number
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          creditos?: number
+          id: string
+          nivel?: number
+          nome: string
+          reputacao_pts?: number
+          streak_dias?: number
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          creditos?: number
+          id?: string
+          nivel?: number
+          nome?: string
+          reputacao_pts?: number
+          streak_dias?: number
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
