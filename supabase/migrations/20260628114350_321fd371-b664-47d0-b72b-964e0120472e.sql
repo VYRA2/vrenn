@@ -1,0 +1,3 @@
+ALTER TABLE public.metas ADD CONSTRAINT metas_user_id_profiles_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE public.checkins ADD CONSTRAINT checkins_user_id_profiles_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE public.arbitros ADD CONSTRAINT arbitros_arbitro_id_profiles_fkey FOREIGN KEY (arbitro_id) REFERENCES public.profiles(id) ON DELETE CASCADE;

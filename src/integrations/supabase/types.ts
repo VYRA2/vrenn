@@ -44,6 +44,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "arbitros_arbitro_id_profiles_fkey"
+            columns: ["arbitro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "arbitros_meta_id_fkey"
             columns: ["meta_id"]
             isOneToOne: false
@@ -126,6 +133,13 @@ export type Database = {
             referencedRelation: "metas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checkins_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       follows: {
@@ -186,7 +200,15 @@ export type Database = {
           titulo?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "metas_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notificacoes: {
         Row: {
