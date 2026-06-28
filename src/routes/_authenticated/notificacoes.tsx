@@ -88,19 +88,20 @@ function Notificacoes() {
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</h2>
             <div className="space-y-2">
               {list.map((n) => {
-                const Icon = ICONS[n.tipo] ?? Bell;
+                const style = TYPE_STYLES[n.tipo] ?? { icon: Bell, color: "#A855F7", bg: "rgba(168,85,247,0.15)" };
+                const Icon = style.icon;
                 const isConvite = n.tipo === "convite_arbitro" && !n.lida;
                 return (
-                  <div key={n.id} className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/40" : ""}`}>
+                  <div key={n.id} className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-light">
-                        <Icon size={16} />
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: style.bg, color: style.color }}>
+                        <Icon size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">{n.mensagem}</p>
+                        <p className="text-sm font-semibold leading-snug">{n.mensagem}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
                       </div>
-                      {!n.lida && <span className="mt-1 h-2 w-2 rounded-full bg-primary" />}
+                      {!n.lida && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />}
                     </div>
                     {isConvite && (
                       <div className="mt-3 grid grid-cols-2 gap-2">
