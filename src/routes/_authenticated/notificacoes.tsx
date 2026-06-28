@@ -9,15 +9,17 @@ export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: Notificacoes,
 });
 
-const ICONS: Record<string, any> = {
-  like: Heart,
-  comment: MessageCircle,
-  follow: UserPlus,
-  achievement: Trophy,
-  convite_arbitro: Shield,
-  checkin_para_validar: Target,
-  checkin_validado: CheckCircle2,
-  checkin_questionado: AlertCircle,
+const TYPE_STYLES: Record<string, { icon: any; color: string; bg: string }> = {
+  like:                  { icon: Heart,         color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
+  comment:               { icon: MessageCircle, color: "#A855F7", bg: "rgba(168,85,247,0.15)" },
+  follow:                { icon: UserPlus,      color: "#38BDF8", bg: "rgba(56,189,248,0.15)" },
+  achievement:           { icon: Trophy,        color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  convite_arbitro:       { icon: Shield,        color: "#A855F7", bg: "rgba(168,85,247,0.15)" },
+  checkin_para_validar:  { icon: Target,        color: "#7B3FF2", bg: "rgba(123,63,242,0.15)" },
+  checkin_validado:      { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
+  checkin_questionado:   { icon: AlertCircle,   color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  arbitro_aceitou:       { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
+  arbitro_recusou:       { icon: AlertCircle,   color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
 };
 
 function Notificacoes() {
