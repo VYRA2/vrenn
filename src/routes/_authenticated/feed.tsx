@@ -75,6 +75,29 @@ function Feed() {
             <Link to="/nova-meta" className="mt-4 inline-block rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">Criar minha meta</Link>
           </div>
         )}
+        {feedCheckins && feedCheckins.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Check-ins recentes</h2>
+            {feedCheckins.map((c: any) => (
+              <Link key={c.id} to="/meta/$id" params={{ id: c.meta_id }} className="block rounded-2xl border border-border bg-card p-3 hover:border-primary/50">
+                <div className="flex items-start gap-3">
+                  {c.foto_url ? (
+                    <img src={c.foto_url} alt="" className="h-16 w-16 rounded-xl object-cover" />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-background text-xs font-bold text-primary-light">
+                      {(c.profiles?.nome || "?")[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold">{c.profiles?.nome || "Usuário"} <span className="text-muted-foreground font-normal">em {c.metas?.titulo}</span></div>
+                    {c.mensagem && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{c.mensagem}</p>}
+                    <div className="mt-1 text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString("pt-BR")}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </section>
+        )}
         {metas?.map((m: any) => <MetaCard key={m.id} meta={m} />)}
       </div>
 
