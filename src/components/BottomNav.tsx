@@ -4,14 +4,14 @@ import { Home, Target, Plus, Bell, User } from "lucide-react";
 export function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
 
-  const left = [
+  const left: Array<{ to: string; icon: typeof Home; label: string; dot?: boolean }> = [
     { to: "/feed", icon: Home, label: "Início" },
     { to: "/perfil", icon: Target, label: "Metas" },
-  ] as const;
-  const right = [
+  ];
+  const right: Array<{ to: string; icon: typeof Home; label: string; dot?: boolean }> = [
     { to: "/notificacoes", icon: Bell, label: "Notificações", dot: true },
     { to: "/perfil", icon: User, label: "Perfil" },
-  ] as const;
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
