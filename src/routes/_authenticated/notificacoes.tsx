@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: Notificacoes,
@@ -13,10 +14,16 @@ const ICONS: Record<string, any> = {
   comment: MessageCircle,
   follow: UserPlus,
   achievement: Trophy,
+  convite_arbitro: Shield,
+  checkin_para_validar: Target,
+  checkin_validado: CheckCircle2,
+  checkin_questionado: AlertCircle,
 };
 
 function Notificacoes() {
   const { user } = Route.useRouteContext();
+  const qc = useQueryClient();
+
   const { data: items } = useQuery({
     queryKey: ["notifs", user.id],
     queryFn: async () => {
@@ -25,6 +32,31 @@ function Notificacoes() {
     },
   });
 
+  async function responder(notif: any, aceitar: boolean) {
+    if (!notif.link_id) return;
+    const status = aceitar ? "aceito" : "recusado";
+    const { data: arb, error } = await supabase.from("arbitros").update({ status }).eq("id", notif.link_id).select("*, metas:meta_id (user_id, titulo)").maybeSingle();
+    if (error) return toast.error(error.message);
+    await supabase.from("notificacoes").update({ lida: true }).eq("id", notif.id);
+    if (arb?.metas) {
+      await supabase.from("notificacoes").insert({
+        user_id: (arb.metas as any).user_id,
+        tipo: aceitar ? "arbitro_aceitou" : "arbitro_recusou",
+        mensagem: aceitar
+          ? `Seu convite para árbitro foi aceito.`
+          : `Seu convite para árbitro foi recusado.`,
+        link_id: arb.meta_id,
+      });
+    }
+    toast.success(aceitar ? "Convite aceito!" : "Convite recusado");
+    qc.invalidateQueries({ queryKey: ["notifs", user.id] });
+  }
+
+  async function marcarTodas() {
+    await supabase.from("notificacoes").update({ lida: true }).eq("user_id", user.id).eq("lida", false);
+    qc.invalidateQueries({ queryKey: ["notifs", user.id] });
+  }
+
   const groups = groupByDay(items ?? []);
 
   return (
@@ -32,11 +64,17 @@ function Notificacoes() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-lg">
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
           <Link to="/feed" className="rounded-full p-2 hover:bg-card"><ArrowLeft size={20} /></Link>
-          <h1 className="text-base font-bold">Notificações</h1>
+          <h1 className="flex-1 text-base font-bold text-center">Notificações</h1>
+          <div className="w-9" />
         </div>
       </header>
 
       <div className="mx-auto max-w-md px-4 pt-4 space-y-5">
+        {(items?.some(i => !i.lida)) && (
+          <div className="flex justify-end">
+            <button onClick={marcarTodas} className="text-xs font-semibold text-primary-light">Marcar todas como lidas</button>
+          </div>
+        )}
         {(!items || items.length === 0) && (
           <div className="rounded-2xl border border-border bg-card p-8 text-center">
             <Bell size={28} className="mx-auto text-muted-foreground" />
@@ -49,16 +87,25 @@ function Notificacoes() {
             <div className="space-y-2">
               {list.map((n) => {
                 const Icon = ICONS[n.tipo] ?? Bell;
+                const isConvite = n.tipo === "convite_arbitro" && !n.lida;
                 return (
-                  <div key={n.id} className={`flex items-start gap-3 rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/40" : ""}`}>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground">
-                      <Icon size={16} />
+                  <div key={n.id} className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/40" : ""}`}>
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-light">
+                        <Icon size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">{n.mensagem}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
+                      </div>
+                      {!n.lida && <span className="mt-1 h-2 w-2 rounded-full bg-primary" />}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm">{n.mensagem}</p>
-                      <p className="mt-0.5 text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("pt-BR")}</p>
-                    </div>
-                    {!n.lida && <span className="mt-1 h-2 w-2 rounded-full bg-primary" />}
+                    {isConvite && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <button onClick={() => responder(n, true)} className="rounded-xl bg-gradient-primary py-2 text-xs font-bold text-primary-foreground">Aceitar</button>
+                        <button onClick={() => responder(n, false)} className="rounded-xl border border-border py-2 text-xs font-bold text-muted-foreground">Recusar</button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
