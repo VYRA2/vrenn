@@ -149,6 +149,12 @@ function MetaDetail() {
             >
               <Camera size={16} /> Publicar atualização
             </button>
+            <button
+              onClick={() => { navigator.clipboard?.writeText(window.location.href); toast.success("Link copiado — convide apoiadores!"); }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-bold"
+            >
+              <UserPlus size={16} /> Apoiadores
+            </button>
           </div>
         )}
       </div>
