@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      arbitros: {
+        Row: {
+          arbitro_id: string
+          convidado_por: string
+          created_at: string
+          id: string
+          meta_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arbitro_id: string
+          convidado_por: string
+          created_at?: string
+          id?: string
+          meta_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arbitro_id?: string
+          convidado_por?: string
+          created_at?: string
+          id?: string
+          meta_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arbitros_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_validacoes: {
+        Row: {
+          arbitro_id: string
+          checkin_id: string
+          comentario: string | null
+          created_at: string
+          id: string
+          status: string
+        }
+        Insert: {
+          arbitro_id: string
+          checkin_id: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          status: string
+        }
+        Update: {
+          arbitro_id?: string
+          checkin_id?: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_validacoes_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkins: {
         Row: {
           created_at: string
