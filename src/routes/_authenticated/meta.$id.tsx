@@ -87,6 +87,17 @@ function MetaDetail() {
           <InfoBox icon={CheckCircle2} label="Check-ins" value={String(checkins?.length ?? 0)} />
         </div>
 
+        {Number(meta.valor_custodia) > 0 && (
+          <section className="rounded-2xl border border-primary/40 bg-primary/5 p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light">🔒</div>
+            <div className="flex-1">
+              <div className="text-xs text-muted-foreground">Em custódia</div>
+              <div className="text-lg font-bold text-primary-light">R$ {Number(meta.valor_custodia).toLocaleString("pt-BR")}</div>
+            </div>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-primary-light/80">Em jogo</span>
+          </section>
+        )}
+
         <section className="rounded-2xl border border-border bg-card p-4">
           <div className="mb-2 flex items-end justify-between">
             <div>
