@@ -405,3 +405,22 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
     </div>
   );
 }
+
+function EmJogoPrivado({ metaId }: { metaId: string }) {
+  const { data } = useQuery({
+    queryKey: ["motivacao", metaId],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_meta_motivacao", { _meta_id: metaId });
+      return data as string | null;
+    },
+  });
+  if (!data) return null;
+  return (
+    <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+      <div className="flex items-center gap-2 text-xs font-bold text-primary-light">
+        <Shield size={14}/> O que está em jogo (só você vê)
+      </div>
+      <p className="mt-2 text-sm whitespace-pre-line">{data}</p>
+    </section>
+  );
+}
