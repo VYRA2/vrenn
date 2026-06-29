@@ -294,13 +294,15 @@ function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: 
         meta_id: metaId, user_id: userId, mensagem: msg, foto_url,
       });
       if (error) throw error;
-      for (const a of acceptedArbitros) {
-        await supabase.from("notificacoes").insert({
-          user_id: a.arbitro_id,
-          tipo: "checkin_para_validar",
-          mensagem: "Novo check-in aguardando sua validação.",
-          link_id: metaId,
-        });
+      for (const c of (await supabase.from("checkins").select("id").eq("meta_id", metaId).order("created_at", { ascending: false }).limit(1)).data ?? []) {
+        for (const a of acceptedArbitros) {
+          await supabase.rpc("notify", {
+            _user_id: a.arbitro_id,
+            _tipo: "checkin_para_validar",
+            _mensagem: "Novo check-in aguardando sua validação.",
+            _link_id: c.id,
+          });
+        }
       }
       toast.success("Check-in publicado!");
       onCreated();
