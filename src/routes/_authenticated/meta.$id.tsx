@@ -353,11 +353,11 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
     if (status === "validado") {
       await supabase.from("checkins").update({ validado: true }).eq("id", checkin.id);
     }
-    await supabase.from("notificacoes").insert({
-      user_id: checkin.user_id,
-      tipo: status === "validado" ? "checkin_validado" : "checkin_questionado",
-      mensagem: status === "validado" ? "Um árbitro validou seu check-in." : `Um árbitro questionou: ${comentario || "sem comentário"}`,
-      link_id: checkin.meta_id,
+    await supabase.rpc("notify", {
+      _user_id: checkin.user_id,
+      _tipo: status === "validado" ? "apoio" : "cobranca",
+      _mensagem: status === "validado" ? "Um árbitro validou seu check-in." : `Um árbitro questionou: ${comentario || "sem comentário"}`,
+      _link_id: checkin.meta_id,
     });
     toast.success(status === "validado" ? "Check-in validado" : "Check-in questionado");
     setComentario(""); onChange();
