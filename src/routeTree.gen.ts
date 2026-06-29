@@ -16,6 +16,7 @@ import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedNovaMetaRouteImport } from './routes/_authenticated/nova-meta'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
+import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDuelosRouteImport } from './routes/_authenticated/duelos'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
@@ -56,6 +57,11 @@ const AuthenticatedNotificacoesRoute =
     path: '/notificacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/busca': typeof AuthenticatedBuscaRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/busca': typeof AuthenticatedBuscaRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
   '/_authenticated/duelos': typeof AuthenticatedDuelosRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/busca'
     | '/duelos'
     | '/feed'
+    | '/metas'
     | '/notificacoes'
     | '/nova-meta'
     | '/perfil'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/busca'
     | '/duelos'
     | '/feed'
+    | '/metas'
     | '/notificacoes'
     | '/nova-meta'
     | '/perfil'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/_authenticated/busca'
     | '/_authenticated/duelos'
     | '/_authenticated/feed'
+    | '/_authenticated/metas'
     | '/_authenticated/notificacoes'
     | '/_authenticated/nova-meta'
     | '/_authenticated/perfil'
@@ -212,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotificacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/metas': {
+      id: '/_authenticated/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof AuthenticatedMetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/feed': {
       id: '/_authenticated/feed'
       path: '/feed'
@@ -247,6 +266,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedDuelosRoute: typeof AuthenticatedDuelosRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
@@ -258,6 +278,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
   AuthenticatedDuelosRoute: AuthenticatedDuelosRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
