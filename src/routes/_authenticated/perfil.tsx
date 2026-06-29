@@ -57,8 +57,7 @@ function Perfil() {
         <VyraLogo size={32} />
         <div className="flex items-center gap-1">
           <button className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
-          <button className="rounded-full p-2 text-foreground/90"><Settings size={20} /></button>
-          <button onClick={logout} className="rounded-full p-2 text-foreground/90"><LogOut size={18} /></button>
+          <Link to="/configuracoes" className="rounded-full p-2 text-foreground/90"><Settings size={20} /></Link>
         </div>
       </header>
 
