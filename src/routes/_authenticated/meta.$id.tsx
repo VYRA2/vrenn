@@ -202,11 +202,11 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
         meta_id: metaId, arbitro_id: target.id, convidado_por: ownerId,
       }).select().single();
       if (error) throw error;
-      await supabase.from("notificacoes").insert({
-        user_id: target.id,
-        tipo: "convite_arbitro",
-        mensagem: `Você foi convidado para ser árbitro de uma meta.`,
-        link_id: arb.id,
+      await supabase.rpc("notify", {
+        _user_id: target.id,
+        _tipo: "convite_arbitro",
+        _mensagem: "Você foi convidado para ser árbitro de uma meta.",
+        _link_id: metaId,
       });
       toast.success(`Convite enviado para ${target.nome || target.username}`);
       setIdent(""); setOpen(false); onChange();
