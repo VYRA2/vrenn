@@ -117,6 +117,8 @@ function MetaDetail() {
           </div>
         </section>
 
+        {isOwner && <EmJogoPrivado metaId={id} />}
+
         <ArbitrosSection metaId={id} isOwner={isOwner} arbitros={arbitros ?? []} onChange={() => qc.invalidateQueries({ queryKey: ["arbitros", id] })} ownerId={meta.user_id} />
 
         <section>
