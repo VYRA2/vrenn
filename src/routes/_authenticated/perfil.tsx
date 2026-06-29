@@ -72,9 +72,9 @@ function Perfil() {
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold">{initial}</div>
               )}
             </div>
-            <button className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
+            <Link to="/perfil/editar" className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
               <Edit3 size={13} />
-            </button>
+            </Link>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
