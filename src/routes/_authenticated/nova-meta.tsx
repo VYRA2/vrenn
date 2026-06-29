@@ -78,7 +78,7 @@ function NovaMeta() {
               </div>
             </div>
             <Textarea label="Descrição" value={descricao} onChange={setDescricao} placeholder="O que você vai fazer?" />
-            <Textarea label="Motivação pessoal (não aparece no feed)" value={motivacao} onChange={setMotivacao} placeholder="Por que isso importa para você?" />
+            <Textarea label="O que está em jogo? (privado, só você vê)" value={motivacao} onChange={setMotivacao} placeholder="Ex: Perco R$200, faço 100 flexões em público, raspo o cabelo…" />
           </div>
         )}
 
