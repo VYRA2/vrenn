@@ -105,12 +105,12 @@ function Perfil() {
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-bold text-primary-light">Missão: Evoluir 1% todos os dias.</h3>
-                <button className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-light">
+                <h3 className="text-sm font-bold text-primary-light">{profile?.missao ? `Missão: ${profile.missao}` : "Missão: defina sua missão pessoal."}</h3>
+                <Link to="/perfil/editar" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-light">
                   Editar <Edit3 size={12} />
-                </button>
+                </Link>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Foco · Disciplina · Consistência</p>
+              <p className="mt-1 text-xs text-muted-foreground">{profile?.bio ?? "Foco · Disciplina · Consistência"}</p>
             </div>
           </div>
         </section>
