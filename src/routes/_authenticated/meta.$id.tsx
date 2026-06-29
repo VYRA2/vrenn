@@ -284,6 +284,9 @@ function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: 
     try {
       let foto_url: string | null = null;
       if (file) {
+        const ok = ["image/jpeg","image/png","image/webp","video/mp4"].includes(file.type);
+        if (!ok) throw new Error("Formato inválido. Use JPG, PNG, WebP ou MP4.");
+        if (file.size > 50 * 1024 * 1024) throw new Error("Arquivo maior que 50MB.");
         const path = `${userId}/${metaId}/${Date.now()}-${file.name}`;
         const { error } = await supabase.storage.from("checkins").upload(path, file);
         if (error) throw error;
