@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      apoios: {
+        Row: {
+          created_at: string
+          id: string
+          meta_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apoios_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arbitros: {
         Row: {
           arbitro_id: string
@@ -211,18 +240,21 @@ export type Database = {
           follower_id: string
           following_id: string
           id: string
+          status: string
         }
         Insert: {
           created_at?: string
           follower_id: string
           following_id: string
           id?: string
+          status?: string
         }
         Update: {
           created_at?: string
           follower_id?: string
           following_id?: string
           id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -319,10 +351,14 @@ export type Database = {
           created_at: string
           creditos: number
           id: string
+          idioma: string
+          missao: string | null
           nivel: number
           nome: string
+          perfil_publico: boolean
           reputacao_pts: number
           streak_dias: number
+          unidades: string
           username: string
         }
         Insert: {
@@ -331,10 +367,14 @@ export type Database = {
           created_at?: string
           creditos?: number
           id: string
+          idioma?: string
+          missao?: string | null
           nivel?: number
           nome: string
+          perfil_publico?: boolean
           reputacao_pts?: number
           streak_dias?: number
+          unidades?: string
           username: string
         }
         Update: {
@@ -343,11 +383,36 @@ export type Database = {
           created_at?: string
           creditos?: number
           id?: string
+          idioma?: string
+          missao?: string | null
           nivel?: number
           nome?: string
+          perfil_publico?: boolean
           reputacao_pts?: number
           streak_dias?: number
+          unidades?: string
           username?: string
+        }
+        Relationships: []
+      }
+      user_searches: {
+        Row: {
+          created_at: string
+          id: string
+          termo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          termo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          termo?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -356,7 +421,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
+      notify: {
+        Args: {
+          _link_id?: string
+          _mensagem: string
+          _tipo: string
+          _user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

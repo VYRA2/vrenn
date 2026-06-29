@@ -57,8 +57,7 @@ function Perfil() {
         <VyraLogo size={32} />
         <div className="flex items-center gap-1">
           <button className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
-          <button className="rounded-full p-2 text-foreground/90"><Settings size={20} /></button>
-          <button onClick={logout} className="rounded-full p-2 text-foreground/90"><LogOut size={18} /></button>
+          <Link to="/configuracoes" className="rounded-full p-2 text-foreground/90"><Settings size={20} /></Link>
         </div>
       </header>
 
@@ -73,9 +72,9 @@ function Perfil() {
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold">{initial}</div>
               )}
             </div>
-            <button className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
+            <Link to="/perfil/editar" className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
               <Edit3 size={13} />
-            </button>
+            </Link>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
@@ -106,12 +105,12 @@ function Perfil() {
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-bold text-primary-light">Missão: Evoluir 1% todos os dias.</h3>
-                <button className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-light">
+                <h3 className="text-sm font-bold text-primary-light">{profile?.missao ? `Missão: ${profile.missao}` : "Missão: defina sua missão pessoal."}</h3>
+                <Link to="/perfil/editar" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-light">
                   Editar <Edit3 size={12} />
-                </button>
+                </Link>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Foco · Disciplina · Consistência</p>
+              <p className="mt-1 text-xs text-muted-foreground">{profile?.bio ?? "Foco · Disciplina · Consistência"}</p>
             </div>
           </div>
         </section>

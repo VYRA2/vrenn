@@ -117,6 +117,8 @@ function MetaDetail() {
           </div>
         </section>
 
+        {isOwner && <EmJogoPrivado metaId={id} />}
+
         <ArbitrosSection metaId={id} isOwner={isOwner} arbitros={arbitros ?? []} onChange={() => qc.invalidateQueries({ queryKey: ["arbitros", id] })} ownerId={meta.user_id} />
 
         <section>
@@ -202,11 +204,11 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
         meta_id: metaId, arbitro_id: target.id, convidado_por: ownerId,
       }).select().single();
       if (error) throw error;
-      await supabase.from("notificacoes").insert({
-        user_id: target.id,
-        tipo: "convite_arbitro",
-        mensagem: `Você foi convidado para ser árbitro de uma meta.`,
-        link_id: arb.id,
+      await supabase.rpc("notify", {
+        _user_id: target.id,
+        _tipo: "convite_arbitro",
+        _mensagem: "Você foi convidado para ser árbitro de uma meta.",
+        _link_id: metaId,
       });
       toast.success(`Convite enviado para ${target.nome || target.username}`);
       setIdent(""); setOpen(false); onChange();
@@ -284,6 +286,9 @@ function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: 
     try {
       let foto_url: string | null = null;
       if (file) {
+        const ok = ["image/jpeg","image/png","image/webp","video/mp4"].includes(file.type);
+        if (!ok) throw new Error("Formato inválido. Use JPG, PNG, WebP ou MP4.");
+        if (file.size > 50 * 1024 * 1024) throw new Error("Arquivo maior que 50MB.");
         const path = `${userId}/${metaId}/${Date.now()}-${file.name}`;
         const { error } = await supabase.storage.from("checkins").upload(path, file);
         if (error) throw error;
@@ -294,13 +299,15 @@ function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: 
         meta_id: metaId, user_id: userId, mensagem: msg, foto_url,
       });
       if (error) throw error;
-      for (const a of acceptedArbitros) {
-        await supabase.from("notificacoes").insert({
-          user_id: a.arbitro_id,
-          tipo: "checkin_para_validar",
-          mensagem: "Novo check-in aguardando sua validação.",
-          link_id: metaId,
-        });
+      for (const c of (await supabase.from("checkins").select("id").eq("meta_id", metaId).order("created_at", { ascending: false }).limit(1)).data ?? []) {
+        for (const a of acceptedArbitros) {
+          await supabase.rpc("notify", {
+            _user_id: a.arbitro_id,
+            _tipo: "checkin_para_validar",
+            _mensagem: "Novo check-in aguardando sua validação.",
+            _link_id: c.id,
+          });
+        }
       }
       toast.success("Check-in publicado!");
       onCreated();
@@ -351,11 +358,11 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
     if (status === "validado") {
       await supabase.from("checkins").update({ validado: true }).eq("id", checkin.id);
     }
-    await supabase.from("notificacoes").insert({
-      user_id: checkin.user_id,
-      tipo: status === "validado" ? "checkin_validado" : "checkin_questionado",
-      mensagem: status === "validado" ? "Um árbitro validou seu check-in." : `Um árbitro questionou: ${comentario || "sem comentário"}`,
-      link_id: checkin.meta_id,
+    await supabase.rpc("notify", {
+      _user_id: checkin.user_id,
+      _tipo: status === "validado" ? "apoio" : "cobranca",
+      _mensagem: status === "validado" ? "Um árbitro validou seu check-in." : `Um árbitro questionou: ${comentario || "sem comentário"}`,
+      _link_id: checkin.meta_id,
     });
     toast.success(status === "validado" ? "Check-in validado" : "Check-in questionado");
     setComentario(""); onChange();
@@ -396,5 +403,24 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
         </div>
       )}
     </div>
+  );
+}
+
+function EmJogoPrivado({ metaId }: { metaId: string }) {
+  const { data } = useQuery({
+    queryKey: ["motivacao", metaId],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_meta_motivacao", { _meta_id: metaId });
+      return data as string | null;
+    },
+  });
+  if (!data) return null;
+  return (
+    <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+      <div className="flex items-center gap-2 text-xs font-bold text-primary-light">
+        <Shield size={14}/> O que está em jogo (só você vê)
+      </div>
+      <p className="mt-2 text-sm whitespace-pre-line">{data}</p>
+    </section>
   );
 }
