@@ -21,8 +21,12 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedDuelosRouteImport } from './routes/_authenticated/duelos'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
+import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
+import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
+import { Route as AuthenticatedEquipesIdIndexRouteImport } from './routes/_authenticated/equipes.$id.index'
+import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -85,6 +89,12 @@ const AuthenticatedBuscaRoute = AuthenticatedBuscaRouteImport.update({
   path: '/busca',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEquipesIndexRoute =
+  AuthenticatedEquipesIndexRouteImport.update({
+    id: '/equipes/',
+    path: '/equipes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerfilEditarRoute =
   AuthenticatedPerfilEditarRouteImport.update({
     id: '/editar',
@@ -96,6 +106,24 @@ const AuthenticatedMetaIdRoute = AuthenticatedMetaIdRouteImport.update({
   path: '/meta/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEquipesNovaRoute =
+  AuthenticatedEquipesNovaRouteImport.update({
+    id: '/equipes/nova',
+    path: '/equipes/nova',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEquipesIdIndexRoute =
+  AuthenticatedEquipesIdIndexRouteImport.update({
+    id: '/equipes/$id/',
+    path: '/equipes/$id/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEquipesIdDesafioNovoRoute =
+  AuthenticatedEquipesIdDesafioNovoRouteImport.update({
+    id: '/equipes/$id/desafio/novo',
+    path: '/equipes/$id/desafio/novo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -109,8 +137,12 @@ export interface FileRoutesByFullPath {
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/ranking': typeof AuthenticatedRankingRoute
+  '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
+  '/equipes/': typeof AuthenticatedEquipesIndexRoute
+  '/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
+  '/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -124,8 +156,12 @@ export interface FileRoutesByTo {
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/ranking': typeof AuthenticatedRankingRoute
+  '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
+  '/equipes': typeof AuthenticatedEquipesIndexRoute
+  '/equipes/$id': typeof AuthenticatedEquipesIdIndexRoute
+  '/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -141,8 +177,12 @@ export interface FileRoutesById {
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
   '/_authenticated/perfil/editar': typeof AuthenticatedPerfilEditarRoute
+  '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
+  '/_authenticated/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
+  '/_authenticated/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -158,8 +198,12 @@ export interface FileRouteTypes {
     | '/nova-meta'
     | '/perfil'
     | '/ranking'
+    | '/equipes/nova'
     | '/meta/$id'
     | '/perfil/editar'
+    | '/equipes/'
+    | '/equipes/$id/'
+    | '/equipes/$id/desafio/novo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -173,8 +217,12 @@ export interface FileRouteTypes {
     | '/nova-meta'
     | '/perfil'
     | '/ranking'
+    | '/equipes/nova'
     | '/meta/$id'
     | '/perfil/editar'
+    | '/equipes'
+    | '/equipes/$id'
+    | '/equipes/$id/desafio/novo'
   id:
     | '__root__'
     | '/'
@@ -189,8 +237,12 @@ export interface FileRouteTypes {
     | '/_authenticated/nova-meta'
     | '/_authenticated/perfil'
     | '/_authenticated/ranking'
+    | '/_authenticated/equipes/nova'
     | '/_authenticated/meta/$id'
     | '/_authenticated/perfil/editar'
+    | '/_authenticated/equipes/'
+    | '/_authenticated/equipes/$id/'
+    | '/_authenticated/equipes/$id/desafio/novo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -285,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuscaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/equipes/': {
+      id: '/_authenticated/equipes/'
+      path: '/equipes'
+      fullPath: '/equipes/'
+      preLoaderRoute: typeof AuthenticatedEquipesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil/editar': {
       id: '/_authenticated/perfil/editar'
       path: '/editar'
@@ -297,6 +356,27 @@ declare module '@tanstack/react-router' {
       path: '/meta/$id'
       fullPath: '/meta/$id'
       preLoaderRoute: typeof AuthenticatedMetaIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipes/nova': {
+      id: '/_authenticated/equipes/nova'
+      path: '/equipes/nova'
+      fullPath: '/equipes/nova'
+      preLoaderRoute: typeof AuthenticatedEquipesNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipes/$id/': {
+      id: '/_authenticated/equipes/$id/'
+      path: '/equipes/$id'
+      fullPath: '/equipes/$id/'
+      preLoaderRoute: typeof AuthenticatedEquipesIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipes/$id/desafio/novo': {
+      id: '/_authenticated/equipes/$id/desafio/novo'
+      path: '/equipes/$id/desafio/novo'
+      fullPath: '/equipes/$id/desafio/novo'
+      preLoaderRoute: typeof AuthenticatedEquipesIdDesafioNovoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -323,7 +403,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRouteWithChildren
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
+  AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
+  AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
+  AuthenticatedEquipesIdDesafioNovoRoute: typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -336,7 +420,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRouteWithChildren,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
+  AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
+  AuthenticatedEquipesIdIndexRoute: AuthenticatedEquipesIdIndexRoute,
+  AuthenticatedEquipesIdDesafioNovoRoute:
+    AuthenticatedEquipesIdDesafioNovoRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -350,13 +439,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
