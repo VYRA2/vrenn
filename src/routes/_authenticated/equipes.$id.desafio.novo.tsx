@@ -245,7 +245,7 @@ function Textarea({ value, onChange, placeholder, max, rows }: any) {
     </div>
   );
 }
-function Select({ value, onChange, options, sub }: any) {
+function Select({ value, onChange, options, sub }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; sub?: string }) {
   return (
     <div className="relative rounded-2xl border border-border bg-card px-4 py-3">
       <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full appearance-none bg-transparent text-sm font-semibold capitalize outline-none pr-6">
