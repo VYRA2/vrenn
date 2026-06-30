@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Target, Plus, Trophy, User, X, Flag, Camera, Swords } from "lucide-react";
+import { Home, Target, Plus, Bell, User, X, Flag, Camera, Swords } from "lucide-react";
 import { useState } from "react";
 
 export function BottomNav() {
@@ -12,7 +12,7 @@ export function BottomNav() {
     { to: "/metas", icon: Target, label: "Metas" },
   ] as const;
   const right = [
-    { to: "/ranking", icon: Trophy, label: "Classificação" },
+    { to: "/notificacoes", icon: Bell, label: "Notificações" },
     { to: "/perfil", icon: User, label: "Perfil" },
   ] as const;
 
