@@ -26,6 +26,7 @@ import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authent
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedEquipesIdIndexRouteImport } from './routes/_authenticated/equipes.$id.index'
+import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -117,6 +118,12 @@ const AuthenticatedEquipesIdIndexRoute =
     path: '/equipes/$id/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEquipesIdDesafioNovoRoute =
+  AuthenticatedEquipesIdDesafioNovoRouteImport.update({
+    id: '/equipes/$id/desafio/novo',
+    path: '/equipes/$id/desafio/novo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
+  '/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
   '/equipes/$id': typeof AuthenticatedEquipesIdIndexRoute
+  '/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -173,6 +182,7 @@ export interface FileRoutesById {
   '/_authenticated/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/_authenticated/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
+  '/_authenticated/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/perfil/editar'
     | '/equipes/'
     | '/equipes/$id/'
+    | '/equipes/$id/desafio/novo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/perfil/editar'
     | '/equipes'
     | '/equipes/$id'
+    | '/equipes/$id/desafio/novo'
   id:
     | '__root__'
     | '/'
@@ -230,6 +242,7 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil/editar'
     | '/_authenticated/equipes/'
     | '/_authenticated/equipes/$id/'
+    | '/_authenticated/equipes/$id/desafio/novo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesIdIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/equipes/$id/desafio/novo': {
+      id: '/_authenticated/equipes/$id/desafio/novo'
+      path: '/equipes/$id/desafio/novo'
+      fullPath: '/equipes/$id/desafio/novo'
+      preLoaderRoute: typeof AuthenticatedEquipesIdDesafioNovoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -387,6 +407,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
   AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
+  AuthenticatedEquipesIdDesafioNovoRoute: typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -403,6 +424,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
   AuthenticatedEquipesIdIndexRoute: AuthenticatedEquipesIdIndexRoute,
+  AuthenticatedEquipesIdDesafioNovoRoute:
+    AuthenticatedEquipesIdDesafioNovoRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

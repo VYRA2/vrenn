@@ -259,7 +259,7 @@ function Select({ value, onChange, options, sub }: any) {
 function IconBox({ color, children }: any) {
   return <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: `${color}20`, color }}>{children}</div>;
 }
-function ToggleCard({ icon, title, desc, value, onChange }: any) {
+function ToggleCard({ icon, title, desc, value, onChange }: { icon: React.ReactNode; title: string; desc: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4 flex items-start gap-3">
       <IconBox color="#7B3FF2">{icon}</IconBox>
