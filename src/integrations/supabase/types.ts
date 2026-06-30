@@ -171,6 +171,65 @@ export type Database = {
           },
         ]
       }
+      desafios_equipe: {
+        Row: {
+          categoria: string
+          created_at: string
+          criador_id: string
+          data_fim: string | null
+          data_inicio: string
+          descricao: string | null
+          duracao_dias: number
+          equipe_id: string
+          id: string
+          premiacao: string | null
+          regras: Json
+          status: string
+          titulo: string
+          valor_entrada: number
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          criador_id: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          duracao_dias?: number
+          equipe_id: string
+          id?: string
+          premiacao?: string | null
+          regras?: Json
+          status?: string
+          titulo: string
+          valor_entrada?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          criador_id?: string
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          duracao_dias?: number
+          equipe_id?: string
+          id?: string
+          premiacao?: string | null
+          regras?: Json
+          status?: string
+          titulo?: string
+          valor_entrada?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desafios_equipe_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       duelos: {
         Row: {
           aposta_creditos: number | null
@@ -233,6 +292,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      equipe_membros: {
+        Row: {
+          created_at: string
+          equipe_id: string
+          id: string
+          papel: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipe_id: string
+          id?: string
+          papel?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          papel?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_membros_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipes: {
+        Row: {
+          avatar_url: string | null
+          categoria: string
+          created_at: string
+          criador_id: string
+          descricao: string | null
+          id: string
+          nome: string
+          publica: boolean
+          regras: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          categoria?: string
+          created_at?: string
+          criador_id: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          publica?: boolean
+          regras?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          categoria?: string
+          created_at?: string
+          criador_id?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          publica?: boolean
+          regras?: string | null
+        }
+        Relationships: []
       }
       follows: {
         Row: {
@@ -422,6 +549,10 @@ export type Database = {
     }
     Functions: {
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
+      is_equipe_member: {
+        Args: { _equipe_id: string; _user_id: string }
+        Returns: boolean
+      }
       notify: {
         Args: {
           _link_id?: string
