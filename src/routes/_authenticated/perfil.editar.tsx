@@ -58,11 +58,13 @@ function EditarPerfil() {
     setUploading(true);
     const ext = file.name.split(".").pop();
     const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
     if (error) { setUploading(false); return toast.error(error.message); }
-    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-    await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", user.id);
-    setAvatarPreview(data.publicUrl);
+    // Bucket é privado; criamos URL assinada longa (10 anos)
+    const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed) { setUploading(false); return toast.error(sErr?.message ?? "Falha ao gerar URL"); }
+    await supabase.from("profiles").update({ avatar_url: signed.signedUrl }).eq("id", user.id);
+    setAvatarPreview(signed.signedUrl);
     setUploading(false);
     setShowPicker(false);
     toast.success("Foto atualizada");
