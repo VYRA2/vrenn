@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Search, Bell, Heart, Bell as BellIcon, Swords, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { Search, Trophy, Heart, Bell as BellIcon, Swords, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
