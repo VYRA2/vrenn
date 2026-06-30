@@ -25,6 +25,7 @@ import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
+import { Route as AuthenticatedEquipesIdIndexRouteImport } from './routes/_authenticated/equipes.$id.index'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -110,6 +111,12 @@ const AuthenticatedEquipesNovaRoute =
     path: '/equipes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEquipesIdIndexRoute =
+  AuthenticatedEquipesIdIndexRouteImport.update({
+    id: '/equipes/$id/',
+    path: '/equipes/$id/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
+  '/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
+  '/equipes/$id': typeof AuthenticatedEquipesIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
   '/_authenticated/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
+  '/_authenticated/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/meta/$id'
     | '/perfil/editar'
     | '/equipes/'
+    | '/equipes/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/meta/$id'
     | '/perfil/editar'
     | '/equipes'
+    | '/equipes/$id'
   id:
     | '__root__'
     | '/'
@@ -217,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/meta/$id'
     | '/_authenticated/perfil/editar'
     | '/_authenticated/equipes/'
+    | '/_authenticated/equipes/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/equipes/$id/': {
+      id: '/_authenticated/equipes/$id/'
+      path: '/equipes/$id'
+      fullPath: '/equipes/$id/'
+      preLoaderRoute: typeof AuthenticatedEquipesIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -366,6 +386,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
+  AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -381,6 +402,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
+  AuthenticatedEquipesIdIndexRoute: AuthenticatedEquipesIdIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

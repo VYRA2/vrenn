@@ -6,7 +6,7 @@ import { ArrowLeft, Share2, MoreHorizontal, Users, Trophy, Flame, Heart, Target,
 import { useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/equipes/$id")({
+export const Route = createFileRoute("/_authenticated/equipes/$id/")({
   component: EquipeDetalhe,
   errorComponent: ({ error }) => <div className="p-8 text-center text-sm text-muted-foreground">Erro: {error.message}</div>,
   notFoundComponent: () => <div className="p-8 text-center text-sm text-muted-foreground">Equipe não encontrada</div>,
