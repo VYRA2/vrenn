@@ -177,11 +177,6 @@ function MetaCard({ meta, userId }: { meta: any; userId: string }) {
           <div className="h-2.5 rounded-full bg-[#2E2E50] overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light transition-all" style={{ width: `${Math.max(2, meta.progresso)}%` }} />
           </div>
-          {Number(meta.valor_custodia) > 0 && (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary-light">
-              💰 R$ {Number(meta.valor_custodia).toLocaleString("pt-BR")} em jogo
-            </div>
-          )}
         </div>
       </Link>
 
