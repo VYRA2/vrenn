@@ -60,10 +60,7 @@ function Feed() {
           <VyraLogo size={32} />
           <div className="flex items-center gap-1">
             <Link to="/busca" className="rounded-full p-2 text-foreground/90"><Search size={22} /></Link>
-            <Link to="/notificacoes" className="relative rounded-full p-2 text-foreground/90">
-              <Bell size={22} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
-            </Link>
+            <Link to="/ranking" className="rounded-full p-2 text-foreground/90"><Trophy size={22} /></Link>
           </div>
         </div>
         <div className="mx-auto flex max-w-md px-5">
