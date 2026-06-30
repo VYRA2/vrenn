@@ -24,6 +24,7 @@ import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
+import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -103,6 +104,12 @@ const AuthenticatedMetaIdRoute = AuthenticatedMetaIdRouteImport.update({
   path: '/meta/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEquipesNovaRoute =
+  AuthenticatedEquipesNovaRouteImport.update({
+    id: '/equipes/nova',
+    path: '/equipes/nova',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/ranking': typeof AuthenticatedRankingRoute
+  '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/ranking': typeof AuthenticatedRankingRoute
+  '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
   '/_authenticated/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/nova-meta'
     | '/perfil'
     | '/ranking'
+    | '/equipes/nova'
     | '/meta/$id'
     | '/perfil/editar'
     | '/equipes/'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/nova-meta'
     | '/perfil'
     | '/ranking'
+    | '/equipes/nova'
     | '/meta/$id'
     | '/perfil/editar'
     | '/equipes'
@@ -201,6 +213,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nova-meta'
     | '/_authenticated/perfil'
     | '/_authenticated/ranking'
+    | '/_authenticated/equipes/nova'
     | '/_authenticated/meta/$id'
     | '/_authenticated/perfil/editar'
     | '/_authenticated/equipes/'
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMetaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/equipes/nova': {
+      id: '/_authenticated/equipes/nova'
+      path: '/equipes/nova'
+      fullPath: '/equipes/nova'
+      preLoaderRoute: typeof AuthenticatedEquipesNovaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -343,6 +363,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRouteWithChildren
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
 }
@@ -357,6 +378,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRouteWithChildren,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
 }
