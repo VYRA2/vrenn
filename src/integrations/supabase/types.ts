@@ -743,7 +743,17 @@ export type Database = {
     Functions: {
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
+      get_meta_valor_destino: { Args: { _meta_id: string }; Returns: string }
       get_meus_creditos: { Args: never; Returns: number }
+      get_my_profile_stats: {
+        Args: never
+        Returns: {
+          creditos: number
+          nivel: number
+          reputacao_pts: number
+          streak_dias: number
+        }[]
+      }
       is_equipe_member: {
         Args: { _equipe_id: string; _user_id: string }
         Returns: boolean
