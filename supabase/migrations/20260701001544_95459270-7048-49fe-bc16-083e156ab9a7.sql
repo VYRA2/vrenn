@@ -1,0 +1,3 @@
+CREATE POLICY "posts_bucket_read" ON storage.objects FOR SELECT USING (bucket_id = 'posts');
+CREATE POLICY "posts_bucket_insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'posts' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "posts_bucket_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'posts' AND auth.uid()::text = (storage.foldername(name))[1]);
