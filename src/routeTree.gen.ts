@@ -20,6 +20,7 @@ import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDuelosRouteImport } from './routes/_authenticated/duelos'
 import { Route as AuthenticatedDescobrirRouteImport } from './routes/_authenticated/descobrir'
+import { Route as AuthenticatedDesafioTemporadaRouteImport } from './routes/_authenticated/desafio-temporada'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
@@ -84,6 +85,12 @@ const AuthenticatedDescobrirRoute = AuthenticatedDescobrirRouteImport.update({
   path: '/descobrir',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDesafioTemporadaRoute =
+  AuthenticatedDesafioTemporadaRouteImport.update({
+    id: '/desafio-temporada',
+    path: '/desafio-temporada',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -136,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/desafio-temporada': typeof AuthenticatedDesafioTemporadaRoute
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -156,6 +164,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/desafio-temporada': typeof AuthenticatedDesafioTemporadaRoute
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -178,6 +187,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/desafio-temporada': typeof AuthenticatedDesafioTemporadaRoute
   '/_authenticated/descobrir': typeof AuthenticatedDescobrirRoute
   '/_authenticated/duelos': typeof AuthenticatedDuelosRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/busca'
     | '/configuracoes'
+    | '/desafio-temporada'
     | '/descobrir'
     | '/duelos'
     | '/feed'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/busca'
     | '/configuracoes'
+    | '/desafio-temporada'
     | '/descobrir'
     | '/duelos'
     | '/feed'
@@ -241,6 +253,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/busca'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/desafio-temporada'
     | '/_authenticated/descobrir'
     | '/_authenticated/duelos'
     | '/_authenticated/feed'
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDescobrirRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/desafio-temporada': {
+      id: '/_authenticated/desafio-temporada'
+      path: '/desafio-temporada'
+      fullPath: '/desafio-temporada'
+      preLoaderRoute: typeof AuthenticatedDesafioTemporadaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
       path: '/configuracoes'
@@ -415,6 +435,7 @@ const AuthenticatedPerfilRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedDesafioTemporadaRoute: typeof AuthenticatedDesafioTemporadaRoute
   AuthenticatedDescobrirRoute: typeof AuthenticatedDescobrirRoute
   AuthenticatedDuelosRoute: typeof AuthenticatedDuelosRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
@@ -433,6 +454,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedDesafioTemporadaRoute: AuthenticatedDesafioTemporadaRoute,
   AuthenticatedDescobrirRoute: AuthenticatedDescobrirRoute,
   AuthenticatedDuelosRoute: AuthenticatedDuelosRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
