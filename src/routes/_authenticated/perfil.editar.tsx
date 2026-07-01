@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
@@ -13,7 +13,6 @@ export const Route = createFileRoute("/_authenticated/perfil/editar")({
 function EditarPerfil() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const { data: profile, refetch } = useQuery({
     queryKey: ["profile-edit", user.id],
@@ -99,20 +98,18 @@ function EditarPerfil() {
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-3xl font-bold">{initial}</div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => fileInput.current?.click()}
-              disabled={uploading}
+            <label
+              htmlFor="avatar-file-input"
               aria-label="Trocar foto de perfil"
-              className="absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow disabled:opacity-60"
+              className={`absolute bottom-1 right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow ${uploading ? "opacity-60 pointer-events-none" : ""}`}
             >
               <Camera size={18} />
-            </button>
+            </label>
             <input
-              ref={fileInput}
+              id="avatar-file-input"
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              className="hidden"
+              style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", border: 0 }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) uploadAvatar(f);
