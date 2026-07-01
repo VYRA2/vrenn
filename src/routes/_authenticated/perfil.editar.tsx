@@ -13,9 +13,7 @@ export const Route = createFileRoute("/_authenticated/perfil/editar")({
 function EditarPerfil() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
-  const cameraInput = useRef<HTMLInputElement>(null);
-  const galleryInput = useRef<HTMLInputElement>(null);
-  const [showPicker, setShowPicker] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const { data: profile, refetch } = useQuery({
     queryKey: ["profile-edit", user.id],
@@ -33,7 +31,7 @@ function EditarPerfil() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setNome(profile.nome ?? "");
       setUsername(profile.username ?? "");
@@ -41,33 +39,25 @@ function EditarPerfil() {
       setMissao(profile.missao ?? "");
       setPublico(profile.perfil_publico ?? true);
     }
-  });
-  // populate when profile loads
-  if (profile && !nome && profile.nome) {
-    setNome(profile.nome);
-    setUsername(profile.username ?? "");
-    setBio(profile.bio ?? "");
-    setMissao(profile.missao ?? "");
-    setPublico(profile.perfil_publico ?? true);
-  }
+  }, [profile]);
 
   const allowed = ["image/jpeg", "image/png", "image/webp"];
   async function uploadAvatar(file: File) {
     if (!allowed.includes(file.type)) return toast.error("Formato inválido. Use JPG, PNG ou WebP.");
-    if (file.size > 50 * 1024 * 1024) return toast.error("Máximo 50MB.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Máximo 5MB.");
+    // Preview imediato
+    setAvatarPreview(URL.createObjectURL(file));
     setUploading(true);
     const ext = file.name.split(".").pop();
     const path = `${user.id}/avatar-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
     if (error) { setUploading(false); return toast.error(error.message); }
-    // Bucket é privado; criamos URL assinada longa (10 anos)
     const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
     if (sErr || !signed) { setUploading(false); return toast.error(sErr?.message ?? "Falha ao gerar URL"); }
     await supabase.from("profiles").update({ avatar_url: signed.signedUrl }).eq("id", user.id);
     setAvatarPreview(signed.signedUrl);
     setUploading(false);
-    setShowPicker(false);
-    toast.success("Foto atualizada");
+    toast.success("Foto atualizada!");
     refetch();
   }
 
