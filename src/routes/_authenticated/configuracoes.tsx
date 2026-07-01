@@ -74,7 +74,7 @@ function Configuracoes() {
           <Row icon={<HelpCircle size={18}/>} label="Central de ajuda"/>
           <Row icon={<FileText size={18}/>} label="Termos de uso"/>
           <Row icon={<Shield size={18}/>} label="Política de privacidade"/>
-          <Row icon={<Info size={18}/>} label="Sobre o VYRA" right={<span className="text-xs text-muted-foreground">v1.0</span>}/>
+          <Row icon={<Info size={18}/>} label="Sobre o VRENN" right={<span className="text-xs text-muted-foreground">v1.0</span>}/>
         </Section>
 
         <Section title="AÇÃO">

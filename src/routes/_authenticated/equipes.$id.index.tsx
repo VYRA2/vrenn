@@ -91,7 +91,7 @@ function EquipeDetalhe() {
           <Stat value={String((membros ?? []).length)} label="Membros" />
           <Stat value={String((desafios ?? []).length)} label="Desafios" />
           <Stat value="—" label="Ranking" />
-          <Stat value="0" label="VYRA Coins" small />
+          <Stat value="0" label="VRENN Coins" small />
         </div>
 
         <div className="mt-3 rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
