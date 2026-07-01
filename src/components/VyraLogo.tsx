@@ -1,4 +1,4 @@
-import vyraIcon from "@/assets/vyra-icon.png";
+import vrennIcon from "@/assets/vrenn-icon.png.asset.json";
 
 interface Props { size?: number; className?: string; showWordmark?: boolean; vertical?: boolean }
 
@@ -6,17 +6,17 @@ export function VyraLogo({ size = 48, className = "", showWordmark = true, verti
   return (
     <div className={`inline-flex ${vertical ? "flex-col" : "flex-row"} items-center gap-2 ${className}`}>
       <img
-        src={vyraIcon}
-        alt="VYRA"
+        src={vrennIcon.url}
+        alt="VRENN"
         width={size}
         height={size}
         loading="lazy"
-        style={{ width: size, height: size, objectFit: "contain", filter: "drop-shadow(0 0 18px rgba(168,85,247,0.45))" }}
+        style={{ width: size, height: size, objectFit: "contain", filter: "drop-shadow(0 0 18px rgba(168,85,247,0.55))" }}
       />
       {showWordmark && (
         <span
           style={{
-            fontSize: vertical ? size * 0.42 : size * 0.5,
+            fontSize: vertical ? size * 0.38 : size * 0.5,
             fontWeight: 300,
             letterSpacing: vertical ? "0.4em" : "0.18em",
             paddingLeft: vertical ? "0.4em" : 0,
@@ -24,7 +24,7 @@ export function VyraLogo({ size = 48, className = "", showWordmark = true, verti
             fontFamily: "Inter, sans-serif",
           }}
         >
-          VYRA
+          VRENN
         </span>
       )}
     </div>
