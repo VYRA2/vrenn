@@ -1,75 +1,105 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Search, Trophy, Heart, Bell as BellIcon, Swords, MoreHorizontal, BadgeCheck } from "lucide-react";
-import { useState } from "react";
+import { PublishProofModal } from "@/components/PublishProofModal";
+import { Bell, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "@tanstack/react-router";
+
+type Tab = "feed" | "seguindo" | "destaques" | "comunidades";
 
 export const Route = createFileRoute("/_authenticated/feed")({
+  validateSearch: (s: Record<string, unknown>) => ({ publish: s.publish ? 1 : undefined }),
   component: Feed,
 });
 
-type Tab = "para-voce" | "seguindo" | "em-alta";
-
 function Feed() {
-  const [tab, setTab] = useState<Tab>("para-voce");
   const { user } = Route.useRouteContext();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [tab, setTab] = useState<Tab>("feed");
+  const [showPublish, setShowPublish] = useState(false);
 
-  const { data: metas, isLoading } = useQuery({
-    queryKey: ["feed-metas", tab, user.id],
+  useEffect(() => {
+    if (search.publish) { setShowPublish(true); navigate({ to: "/feed", search: {} as any, replace: true }); }
+  }, [search.publish]);
+
+  const { data: unread } = useQuery({
+    queryKey: ["notif-unread", user.id],
     queryFn: async () => {
+      const { count } = await supabase.from("notificacoes").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("lida", false);
+      return count ?? 0;
+    },
+  });
+
+  const { data: posts, isLoading, refetch } = useQuery({
+    queryKey: ["feed-posts", tab, user.id],
+    queryFn: async () => {
+      let query = supabase
+        .from("posts")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
+        .order("created_at", { ascending: false })
+        .limit(30);
+
       if (tab === "seguindo") {
-        const { data: f } = await supabase
-          .from("follows").select("following_id")
-          .eq("follower_id", user.id).eq("status", "aceito");
+        const { data: f } = await supabase.from("follows").select("following_id").eq("follower_id", user.id).eq("status", "aceito");
         const ids = (f ?? []).map((x: any) => x.following_id);
         if (!ids.length) return [];
-        const { data } = await supabase
-          .from("metas")
-          .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, valor_custodia, profiles:user_id (nome, username, avatar_url)")
-          .in("user_id", ids)
-          .order("created_at", { ascending: false }).limit(30);
-        return data ?? [];
+        query = query.in("user_id", ids);
+      } else if (tab === "destaques") {
+        const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+        query = query.gte("created_at", since);
+      } else if (tab === "comunidades") {
+        const { data: eq } = await supabase.from("equipe_membros").select("equipe_id").eq("user_id", user.id);
+        const eqIds = (eq ?? []).map((x: any) => x.equipe_id);
+        if (!eqIds.length) return [];
+        const { data: mem } = await supabase.from("equipe_membros").select("user_id").in("equipe_id", eqIds);
+        const uids = Array.from(new Set((mem ?? []).map((x: any) => x.user_id)));
+        query = query.in("user_id", uids);
       }
-      if (tab === "em-alta") {
-        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-        const { data: ap } = await supabase.from("apoios").select("meta_id").gte("created_at", since);
-        const counts = new Map<string, number>();
-        (ap ?? []).forEach((r: any) => counts.set(r.meta_id, (counts.get(r.meta_id) ?? 0) + 1));
-        const { data } = await supabase
-          .from("metas")
-          .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, valor_custodia, profiles:user_id (nome, username, avatar_url)")
-          .order("created_at", { ascending: false }).limit(60);
-        return (data ?? []).sort((a: any, b: any) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0)).slice(0, 20);
+      const { data } = await query;
+      const list = data ?? [];
+      if (tab === "destaques" && list.length) {
+        const ids = list.map((p: any) => p.id);
+        const [{ data: likes }, { data: comments }] = await Promise.all([
+          supabase.from("post_likes").select("post_id").in("post_id", ids),
+          supabase.from("post_comments").select("post_id").in("post_id", ids),
+        ]);
+        const score = new Map<string, number>();
+        (likes ?? []).forEach((l: any) => score.set(l.post_id, (score.get(l.post_id) ?? 0) + 1));
+        (comments ?? []).forEach((c: any) => score.set(c.post_id, (score.get(c.post_id) ?? 0) + 1));
+        return list.sort((a: any, b: any) => (score.get(b.id) ?? 0) - (score.get(a.id) ?? 0));
       }
-      const { data } = await supabase
-        .from("metas")
-        .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, valor_custodia, profiles:user_id (nome, username, avatar_url)")
-        .order("created_at", { ascending: false }).limit(30);
-      return data ?? [];
+      return list;
     },
+  });
+
+  const { data: me } = useQuery({
+    queryKey: ["profile-me-mini", user.id],
+    queryFn: async () => (await supabase.from("profiles").select("avatar_url, nome").eq("id", user.id).single()).data,
   });
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
-          <VyraLogo size={32} />
-          <div className="flex items-center gap-1">
-            <Link to="/busca" className="rounded-full p-2 text-foreground/90"><Search size={22} /></Link>
-            <Link to="/ranking" className="rounded-full p-2 text-foreground/90"><Trophy size={22} /></Link>
-          </div>
+        <div className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
+          <div className="justify-self-start"><VyraLogo size={28} showWordmark={false} /></div>
+          <div className="justify-self-center"><VyraLogo size={22} showWordmark={true} className="[&>img]:hidden" /></div>
+          <Link to="/notificacoes" className="relative justify-self-end rounded-full p-2 text-foreground/90">
+            <Bell size={22} />
+            {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}
+          </Link>
         </div>
-        <div className="mx-auto flex max-w-md px-5">
-          {([["para-voce", "Para você"], ["seguindo", "Seguindo"], ["em-alta", "Em alta"]] as const).map(([k, l]) => {
+        <div className="mx-auto flex max-w-md px-3">
+          {([["feed", "Feed"], ["seguindo", "Seguindo"], ["destaques", "Destaques"], ["comunidades", "Comunidades"]] as const).map(([k, l]) => {
             const active = tab === k;
             return (
-              <button key={k} onClick={() => setTab(k)} className={`relative flex-1 py-3 text-sm font-semibold transition-colors ${active ? "text-primary-light" : "text-muted-foreground"}`}>
+              <button key={k} onClick={() => setTab(k)} className={`relative flex-1 py-3 text-xs font-semibold transition-colors ${active ? "text-primary-light" : "text-muted-foreground"}`}>
                 {l}
-                {active && <span className="absolute inset-x-6 -bottom-px h-0.5 rounded-full bg-primary" />}
+                {active && <span className="absolute inset-x-4 -bottom-px h-0.5 rounded-full bg-primary" />}
               </button>
             );
           })}
@@ -78,132 +108,171 @@ function Feed() {
       </header>
 
       <div className="mx-auto max-w-md space-y-4 px-4 py-4">
-        {isLoading && [1, 2, 3].map(i => <Skeleton key={i} />)}
-        {!isLoading && (!metas || metas.length === 0) && (
+        <button onClick={() => setShowPublish(true)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left">
+          <div className="relative shrink-0">
+            {me?.avatar_url ? (
+              <img src={me.avatar_url} alt="" className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
+            ) : (
+              <div className="h-11 w-11 rounded-full border-2 border-primary/60 bg-gradient-primary" />
+            )}
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-card"><Plus size={12} strokeWidth={3} /></span>
+          </div>
+          <span className="flex-1 text-sm text-muted-foreground">Compartilhe uma prova. Inspire credibilidade.</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-light"><Camera size={18} /></div>
+        </button>
+
+        {isLoading && [1, 2].map(i => <div key={i} className="h-96 animate-pulse rounded-2xl bg-card" />)}
+        {!isLoading && (!posts || posts.length === 0) && (
           <div className="rounded-2xl border border-border bg-card p-8 text-center">
             <p className="text-sm text-muted-foreground">
-              {tab === "seguindo" ? "Você ainda não segue ninguém. Use a busca para encontrar pessoas." : "Nenhuma meta ainda."}
+              {tab === "seguindo" ? "Você ainda não segue ninguém." : tab === "comunidades" ? "Entre em uma equipe para ver publicações." : "Nenhuma publicação ainda. Compartilhe sua primeira prova!"}
             </p>
-            {tab !== "seguindo" && (
-              <Link to="/nova-meta" className="mt-4 inline-block rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow">Criar minha meta</Link>
-            )}
           </div>
         )}
-        {metas?.map((m: any) => <MetaCard key={m.id} meta={m} userId={user.id} />)}
+        {posts?.map((p: any) => <PostCard key={p.id} post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />)}
       </div>
 
-      <BottomNav />
+      {showPublish && <PublishProofModal userId={user.id} onClose={() => setShowPublish(false)} onPublished={() => refetch()} />}
+
+      <BottomNav onPublish={() => setShowPublish(true)} />
     </main>
   );
 }
 
-function MetaCard({ meta, userId }: { meta: any; userId: string }) {
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  const profile = meta.profiles;
-  const initial = (profile?.nome || profile?.username || "?")[0].toUpperCase();
-  const diasRestantes = meta.prazo ? Math.max(0, Math.ceil((new Date(meta.prazo).getTime() - Date.now()) / 86400000)) : null;
-  const [busy, setBusy] = useState<string | null>(null);
+function PostCard({ post, userId, onChange }: { post: any; userId: string; onChange: () => void }) {
+  const p = post.profiles;
+  const m = post.metas;
+  const initial = (p?.nome || p?.username || "?")[0].toUpperCase();
 
-  async function apoiar(e: React.MouseEvent) {
-    e.preventDefault();
-    setBusy("apoiar");
-    const { error } = await supabase.from("apoios").insert({ user_id: userId, meta_id: meta.id });
-    if (error && !error.message.includes("duplicate")) toast.error(error.message);
-    else {
-      toast.success("Apoio registrado");
-      if (meta.user_id !== userId) await supabase.rpc("notify", { _user_id: meta.user_id, _tipo: "apoio", _mensagem: "Alguém apoiou sua meta.", _link_id: meta.id });
-      qc.invalidateQueries({ queryKey: ["feed-metas"] });
-    }
-    setBusy(null);
+  const { data: stats, refetch } = useQuery({
+    queryKey: ["post-stats", post.id, userId],
+    queryFn: async () => {
+      const [{ count: likes }, { count: comments }, { data: myLike }, { data: mySave }, { data: follow }] = await Promise.all([
+        supabase.from("post_likes").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+        supabase.from("post_comments").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+        supabase.from("post_likes").select("id").eq("post_id", post.id).eq("user_id", userId).maybeSingle(),
+        supabase.from("post_saves").select("id").eq("post_id", post.id).eq("user_id", userId).maybeSingle(),
+        post.user_id !== userId ? supabase.from("follows").select("id, status").eq("follower_id", userId).eq("following_id", post.user_id).maybeSingle() : Promise.resolve({ data: null } as any),
+      ]);
+      return { likes: likes ?? 0, comments: comments ?? 0, liked: !!myLike, saved: !!mySave, following: follow?.status === "aceito" };
+    },
+  });
+
+  async function toggleLike() {
+    if (stats?.liked) await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", userId);
+    else await supabase.from("post_likes").insert({ post_id: post.id, user_id: userId });
+    refetch();
   }
-  async function cobrar(e: React.MouseEvent) {
-    e.preventDefault();
-    if (meta.user_id === userId) return toast.info("Você não pode se cobrar.");
-    setBusy("cobrar");
-    const { error } = await supabase.rpc("notify", { _user_id: meta.user_id, _tipo: "cobranca", _mensagem: "Alguém te cobrou na meta.", _link_id: meta.id });
-    if (error) toast.error(error.message); else toast.success("Cobrança enviada");
-    setBusy(null);
+  async function toggleSave() {
+    if (stats?.saved) await supabase.from("post_saves").delete().eq("post_id", post.id).eq("user_id", userId);
+    else await supabase.from("post_saves").insert({ post_id: post.id, user_id: userId });
+    refetch();
   }
-  function desafiar(e: React.MouseEvent) {
-    e.preventDefault();
-    navigate({ to: "/duelos", search: { challenge: meta.user_id, titulo: meta.titulo } as any });
+  async function toggleFollow() {
+    if (post.user_id === userId) return;
+    if (stats?.following) await supabase.from("follows").delete().eq("follower_id", userId).eq("following_id", post.user_id);
+    else await supabase.from("follows").insert({ follower_id: userId, following_id: post.user_id, status: "aceito" });
+    refetch();
+    onChange();
   }
+  function share() {
+    const url = `${window.location.origin}/meta/${post.meta_id ?? ""}`;
+    if (navigator.share) navigator.share({ title: post.legenda ?? "VRENN", url }).catch(() => {});
+    else { navigator.clipboard.writeText(url); toast.success("Link copiado"); }
+  }
+
+  const isVideo = post.tipo === "video";
+  const cumprido = m?.status === "concluida";
 
   return (
     <article className="rounded-2xl border border-border bg-card p-4">
-      <Link to="/meta/$id" params={{ id: meta.id }} className="block">
-        <div className="flex items-center gap-3">
-          {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt={profile.nome} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
-          ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold text-primary-foreground">
-              {initial}
-            </div>
-          )}
-          <div className="flex-1">
-            <div className="flex items-center gap-1">
-              <span className="text-base font-bold">{profile?.nome ?? "Usuário"}</span>
-              <BadgeCheck size={16} className="text-primary-light fill-primary/20" />
-            </div>
-            <div className="text-xs text-muted-foreground">@{profile?.username ?? "—"} · {formatWhen(meta.created_at)}</div>
-          </div>
-          <button onClick={(e) => e.preventDefault()} className="text-muted-foreground"><MoreHorizontal size={20} /></button>
-        </div>
-
-        <h3 className="mt-3 text-lg font-extrabold leading-tight">{meta.titulo}</h3>
-        {meta.descricao && <p className="mt-1.5 text-sm text-muted-foreground leading-snug">{meta.descricao}</p>}
-
-        {meta.foto_capa_url && (
-          <div className="mt-3 overflow-hidden rounded-xl">
-            <img src={meta.foto_capa_url} alt="" className="w-full h-48 object-cover" />
-          </div>
+      <div className="flex items-center gap-3">
+        {p?.avatar_url ? (
+          <img src={p.avatar_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" alt="" />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold text-primary-foreground">{initial}</div>
         )}
-
-        <div className="mt-3">
-          <div className="mb-1.5 flex items-end justify-between">
-            <div>
-              <span className="text-xs text-muted-foreground">Progresso</span>
-              <div className="text-xl font-bold text-primary-light leading-none mt-1">{meta.progresso}%</div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs font-semibold text-primary-light">{diasRestantes !== null ? `${diasRestantes} dias restantes` : "Sem prazo"}</div>
-              {meta.prazo && <div className="text-[10px] text-muted-foreground mt-0.5">Até {new Date(meta.prazo).toLocaleDateString("pt-BR")}</div>}
-            </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
+            <BadgeCheck size={14} className="text-primary-light" />
           </div>
-          <div className="h-2.5 rounded-full bg-[#2E2E50] overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light transition-all" style={{ width: `${Math.max(2, meta.progresso)}%` }} />
-          </div>
+          <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
         </div>
-      </Link>
+        {post.user_id !== userId && (
+          <button onClick={toggleFollow} className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${stats?.following ? "border-primary bg-primary text-primary-foreground" : "border-primary text-primary-light"}`}>
+            {stats?.following ? "Seguindo" : "Seguir"}
+          </button>
+        )}
+        <button className="text-muted-foreground"><MoreHorizontal size={18} /></button>
+      </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3">
-        <MicroAction icon={<Heart size={16} />} label="Apoiar" color="text-rose-400" onClick={apoiar} disabled={busy === "apoiar"} />
-        <MicroAction icon={<BellIcon size={16} />} label="Cobrar" color="text-amber-400" onClick={cobrar} disabled={busy === "cobrar"} />
-        <MicroAction icon={<Swords size={16} />} label="Desafiar" color="text-primary-light" onClick={desafiar} />
+      {m && (
+        <Link to="/meta/$id" params={{ id: post.meta_id }} className="mt-3 flex items-center gap-2 text-xs">
+          <span className="text-muted-foreground">🔒 Compromisso:</span>
+          <span className="font-semibold truncate">{m.titulo}</span>
+          <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${cumprido ? "text-accent" : "text-amber-400"}`}>
+            {cumprido ? <><CheckCircle2 size={11} /> Cumprido</> : <><Clock size={11} /> Em andamento</>}
+          </span>
+        </Link>
+      )}
+
+      {post.media_url && (
+        <div className="relative mt-3 overflow-hidden rounded-xl">
+          {isVideo ? (
+            <video src={post.media_url} controls playsInline className="w-full max-h-96 object-cover bg-black" />
+          ) : (
+            <img src={post.media_url} className="w-full max-h-96 object-cover" alt="" />
+          )}
+          {m?.progresso != null && (
+            <span className="absolute top-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-bold text-white">{m.progresso}%</span>
+          )}
+        </div>
+      )}
+
+      {post.legenda && (
+        <div className="mt-3">
+          <p className="text-sm leading-snug">
+            <span className="font-bold">{post.legenda.split("\n")[0]}</span>
+            {post.legenda.includes("\n") && <><br /><span className="text-muted-foreground">{post.legenda.split("\n").slice(1).join("\n")}</span></>}
+          </p>
+        </div>
+      )}
+
+      {post.hashtags?.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm font-medium text-primary-light">
+          {post.hashtags.map((h: string, i: number) => <span key={i}>{h}</span>)}
+        </div>
+      )}
+
+      <div className="mt-3 flex items-center gap-5 border-t border-border pt-3">
+        <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
+          <Heart size={20} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
+          <span className="font-semibold">{stats?.likes ?? 0}</span>
+        </button>
+        <button className="flex items-center gap-1.5 text-sm text-foreground">
+          <MessageCircle size={20} />
+          <span className="font-semibold">{stats?.comments ?? 0}</span>
+        </button>
+        <button onClick={share} className="flex items-center gap-1.5 text-sm text-foreground">
+          <Send size={20} />
+        </button>
+        <button onClick={toggleSave} className="ml-auto">
+          <Bookmark size={20} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
+        </button>
       </div>
     </article>
   );
 }
 
-function MicroAction({ icon, label, color, onClick, disabled }: { icon: React.ReactNode; label: string; color: string; onClick?: (e: React.MouseEvent) => void; disabled?: boolean }) {
-  return (
-    <button onClick={onClick} disabled={disabled} className={`inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-background py-2 text-xs font-semibold ${color} hover:border-primary/50 transition-colors disabled:opacity-60`}>
-      {icon}<span>{label}</span>
-    </button>
-  );
-}
-
-function Skeleton() { return <div className="h-56 animate-pulse rounded-2xl bg-card" />; }
-
 function formatWhen(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-  const isYesterday = d.toDateString() === yesterday.toDateString();
-  const hh = d.toTimeString().slice(0, 5);
-  if (sameDay) return `Hoje às ${hh}`;
-  if (isYesterday) return `Ontem às ${hh}`;
-  return d.toLocaleDateString("pt-BR");
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "agora";
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  return new Date(iso).toLocaleDateString("pt-BR");
 }
