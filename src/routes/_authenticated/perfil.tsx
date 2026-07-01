@@ -22,8 +22,12 @@ function Perfil() {
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["profile", user.id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-      return data;
+      const [{ data }, { data: statsRows }] = await Promise.all([
+        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at").eq("id", user.id).maybeSingle(),
+        supabase.rpc("get_my_profile_stats"),
+      ]);
+      const stats = statsRows?.[0] ?? {};
+      return data ? { ...data, ...stats } : null;
     },
   });
 
