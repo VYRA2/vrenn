@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
+import { X, Camera, Image as ImageIcon, Loader2, Flag } from "lucide-react";
 import { toast } from "sonner";
 
 const SUGGESTIONS: Record<string, string[]> = {
@@ -13,19 +14,23 @@ const SUGGESTIONS: Record<string, string[]> = {
 };
 
 export function PublishProofModal({ userId, onClose, onPublished }: { userId: string; onClose: () => void; onPublished?: () => void }) {
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [metaId, setMetaId] = useState<string>("");
   const [legenda, setLegenda] = useState("");
   const [hashtags, setHashtags] = useState("");
   const [metas, setMetas] = useState<any[]>([]);
+  const [loadingMetas, setLoadingMetas] = useState(true);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
+      setLoadingMetas(true);
       const { data } = await supabase.from("metas").select("id, titulo, categoria, status, progresso").eq("user_id", userId).order("created_at", { ascending: false });
       setMetas(data ?? []);
+      setLoadingMetas(false);
     })();
   }, [userId]);
 
@@ -89,6 +94,26 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
 
         <input ref={fileRef} type="file" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
 
+        {loadingMetas ? (
+          <div className="flex items-center justify-center py-10 text-muted-foreground">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : metas.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-6 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary-light">
+              <Flag size={22} />
+            </div>
+            <h4 className="text-sm font-bold">Você ainda não tem uma meta ativa</h4>
+            <p className="mt-1 text-xs text-muted-foreground">No VYRA, toda prova é vinculada a um compromisso real. Crie sua primeira meta pra poder publicar.</p>
+            <button
+              onClick={() => { onClose(); navigate({ to: "/nova-meta" }); }}
+              className="mt-4 w-full rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow"
+            >
+              Criar minha primeira meta
+            </button>
+          </div>
+        ) : (
+        <>
         {preview ? (
           <div className="relative mb-3 overflow-hidden rounded-2xl bg-background">
             {file?.type.startsWith("video") ? (
@@ -141,6 +166,8 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
           {saving && <Loader2 size={16} className="animate-spin" />}
           {saving ? "Publicando…" : "Publicar prova"}
         </button>
+        </>
+        )}
       </div>
     </div>
   );
