@@ -9,7 +9,7 @@ export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
 
   const left = [
     { to: "/feed", icon: Home, label: "Início" },
-    { to: "/busca", icon: Compass, label: "Descobrir" },
+    { to: "/descobrir", icon: Compass, label: "Descobrir" },
   ] as const;
   const right = [
     { to: "/equipes", icon: Users, label: "Equipes" },

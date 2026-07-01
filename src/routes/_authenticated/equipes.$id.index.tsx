@@ -1,255 +1,180 @@
-import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { BottomNav } from "@/components/BottomNav";
-import { ArrowLeft, Share2, MoreHorizontal, Users, Trophy, Flame, Heart, Target, Activity, Settings, Plus, UserPlus, Calendar, ChevronRight } from "lucide-react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { toast } from "sonner";
+import { BottomNav } from "@/components/BottomNav";
+import {
+  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, TrendingUp,
+  Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
-  component: EquipeDetalhe,
-  errorComponent: ({ error }) => <div className="p-8 text-center text-sm text-muted-foreground">Erro: {error.message}</div>,
-  notFoundComponent: () => <div className="p-8 text-center text-sm text-muted-foreground">Equipe não encontrada</div>,
+  component: EquipeProfile,
 });
 
-type Tab = "visao" | "desafios" | "membros" | "atividades" | "config";
+type Tab = "resumo" | "membros" | "desafios" | "feed" | "estatisticas";
 
-function EquipeDetalhe() {
-  const { id } = Route.useParams();
-  const { user } = Route.useRouteContext();
+const TABS: { id: Tab; label: string }[] = [
+  { id: "resumo", label: "Visão geral" },
+  { id: "membros", label: "Membros" },
+  { id: "desafios", label: "Feed da equipe" },
+  { id: "feed", label: "Estatísticas" },
+  { id: "estatisticas", label: "Configurações" },
+];
+
+const DESAFIOS = [
+  { titulo: "Desafio 30 Dias – Treino Consistente", sub: "Encerrado em 10/06/2024 · 18 participantes", valor: "R$ 4.250,00", status: "Conquistado", icon: Dumbbell, ok: true },
+  { titulo: "Desafio Leitura Diária", sub: "Encerrado em 28/05/2024 · 16 participantes", valor: "R$ 2.880,00", status: "Conquistado", icon: BookOpen, ok: true },
+  { titulo: "Desafio Corrida – 100km", sub: "Encerrado em 15/05/2024 · 21 participantes", valor: "R$ 6.300,00", status: "Conquistado", icon: Zap, ok: true },
+  { titulo: "Desafio Foco Total", sub: "Em andamento · Termina em 22/06/2024", valor: "R$ 3.750,00", status: "Em andamento", icon: Brain, ok: false },
+];
+
+const MEMBROS = [
+  { nome: "Lucas Menezes", pts: "1.245", tag: "Mais ativo", avatar: "https://i.pravatar.cc/100?img=12" },
+  { nome: "Mariana Costa", pts: "1.120", tag: "Mais hábitos", avatar: "https://i.pravatar.cc/100?img=45" },
+  { nome: "Gabriel Rocha", pts: "980", tag: "Mais provas", avatar: "https://i.pravatar.cc/100?img=33" },
+  { nome: "Juliana Lima", pts: "875", tag: "Mais evolução", avatar: "https://i.pravatar.cc/100?img=48" },
+];
+
+function EquipeProfile() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("visao");
-
-  const { data: equipe, isLoading } = useQuery({
-    queryKey: ["equipe", id],
-    queryFn: async () => {
-      const { data } = await (supabase as any).from("equipes").select("*").eq("id", id).maybeSingle();
-      return data;
-    },
-  });
-
-  const { data: membros } = useQuery({
-    queryKey: ["equipe-membros", id],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("equipe_membros")
-        .select("user_id, papel, profiles:user_id (id, nome, username, avatar_url, reputacao_pts)")
-        .eq("equipe_id", id);
-      return (data ?? []).map((r: any) => ({ ...r.profiles, papel: r.papel })).filter((m: any) => m?.id);
-    },
-  });
-
-  const { data: desafios } = useQuery({
-    queryKey: ["equipe-desafios", id],
-    queryFn: async () => {
-      const { data } = await (supabase as any).from("desafios_equipe").select("*").eq("equipe_id", id).order("created_at", { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  if (isLoading) return <div className="min-h-screen bg-background pt-10"><div className="mx-auto max-w-md px-5 space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-2xl bg-card"/>)}</div></div>;
-  if (!equipe) return <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-8 text-sm text-muted-foreground">Equipe não encontrada</div>;
-
-  const isMember = (membros ?? []).some((m: any) => m.id === user.id);
-  const desafioAtivo = (desafios ?? []).find((d: any) => d.status === "ativo");
-  const proximosDesafios = (desafios ?? []).filter((d: any) => d.id !== desafioAtivo?.id).slice(0, 3);
-
-  async function entrar() {
-    const { error } = await (supabase as any).from("equipe_membros").insert({ equipe_id: id, user_id: user.id, papel: "membro" });
-    if (error) return toast.error(error.message);
-    toast.success("Você entrou na equipe");
-    navigate({ to: "/equipes/$id", params: { id } });
-  }
+  const [tab, setTab] = useState<Tab>("resumo");
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-5 pb-2">
-        <button onClick={() => navigate({ to: "/equipes" })} className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"><ArrowLeft size={18}/></button>
-        <div className="flex items-center gap-2">
-          <button className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"><Share2 size={16}/></button>
-          <button className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"><MoreHorizontal size={16}/></button>
-        </div>
+      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
+        <button onClick={() => navigate({ to: "/equipes" })} className="flex h-9 w-9 items-center justify-center rounded-full text-primary-light">
+          <ArrowLeft size={20} />
+        </button>
+        <button className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><MoreHorizontal size={16} /></button>
       </header>
 
-      <div className="mx-auto max-w-md px-5 pt-3">
-        <div className="flex items-start gap-4">
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary-light overflow-hidden border border-primary/30">
-            {equipe.avatar_url ? <img src={equipe.avatar_url} className="h-full w-full object-cover"/> : <Users size={42}/>}
+      <div className="mx-auto max-w-md px-5">
+        {/* Hero */}
+        <section className="flex items-start gap-4">
+          <div className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/30 to-background shadow-glow">
+            <Shield size={64} className="text-primary-light drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]" fill="currentColor" fillOpacity={0.25} />
           </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold inline-flex items-center gap-2">{equipe.nome}</h1>
-            <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{equipe.descricao || "Sem descrição"}</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <Tag icon={<Heart size={11}/>} label="Saúde" />
-              <Tag icon={<Target size={11}/>} label={equipe.categoria} />
-              <Tag icon={<Flame size={11}/>} label="Constância" />
+          <div className="flex-1 min-w-0 pt-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-black">ALPHA</h1>
+              <BadgeCheck size={20} className="text-primary-light" />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">Disciplina hoje, vitória sempre.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1"><Users size={13} className="text-primary-light" /> 24 membros</span>
+              <span className="inline-flex items-center gap-1"><Calendar size={13} className="text-primary-light" /> Desde 12/04/2024</span>
+              <span className="rounded-full border border-primary bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold text-primary-light">MASTER</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="mt-5 grid grid-cols-4 gap-2 rounded-2xl border border-border bg-card p-4">
-          <Stat value={String((membros ?? []).length)} label="Membros" />
-          <Stat value={String((desafios ?? []).length)} label="Desafios" />
-          <Stat value="—" label="Ranking" />
-          <Stat value="0" label="VRENN Coins" small />
-        </div>
-
-        <div className="mt-3 rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-light"><Trophy size={18}/></div>
-          <div className="flex-1">
-            <div className="text-[11px] text-muted-foreground">Ranking da equipe</div>
-            <div className="text-base font-bold inline-flex items-center gap-2">— <span className="text-[11px] text-muted-foreground font-normal">sem ranking ainda</span></div>
-          </div>
-          <button className="rounded-xl border border-primary px-3 py-1.5 text-xs font-semibold text-primary-light">Ver ranking ›</button>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-md mt-4 overflow-x-auto px-2">
-        <div className="flex">
-          {([
-            { id: "visao", label: "Visão geral", icon: Trophy },
-            { id: "desafios", label: "Desafios", icon: Target },
-            { id: "membros", label: "Membros", icon: Users },
-            { id: "atividades", label: "Atividades", icon: Activity },
-            { id: "config", label: "Configurações", icon: Settings },
-          ] as { id: Tab; label: string; icon: any }[]).map((t) => {
-            const active = tab === t.id;
-            const I = t.icon;
+        {/* Tabs */}
+        <div className="mt-6 flex gap-4 overflow-x-auto border-b border-border -mx-5 px-5 pb-0.5">
+          {TABS.map((t) => {
+            const a = tab === t.id;
             return (
-              <button key={t.id} onClick={() => setTab(t.id)} className={`relative flex flex-1 min-w-fit flex-col items-center gap-1 px-3 py-2.5 text-[11px] font-semibold whitespace-nowrap transition-colors ${active ? "text-primary-light" : "text-muted-foreground"}`}>
-                <I size={18} />
+              <button key={t.id} onClick={() => setTab(t.id)} className={`relative shrink-0 pb-2 text-sm font-semibold ${a ? "text-primary-light" : "text-muted-foreground"}`}>
                 {t.label}
-                {active && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-primary" />}
+                {a && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />}
               </button>
             );
           })}
         </div>
-        <div className="h-px bg-border" />
-      </div>
 
-      <div className="mx-auto max-w-md px-5 pt-5 space-y-5">
-        {tab === "visao" && (
-          <>
-            <section className="rounded-2xl border border-border bg-card p-4">
-              <div className="text-sm font-bold">Sobre a equipe</div>
-              <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">{equipe.descricao || "Sem descrição definida."}</p>
-              <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Calendar size={12}/> Criada em {new Date(equipe.created_at).toLocaleDateString("pt-BR")}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-sm font-bold mb-2">Desafio ativo</h3>
-              {desafioAtivo ? (
-                <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary-light"><Flame size={22}/></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{desafioAtivo.titulo}</div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground">{desafioAtivo.duracao_dias} dias</div>
-                    <div className="mt-2 h-2 rounded-full bg-[#2E2E50] overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-primary to-primary-light" style={{ width: `0%` }} />
-                    </div>
-                  </div>
-                  <ChevronRight size={18} className="text-muted-foreground"/>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border bg-card p-5 text-center text-xs text-muted-foreground">Nenhum desafio ativo. {isMember && <Link to="/equipes/$id/desafio/novo" params={{ id }} className="text-primary-light font-semibold">Criar desafio</Link>}</div>
-              )}
-            </section>
-
-            {proximosDesafios.length > 0 && (
-              <section>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold">Próximos desafios</h3>
-                  <button className="text-[11px] font-semibold text-primary-light">Ver todos</button>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {proximosDesafios.map((d: any) => (
-                    <div key={d.id} className="rounded-2xl border border-border bg-card p-3">
-                      <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-accent/15 text-accent"><Target size={16}/></div>
-                      <div className="text-xs font-bold line-clamp-2">{d.titulo}</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{d.duracao_dias} dias</div>
-                      <button className="mt-2 w-full rounded-lg border border-primary py-1.5 text-[11px] font-semibold text-primary-light">Entrar</button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold">Membros em destaque</h3>
-                <button className="text-[11px] font-semibold text-primary-light">Ver todos</button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {(membros ?? []).slice(0, 4).map((m: any) => (
-                  <div key={m.id} className="rounded-2xl border border-border bg-card p-3 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/20 overflow-hidden border-2 border-primary/40">
-                      {m.avatar_url ? <img src={m.avatar_url} className="h-full w-full object-cover"/> : <div className="flex h-full w-full items-center justify-center text-sm font-bold text-primary-light">{(m.nome || "?")[0]}</div>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold truncate">{m.nome}</div>
-                      <div className="text-[10px] text-primary-light font-semibold">{m.reputacao_pts ?? 0} pts</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
-
-        {tab === "desafios" && (
-          <div className="space-y-3">
-            {(desafios ?? []).length === 0 && <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nenhum desafio ainda.</div>}
-            {(desafios ?? []).map((d: any) => (
-              <div key={d.id} className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-sm font-bold">{d.titulo}</div>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${d.status === "ativo" ? "bg-accent/15 text-accent" : "bg-border text-muted-foreground"}`}>{d.status}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{d.descricao}</p>
-                <div className="mt-2 text-[11px] text-muted-foreground">{d.duracao_dias} dias · R$ {Number(d.valor_entrada).toFixed(2)}</div>
-              </div>
-            ))}
+        {/* Card stats */}
+        <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <h3 className="text-sm font-bold">Desafios da equipe</h3>
+          <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+            <QuickStat icon={<Trophy size={20} />} value="18" label="Desafios realizados" />
+            <QuickStat icon={<Coins size={20} />} value="R$ 64.750,00" label="Total em jogo" small />
+            <QuickStat icon={<Target size={20} />} value="R$ 51.230,00" label="Total conquistado" small />
+            <QuickStat icon={<TrendingUp size={20} />} value="78%" label="Taxa de sucesso" />
           </div>
-        )}
 
-        {tab === "membros" && (
-          <div className="space-y-2">
-            {(membros ?? []).map((m: any) => (
-              <div key={m.id} className="rounded-2xl border border-border bg-card p-3 flex items-center gap-3">
-                <div className="h-11 w-11 rounded-full bg-primary/20 overflow-hidden">
-                  {m.avatar_url ? <img src={m.avatar_url} className="h-full w-full object-cover"/> : <div className="flex h-full w-full items-center justify-center text-sm font-bold text-primary-light">{(m.nome || "?")[0]}</div>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate">{m.nome}</div>
-                  <div className="text-[10px] text-muted-foreground">@{m.username} · {m.reputacao_pts ?? 0} pts</div>
-                </div>
-                {m.papel === "admin" && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary-light">Admin</span>}
+          {/* Chart mock */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold">Evolução dos valores</span>
+              <span className="rounded-full border border-border bg-background px-2 py-1 text-[10px] text-muted-foreground">Últimos 6 meses ▾</span>
+            </div>
+            <ChartMock />
+          </div>
+        </section>
+
+        {/* Últimos desafios */}
+        <div className="mt-6 mb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold">Últimos desafios</h3>
+          <Link to="/desafio-temporada" className="text-xs font-semibold text-primary-light">Ver todos</Link>
+        </div>
+        <div className="space-y-2">
+          {DESAFIOS.map((d) => (
+            <div key={d.titulo} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary-light">
+                <d.icon size={18} />
               </div>
-            ))}
-          </div>
-        )}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold truncate">{d.titulo}</div>
+                <div className="text-[11px] text-muted-foreground truncate">{d.sub}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold">{d.valor}</div>
+                <div className={`inline-flex items-center gap-1 text-[10px] font-semibold ${d.ok ? "text-accent" : "text-primary-light"}`}>
+                  {d.status} {d.ok ? <BadgeCheck size={11} /> : <TrendingUp size={11} />}
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-muted-foreground" />
+            </div>
+          ))}
+        </div>
 
-        {tab === "atividades" && <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Feed de atividades em breve.</div>}
-        {tab === "config" && (
-          <div className="space-y-2">
-            <Row label="Visibilidade" value={equipe.publica ? "Pública" : "Privada"} />
-            <Row label="Categoria" value={equipe.categoria} />
-            {equipe.regras && <Row label="Regras" value={equipe.regras} />}
+        {/* Banner */}
+        <Link to="/desafio-temporada" className="mt-6 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/20 via-primary/5 to-background p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/25 text-primary-light">
+              <Trophy size={26} />
+            </div>
+            <div>
+              <h4 className="text-base font-bold">Juntos somos mais fortes</h4>
+              <p className="mt-1 text-xs text-muted-foreground">Cada desafio é um passo rumo à nossa melhor versão. Continuem firmes.</p>
+            </div>
           </div>
-        )}
-      </div>
+        </Link>
 
-      <div className="mx-auto max-w-md px-5 pt-6 grid grid-cols-2 gap-3">
-        {isMember ? (
-          <>
-            <button className="rounded-2xl border border-primary py-3 text-sm font-semibold text-primary-light inline-flex items-center justify-center gap-2"><UserPlus size={16}/> Convidar membros</button>
-            <Link to="/equipes/$id/desafio/novo" params={{ id }} className="rounded-2xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow inline-flex items-center justify-center gap-2"><Plus size={16}/> Criar novo desafio</Link>
-          </>
-        ) : (
-          <button onClick={entrar} className="col-span-2 rounded-2xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">Entrar na equipe</button>
-        )}
+        {/* Membros em destaque */}
+        <div className="mt-6 mb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold">Membros em destaque</h3>
+          <button className="text-xs font-semibold text-primary-light">Ver todos</button>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {MEMBROS.map((m) => (
+            <div key={m.nome} className="rounded-2xl border border-border bg-card p-2 text-center">
+              <div className="relative mx-auto h-14 w-14">
+                <img src={m.avatar} className="h-full w-full rounded-full border-2 border-primary/60 object-cover" />
+                <BadgeCheck size={13} className="absolute -bottom-0.5 -right-0.5 rounded-full bg-primary text-primary-foreground" />
+              </div>
+              <div className="mt-2 text-[11px] font-bold truncate">{m.nome}</div>
+              <div className="text-[10px] text-muted-foreground">{m.pts} pts</div>
+              <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent truncate">{m.tag}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Sobre */}
+        <section className="mt-6 rounded-2xl border border-border bg-card p-4">
+          <h3 className="text-sm font-bold">Sobre a equipe</h3>
+          <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+            A equipe ALPHA reúne pessoas comprometidas em transformar disciplina em resultado. Aqui, cada desafio é uma prova de consistência coletiva.
+          </p>
+        </section>
+
+        {/* Ações */}
+        <div className="mt-5 flex gap-2">
+          <button className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
+            <UserPlus size={16} /> Convidar membros
+          </button>
+          <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id: "current" } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
+            <Sparkles size={16} /> Criar desafio
+          </button>
+        </div>
       </div>
 
       <BottomNav />
@@ -257,26 +182,35 @@ function EquipeDetalhe() {
   );
 }
 
-function Stat({ value, label, small }: { value: string; label: string; small?: boolean }) {
+function QuickStat({ icon, value, label, small }: { icon: React.ReactNode; value: string; label: string; small?: boolean }) {
   return (
-    <div className="text-center">
-      <div className={`font-bold ${small ? "text-base" : "text-xl"}`}>{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+    <div>
+      <div className="mx-auto flex h-8 items-center justify-center text-primary-light">{icon}</div>
+      <div className={`mt-1 font-bold ${small ? "text-[13px]" : "text-lg"}`}>{value}</div>
+      <div className="text-[9px] text-muted-foreground leading-tight">{label}</div>
     </div>
   );
 }
-function Tag({ icon, label }: { icon: React.ReactNode; label: string }) {
+
+function ChartMock() {
+  const points = [30, 45, 55, 60, 85, 70];
+  const max = 100;
+  const w = 300, h = 90;
+  const step = w / (points.length - 1);
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - (p / max) * h}`).join(" ");
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-[10px] text-muted-foreground capitalize">
-      {icon} {label}
-    </span>
-  );
-}
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-sm font-semibold whitespace-pre-wrap capitalize">{value}</div>
+    <div className="relative mt-2">
+      <svg viewBox={`0 0 ${w} ${h + 20}`} className="w-full">
+        <path d={path} fill="none" stroke="#A855F7" strokeWidth="2" />
+        {points.map((p, i) => (
+          <circle key={i} cx={i * step} cy={h - (p / max) * h} r="3.5" fill="#A855F7" />
+        ))}
+        {points.map((_, i) => {
+          const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
+          return <text key={i} x={i * step} y={h + 15} fontSize="9" fill="#94A3B8" textAnchor="middle">{labels[i]}</text>;
+        })}
+      </svg>
+      <div className="absolute -top-1 right-2 rounded-md bg-primary/20 border border-primary/40 px-2 py-0.5 text-[10px] font-bold text-primary-light">R$ 51.230</div>
     </div>
   );
 }
