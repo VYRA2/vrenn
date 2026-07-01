@@ -549,6 +549,8 @@ export type Database = {
     }
     Functions: {
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
+      get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
+      get_meus_creditos: { Args: never; Returns: number }
       is_equipe_member: {
         Args: { _equipe_id: string; _user_id: string }
         Returns: boolean
