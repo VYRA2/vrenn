@@ -13,7 +13,6 @@ export const Route = createFileRoute("/_authenticated/perfil/editar")({
 function EditarPerfil() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const { data: profile, refetch } = useQuery({
     queryKey: ["profile-edit", user.id],
