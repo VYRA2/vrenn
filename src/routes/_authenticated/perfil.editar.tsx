@@ -1,10 +1,10 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, User as UserIcon, AtSign, Pencil, Target, Shield, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Camera, User as UserIcon, AtSign, Pencil, Target, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/perfil/editar")({
   component: EditarPerfil,
