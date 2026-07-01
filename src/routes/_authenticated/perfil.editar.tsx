@@ -17,7 +17,7 @@ function EditarPerfil() {
   const { data: profile, refetch } = useQuery({
     queryKey: ["profile-edit", user.id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico").eq("id", user.id).maybeSingle();
       return data;
     },
   });
@@ -53,7 +53,8 @@ function EditarPerfil() {
     if (error) { setUploading(false); return toast.error(error.message); }
     const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
     if (sErr || !signed) { setUploading(false); return toast.error(sErr?.message ?? "Falha ao gerar URL"); }
-    await supabase.from("profiles").update({ avatar_url: signed.signedUrl }).eq("id", user.id);
+    const { error: updErr } = await supabase.from("profiles").update({ avatar_url: signed.signedUrl }).eq("id", user.id);
+    if (updErr) { setUploading(false); setAvatarPreview(null); return toast.error("Falha ao salvar foto: " + updErr.message); }
     setAvatarPreview(signed.signedUrl);
     setUploading(false);
     toast.success("Foto atualizada!");
