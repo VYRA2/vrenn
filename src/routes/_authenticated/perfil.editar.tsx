@@ -99,24 +99,29 @@ function EditarPerfil() {
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-3xl font-bold">{initial}</div>
               )}
             </div>
-            <button onClick={() => setShowPicker(!showPicker)} className="absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              disabled={uploading}
+              aria-label="Trocar foto de perfil"
+              className="absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow disabled:opacity-60"
+            >
               <Camera size={18} />
             </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadAvatar(f);
+                e.target.value = "";
+              }}
+            />
           </div>
         </div>
-
-        {showPicker && (
-          <div className="mx-auto mt-4 max-w-sm rounded-2xl border border-border bg-card">
-            <button onClick={() => cameraInput.current?.click()} disabled={uploading} className="flex w-full items-center gap-3 border-b border-border px-4 py-3.5 text-sm text-left">
-              <Camera size={18} className="text-primary-light"/> Tirar foto
-            </button>
-            <button onClick={() => galleryInput.current?.click()} disabled={uploading} className="flex w-full items-center gap-3 px-4 py-3.5 text-sm text-left">
-              <ImageIcon size={18} className="text-primary-light"/> Escolher da galeria
-            </button>
-            <input ref={cameraInput} type="file" accept="image/jpeg,image/png,image/webp" capture="user" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
-            <input ref={galleryInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadAvatar(e.target.files[0])} />
-          </div>
-        )}
+        {uploading && <p className="mt-2 text-center text-xs text-muted-foreground">Enviando…</p>}
 
         <div className="mt-6 space-y-3">
           <IconField icon={<UserIcon size={18}/>} label="Nome completo" value={nome} onChange={setNome} />
