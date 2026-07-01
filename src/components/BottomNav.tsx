@@ -1,24 +1,30 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Target, Plus, Users, User, X, Flag, Camera, Swords, Shield, UserPlus } from "lucide-react";
+import { Home, Compass, Plus, Bell, User, X, Flag, Camera, Swords, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
 
-export function BottomNav() {
+export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [openSheet, setOpenSheet] = useState(false);
   const navigate = useNavigate();
 
   const left = [
     { to: "/feed", icon: Home, label: "Início" },
-    { to: "/metas", icon: Target, label: "Metas" },
+    { to: "/busca", icon: Compass, label: "Descobrir" },
   ] as const;
   const right = [
-    { to: "/equipes", icon: Users, label: "Equipes" },
+    { to: "/notificacoes", icon: Bell, label: "Notificações" },
     { to: "/perfil", icon: User, label: "Perfil" },
   ] as const;
 
   function go(to: string) {
     setOpenSheet(false);
     navigate({ to });
+  }
+
+  function publish() {
+    setOpenSheet(false);
+    if (onPublish) onPublish();
+    else navigate({ to: "/feed", search: { publish: 1 } as any });
   }
 
   return (
@@ -54,8 +60,8 @@ export function BottomNav() {
               <button onClick={() => setOpenSheet(false)} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18} /></button>
             </div>
             <div className="space-y-2">
-              <SheetItem icon={<Flag size={20} />} title="Criar meta" desc="Defina um novo compromisso público" onClick={() => go("/nova-meta")} color="#7B3FF2" />
-              <SheetItem icon={<Camera size={20} />} title="Publicar atualização" desc="Check-in com foto, vídeo ou texto" onClick={() => go("/metas")} color="#22D3A1" />
+              <SheetItem icon={<Camera size={20} />} title="Publicar prova" desc="Foto ou vídeo vinculado a uma meta" onClick={publish} color="#7B3FF2" />
+              <SheetItem icon={<Flag size={20} />} title="Criar meta" desc="Defina um novo compromisso público" onClick={() => go("/nova-meta")} color="#22D3A1" />
               <SheetItem icon={<Swords size={20} />} title="Criar duelo" desc="Desafie alguém em uma meta" onClick={() => go("/duelos")} color="#A855F7" />
               <SheetItem icon={<Shield size={20} />} title="Criar desafio de equipe" desc="Lance um desafio para sua equipe" onClick={() => go("/equipes")} color="#F59E0B" />
               <SheetItem icon={<UserPlus size={20} />} title="Criar equipe" desc="Reúna pessoas com o mesmo objetivo" onClick={() => go("/equipes/nova")} color="#22D3A1" />
