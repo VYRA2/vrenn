@@ -15,7 +15,7 @@ function Configuracoes() {
   const navigate = useNavigate();
   const { data: profile, refetch } = useQuery({
     queryKey: ["profile-cfg", user.id],
-    queryFn: async () => (await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at").eq("id", user.id).maybeSingle()).data,
   });
 
   async function logout() {
