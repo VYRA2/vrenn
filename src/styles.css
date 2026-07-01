@@ -52,14 +52,14 @@
 :root {
   --radius: 12px;
 
-  /* VYRA palette mapped to oklch */
+  /* VRENN palette mapped to oklch */
   --background: oklch(0.15 0.025 285);            /* #0F0F17 carbon black */
   --foreground: oklch(0.98 0 0);
   --card: oklch(0.21 0.035 285);                  /* #1A1A2E */
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.21 0.035 285);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.55 0.24 295);                /* #7B3FF2 roxo VYRA */
+  --primary: oklch(0.55 0.24 295);                /* #7B3FF2 roxo VRENN */
   --primary-foreground: oklch(0.98 0 0);
   --primary-light: oklch(0.66 0.22 300);          /* #A855F7 */
   --secondary: oklch(0.28 0.05 285);

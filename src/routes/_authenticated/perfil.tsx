@@ -235,7 +235,7 @@ function UsernameModal({ userId, currentName, onClose, onSaved }: { userId: stri
       <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 space-y-4">
         <div>
           <h3 className="text-lg font-bold">Escolha seu @username</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Esse será seu identificador único no VYRA.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Esse será seu identificador único no VRENN.</p>
         </div>
         <label className="block">
           <span className="mb-1.5 block text-xs font-semibold">Nome de exibição</span>

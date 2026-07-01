@@ -209,7 +209,7 @@ function NovoDesafio() {
           </>
         )}
 
-        <div className="pt-2 pb-4 text-center text-[11px] text-muted-foreground inline-flex items-center justify-center gap-1 w-full"><Lock size={11}/> Pagamento seguro via VYRA Wallet</div>
+        <div className="pt-2 pb-4 text-center text-[11px] text-muted-foreground inline-flex items-center justify-center gap-1 w-full"><Lock size={11}/> Pagamento seguro via VRENN Wallet</div>
       </div>
     </main>
   );

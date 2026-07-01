@@ -49,7 +49,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Conta criada! Bem-vindo ao VYRA.");
+    toast.success("Conta criada! Bem-vindo ao VRENN.");
     navigate({ to: "/feed" });
   }
 
