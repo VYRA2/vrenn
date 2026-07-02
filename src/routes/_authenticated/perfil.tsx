@@ -86,6 +86,7 @@ function Perfil() {
               <BadgeCheck size={18} className="text-primary-light fill-primary/20" />
             </div>
             <p className="text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
+            {profile?.bio && <p className="mt-1 text-xs text-foreground/80">{profile.bio}</p>}
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1">
               <Gem size={12} className="text-primary-light" />
               <span className="text-xs font-semibold text-primary-light">Nível Diamante</span>
@@ -114,7 +115,7 @@ function Perfil() {
                   Editar <Edit3 size={12} />
                 </Link>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{profile?.bio ?? "Foco · Disciplina · Consistência"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Foco · Disciplina · Consistência</p>
             </div>
           </div>
         </section>
