@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
   Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight,
-  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark,
+  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/descobrir")({
@@ -42,9 +45,27 @@ const PESSOAS = [
 ];
 
 function DescobrirPage() {
+  const { user } = Route.useRouteContext();
   const [tab, setTab] = useState<Tab>("voce");
   const [q, setQ] = useState("");
   const [countdown, setCountdown] = useState({ d: 23, h: 14, m: 38 });
+
+  const buscando = q.trim().length >= 2;
+
+  const { data: resultados, isFetching: buscandoAgora } = useQuery({
+    queryKey: ["descobrir-busca", tab, q],
+    enabled: buscando,
+    queryFn: async () => {
+      const term = `%${q.trim()}%`;
+      if (tab === "metas") {
+        const { data } = await supabase.from("metas").select("id, titulo, categoria, progresso, user_id, profiles:user_id(nome, username, avatar_url)").ilike("titulo", term).limit(20);
+        return data ?? [];
+      }
+      // Pessoas (padrão para "voce", "pessoas", "habitos", "provas")
+      const { data } = await supabase.from("profiles").select("id, nome, username, avatar_url").or(`nome.ilike.${term},username.ilike.${term}`).neq("id", user.id).limit(20);
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -94,6 +115,29 @@ function DescobrirPage() {
           })}
         </div>
 
+        {buscando ? (
+          <section className="mt-5">
+            <h3 className="mb-3 text-sm font-bold">Resultados para "{q.trim()}"</h3>
+            {buscandoAgora && <p className="text-xs text-muted-foreground">Buscando…</p>}
+            <div className="space-y-2">
+              {!buscandoAgora && (resultados ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum resultado encontrado.</p>
+              )}
+              {tab === "metas"
+                ? (resultados ?? []).map((m: any) => (
+                    <Link key={m.id} to="/meta/$id" params={{ id: m.id }} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold truncate">{m.titulo}</div>
+                        <div className="text-xs text-muted-foreground">@{m.profiles?.username ?? "—"} · {m.categoria}</div>
+                      </div>
+                      <span className="text-xs font-bold text-primary-light">{m.progresso}%</span>
+                    </Link>
+                  ))
+                : (resultados ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)}
+            </div>
+          </section>
+        ) : (
+        <>
         {/* Banner Desafio */}
         <Link to="/desafio-temporada" className="mt-5 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17] p-5 shadow-glow">
           <div className="flex items-start justify-between gap-3">
@@ -181,6 +225,8 @@ function DescobrirPage() {
             </div>
           ))}
         </div>
+        </>
+        )}
       </div>
 
       <BottomNav />
@@ -193,6 +239,37 @@ function TimeBox({ v, l }: { v: number; l: string }) {
     <div className="text-center">
       <div className="text-lg font-black leading-none">{String(v).padStart(2, "0")}</div>
       <div className="mt-0.5 text-[9px] font-semibold text-muted-foreground">{l}</div>
+    </div>
+  );
+}
+
+function PessoaRow({ pessoa, userId }: { pessoa: any; userId: string }) {
+  const [seguindo, setSeguindo] = useState(false);
+  const [busy, setBusy] = useState(false);
+  async function seguir() {
+    if (pessoa.id === userId) return;
+    setBusy(true);
+    const { error } = await supabase.from("follows").insert({ follower_id: userId, following_id: pessoa.id, status: "aceito" });
+    if (error && !error.message.includes("duplicate")) toast.error(error.message);
+    else { setSeguindo(true); toast.success(`Seguindo @${pessoa.username}`); }
+    setBusy(false);
+  }
+  const initial = (pessoa.nome || "?")[0]?.toUpperCase();
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+      {pessoa.avatar_url ? (
+        <img src={pessoa.avatar_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
+      ) : (
+        <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold">{initial}</div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold truncate">{pessoa.nome}</div>
+        <div className="text-xs text-muted-foreground truncate">@{pessoa.username}</div>
+      </div>
+      <button onClick={seguir} disabled={busy || seguindo} className={`rounded-2xl px-4 py-2 text-xs font-bold ${seguindo ? "border border-border text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
+        {seguindo ? "Seguindo" : "Seguir"}
+      </button>
+      <button className="text-muted-foreground"><MoreVertical size={18} /></button>
     </div>
   );
 }
