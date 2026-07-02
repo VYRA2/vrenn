@@ -606,6 +606,13 @@ export type Database = {
             referencedRelation: "metas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "posts_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
