@@ -61,14 +61,15 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
       const path = `${userId}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("posts").upload(path, file, { upsert: false });
       if (upErr) throw upErr;
-      const { data: signed } = await supabase.storage.from("posts").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+     const { data: signed, error: sErr } = await supabase.storage.from("posts").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr || !signed?.signedUrl) throw new Error(sErr?.message ?? "Não foi possível gerar o link da mídia. Tenta de novo.");
       const tags = (hashtags.trim() ? hashtags : suggested.join(" "))
         .split(/\s+/).map((t) => t.startsWith("#") ? t : `#${t}`).filter((t) => t.length > 1);
       const tipo = file.type.startsWith("video") ? "video" : "foto";
       const { error } = await supabase.from("posts").insert({
         user_id: userId,
         meta_id: metaId,
-        media_url: signed?.signedUrl ?? null,
+        media_url: signed.signedUrl,
         tipo,
         legenda: legenda || null,
         hashtags: tags,
