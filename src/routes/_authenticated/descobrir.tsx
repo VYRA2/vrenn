@@ -257,15 +257,17 @@ function PessoaRow({ pessoa, userId }: { pessoa: any; userId: string }) {
   const initial = (pessoa.nome || "?")[0]?.toUpperCase();
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-      {pessoa.avatar_url ? (
-        <img src={pessoa.avatar_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
-      ) : (
-        <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold">{initial}</div>
-      )}
-      <div className="flex-1 min-w-0">
+      <Link to="/u/$username" params={{ username: pessoa.username }} className="shrink-0">
+        {pessoa.avatar_url ? (
+          <img src={pessoa.avatar_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold">{initial}</div>
+        )}
+      </Link>
+      <Link to="/u/$username" params={{ username: pessoa.username }} className="flex-1 min-w-0">
         <div className="text-sm font-bold truncate">{pessoa.nome}</div>
         <div className="text-xs text-muted-foreground truncate">@{pessoa.username}</div>
-      </div>
+      </Link>
       <button onClick={seguir} disabled={busy || seguindo} className={`rounded-2xl px-4 py-2 text-xs font-bold ${seguindo ? "border border-border text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
         {seguindo ? "Seguindo" : "Seguir"}
       </button>
