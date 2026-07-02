@@ -761,6 +761,14 @@ export type Database = {
           streak_dias: number
         }[]
       }
+      get_public_profile_stats: {
+        Args: { _user_id: string }
+        Returns: {
+          ranking_geral: number
+          reputacao_pts: number
+          streak_dias: number
+        }[]
+      }
       is_equipe_member: {
         Args: { _equipe_id: string; _user_id: string }
         Returns: boolean
