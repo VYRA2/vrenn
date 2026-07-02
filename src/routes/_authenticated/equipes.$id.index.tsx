@@ -241,7 +241,13 @@ function EquipeProfile() {
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {(membros ?? []).map((m: any) => (
-                  <div key={m.user_id} className="rounded-2xl border border-border bg-card p-2 text-center">
+                  <Link
+                    key={m.user_id}
+                    to="/u/$username"
+                    params={{ username: m.profiles?.username ?? "" }}
+                    disabled={!m.profiles?.username}
+                    className="rounded-2xl border border-border bg-card p-2 text-center"
+                  >
                     <div className="relative mx-auto h-14 w-14">
                       {m.profiles?.avatar_url ? (
                         <img src={m.profiles.avatar_url} className="h-full w-full rounded-full border-2 border-primary/60 object-cover" />
@@ -255,7 +261,7 @@ function EquipeProfile() {
                     <div className="mt-2 text-[11px] font-bold truncate">{m.profiles?.nome ?? "—"}</div>
                     <div className="text-[10px] text-muted-foreground truncate">@{m.profiles?.username ?? "—"}</div>
                     {m.papel === "admin" && <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent">Admin</div>}
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
