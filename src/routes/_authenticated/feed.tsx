@@ -187,14 +187,24 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   return (
     <article className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
-        {p?.avatar_url ? (
-          <img src={p.avatar_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" alt="" />
+        {p?.username ? (
+          <Link to="/u/$username" params={{ username: p.username }} className="shrink-0">
+            {p.avatar_url ? (
+              <img src={p.avatar_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" alt="" />
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold text-primary-foreground">{initial}</div>
+            )}
+          </Link>
         ) : (
           <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold text-primary-foreground">{initial}</div>
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
-            <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
+            {p?.username ? (
+              <Link to="/u/$username" params={{ username: p.username }} className="text-sm font-bold truncate hover:underline">{p?.nome ?? "Usuário"}</Link>
+            ) : (
+              <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
+            )}
             <BadgeCheck size={14} className="text-primary-light" />
           </div>
           <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
