@@ -24,7 +24,7 @@ import { Route as AuthenticatedDesafioTemporadaRouteImport } from './routes/_aut
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
-import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil.editar'
+import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil_.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedEquipesIdIndexRouteImport } from './routes/_authenticated/equipes.$id.index'
@@ -110,9 +110,9 @@ const AuthenticatedEquipesIndexRoute =
   } as any)
 const AuthenticatedPerfilEditarRoute =
   AuthenticatedPerfilEditarRouteImport.update({
-    id: '/editar',
-    path: '/editar',
-    getParentRoute: () => AuthenticatedPerfilRoute,
+    id: '/perfil_/editar',
+    path: '/perfil/editar',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMetaIdRoute = AuthenticatedMetaIdRouteImport.update({
   id: '/meta/$id',
@@ -150,7 +150,7 @@ export interface FileRoutesByFullPath {
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
-  '/perfil': typeof AuthenticatedPerfilRouteWithChildren
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
@@ -171,7 +171,7 @@ export interface FileRoutesByTo {
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
-  '/perfil': typeof AuthenticatedPerfilRouteWithChildren
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/ranking': typeof AuthenticatedRankingRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
@@ -194,11 +194,11 @@ export interface FileRoutesById {
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
-  '/_authenticated/perfil': typeof AuthenticatedPerfilRouteWithChildren
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
-  '/_authenticated/perfil/editar': typeof AuthenticatedPerfilEditarRoute
+  '/_authenticated/perfil_/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/_authenticated/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
   '/_authenticated/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
@@ -264,7 +264,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ranking'
     | '/_authenticated/equipes/nova'
     | '/_authenticated/meta/$id'
-    | '/_authenticated/perfil/editar'
+    | '/_authenticated/perfil_/editar'
     | '/_authenticated/equipes/'
     | '/_authenticated/equipes/$id/'
     | '/_authenticated/equipes/$id/desafio/novo'
@@ -383,12 +383,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/perfil/editar': {
-      id: '/_authenticated/perfil/editar'
-      path: '/editar'
+    '/_authenticated/perfil_/editar': {
+      id: '/_authenticated/perfil_/editar'
+      path: '/perfil/editar'
       fullPath: '/perfil/editar'
       preLoaderRoute: typeof AuthenticatedPerfilEditarRouteImport
-      parentRoute: typeof AuthenticatedPerfilRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/meta/$id': {
       id: '/_authenticated/meta/$id'
@@ -421,17 +421,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedPerfilRouteChildren {
-  AuthenticatedPerfilEditarRoute: typeof AuthenticatedPerfilEditarRoute
-}
-
-const AuthenticatedPerfilRouteChildren: AuthenticatedPerfilRouteChildren = {
-  AuthenticatedPerfilEditarRoute: AuthenticatedPerfilEditarRoute,
-}
-
-const AuthenticatedPerfilRouteWithChildren =
-  AuthenticatedPerfilRoute._addFileChildren(AuthenticatedPerfilRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -442,10 +431,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
-  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRouteWithChildren
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
+  AuthenticatedPerfilEditarRoute: typeof AuthenticatedPerfilEditarRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
   AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
   AuthenticatedEquipesIdDesafioNovoRoute: typeof AuthenticatedEquipesIdDesafioNovoRoute
@@ -461,10 +451,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
-  AuthenticatedPerfilRoute: AuthenticatedPerfilRouteWithChildren,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
+  AuthenticatedPerfilEditarRoute: AuthenticatedPerfilEditarRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
   AuthenticatedEquipesIdIndexRoute: AuthenticatedEquipesIdIndexRoute,
   AuthenticatedEquipesIdDesafioNovoRoute:
@@ -482,3 +473,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
