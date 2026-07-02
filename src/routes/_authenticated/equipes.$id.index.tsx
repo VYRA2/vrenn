@@ -1,42 +1,112 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import {
-  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, TrendingUp,
-  Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles,
+  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target,
+  Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
   component: EquipeProfile,
 });
 
-type Tab = "resumo" | "membros" | "desafios" | "feed" | "estatisticas";
+type Tab = "resumo" | "membros" | "desafios";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "resumo", label: "Visão geral" },
   { id: "membros", label: "Membros" },
-  { id: "desafios", label: "Feed da equipe" },
-  { id: "feed", label: "Estatísticas" },
-  { id: "estatisticas", label: "Configurações" },
+  { id: "desafios", label: "Desafios" },
 ];
 
-const DESAFIOS = [
-  { titulo: "Desafio 30 Dias – Treino Consistente", sub: "Encerrado em 10/06/2024 · 18 participantes", valor: "R$ 4.250,00", status: "Conquistado", icon: Dumbbell, ok: true },
-  { titulo: "Desafio Leitura Diária", sub: "Encerrado em 28/05/2024 · 16 participantes", valor: "R$ 2.880,00", status: "Conquistado", icon: BookOpen, ok: true },
-  { titulo: "Desafio Corrida – 100km", sub: "Encerrado em 15/05/2024 · 21 participantes", valor: "R$ 6.300,00", status: "Conquistado", icon: Zap, ok: true },
-  { titulo: "Desafio Foco Total", sub: "Em andamento · Termina em 22/06/2024", valor: "R$ 3.750,00", status: "Em andamento", icon: Brain, ok: false },
-];
+const CATEGORIA_ICON: Record<string, any> = {
+  saude: Dumbbell, fitness: Dumbbell, estudos: BookOpen, leitura: BookOpen,
+  financas: Coins, trabalho: Brain, foco: Zap,
+};
 
-const MEMBROS = [
-  { nome: "Lucas Menezes", pts: "1.245", tag: "Mais ativo", avatar: "https://i.pravatar.cc/100?img=12" },
-  { nome: "Mariana Costa", pts: "1.120", tag: "Mais hábitos", avatar: "https://i.pravatar.cc/100?img=45" },
-  { nome: "Gabriel Rocha", pts: "980", tag: "Mais provas", avatar: "https://i.pravatar.cc/100?img=33" },
-  { nome: "Juliana Lima", pts: "875", tag: "Mais evolução", avatar: "https://i.pravatar.cc/100?img=48" },
-];
+function fmtData(d: string) {
+  return new Date(d).toLocaleDateString("pt-BR");
+}
+function fmtMoeda(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 function EquipeProfile() {
   const navigate = useNavigate();
+  const { user } = Route.useRouteContext();
+  const { id } = Route.useParams();
   const [tab, setTab] = useState<Tab>("resumo");
+
+  const { data: equipe, isLoading: loadingEquipe } = useQuery({
+    queryKey: ["equipe", id],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("equipes").select("*").eq("id", id).maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: membros, isLoading: loadingMembros } = useQuery({
+    queryKey: ["equipe-membros", id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("equipe_membros")
+        .select("user_id, papel, created_at, profiles:user_id (nome, username, avatar_url)")
+        .eq("equipe_id", id)
+        .order("created_at", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: desafios, isLoading: loadingDesafios } = useQuery({
+    queryKey: ["equipe-desafios", id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("desafios_equipe")
+        .select("*")
+        .eq("equipe_id", id)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  if (loadingEquipe) {
+    return (
+      <main className="min-h-screen bg-background px-5 pt-6">
+        <div className="mx-auto max-w-md animate-pulse space-y-4">
+          <div className="h-28 rounded-2xl bg-card" />
+          <div className="h-40 rounded-2xl bg-card" />
+        </div>
+      </main>
+    );
+  }
+
+  if (!equipe) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-5 text-center">
+        <div>
+          <h2 className="text-lg font-bold">Equipe não encontrada</h2>
+          <button onClick={() => navigate({ to: "/equipes" })} className="mt-4 rounded-2xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">Voltar</button>
+        </div>
+      </main>
+    );
+  }
+
+  const totalEmJogo = (desafios ?? []).reduce((s: number, d: any) => s + Number(d.valor_entrada ?? 0), 0);
+  const ativos = (desafios ?? []).filter((d: any) => d.status === "ativo").length;
+  const concluidos = (desafios ?? []).filter((d: any) => d.status === "concluido").length;
+  const souAdmin = (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "admin");
+
+  async function convidar() {
+    const link = `${window.location.origin}/equipes/${id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Link de convite copiado!");
+    } catch {
+      toast.error("Não foi possível copiar o link");
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
@@ -50,19 +120,23 @@ function EquipeProfile() {
       <div className="mx-auto max-w-md px-5">
         {/* Hero */}
         <section className="flex items-start gap-4">
-          <div className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/30 to-background shadow-glow">
-            <Shield size={64} className="text-primary-light drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]" fill="currentColor" fillOpacity={0.25} />
+          <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/30 to-background shadow-glow">
+            {equipe.avatar_url ? (
+              <img src={equipe.avatar_url} className="h-full w-full object-cover" />
+            ) : (
+              <Shield size={64} className="text-primary-light drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]" fill="currentColor" fillOpacity={0.25} />
+            )}
           </div>
           <div className="flex-1 min-w-0 pt-2">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-black">ALPHA</h1>
-              <BadgeCheck size={20} className="text-primary-light" />
+              <h1 className="text-3xl font-black truncate">{equipe.nome}</h1>
+              {equipe.publica && <BadgeCheck size={20} className="text-primary-light shrink-0" />}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">Disciplina hoje, vitória sempre.</p>
+            {equipe.descricao && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{equipe.descricao}</p>}
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1"><Users size={13} className="text-primary-light" /> 24 membros</span>
-              <span className="inline-flex items-center gap-1"><Calendar size={13} className="text-primary-light" /> Desde 12/04/2024</span>
-              <span className="rounded-full border border-primary bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold text-primary-light">MASTER</span>
+              <span className="inline-flex items-center gap-1"><Users size={13} className="text-primary-light" /> {(membros ?? []).length} membros</span>
+              <span className="inline-flex items-center gap-1"><Calendar size={13} className="text-primary-light" /> Desde {fmtData(equipe.created_at)}</span>
+              <span className="rounded-full border border-primary bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold capitalize text-primary-light">{equipe.categoria}</span>
             </div>
           </div>
         </section>
@@ -80,98 +154,145 @@ function EquipeProfile() {
           })}
         </div>
 
-        {/* Card stats */}
-        <section className="mt-4 rounded-2xl border border-border bg-card p-4">
-          <h3 className="text-sm font-bold">Desafios da equipe</h3>
-          <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-            <QuickStat icon={<Trophy size={20} />} value="18" label="Desafios realizados" />
-            <QuickStat icon={<Coins size={20} />} value="R$ 64.750,00" label="Total em jogo" small />
-            <QuickStat icon={<Target size={20} />} value="R$ 51.230,00" label="Total conquistado" small />
-            <QuickStat icon={<TrendingUp size={20} />} value="78%" label="Taxa de sucesso" />
-          </div>
+        {tab === "resumo" && (
+          <>
+            {/* Card stats */}
+            <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+              <h3 className="text-sm font-bold">Desafios da equipe</h3>
+              <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                <QuickStat icon={<Trophy size={20} />} value={String((desafios ?? []).length)} label="Desafios criados" />
+                <QuickStat icon={<Coins size={20} />} value={fmtMoeda(totalEmJogo)} label="Total em jogo" small />
+                <QuickStat icon={<Sparkles size={20} />} value={String(ativos)} label="Em andamento" />
+                <QuickStat icon={<Target size={20} />} value={String(concluidos)} label="Concluídos" />
+              </div>
+            </section>
 
-          {/* Chart mock */}
-          <div className="mt-6">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold">Evolução dos valores</span>
-              <span className="rounded-full border border-border bg-background px-2 py-1 text-[10px] text-muted-foreground">Últimos 6 meses ▾</span>
+            {/* Últimos desafios */}
+            <div className="mt-6 mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold">Desafios</h3>
+              {souAdmin && (
+                <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id } })} className="text-xs font-semibold text-primary-light">+ Novo</button>
+              )}
             </div>
-            <ChartMock />
-          </div>
-        </section>
+            {loadingDesafios ? (
+              <div className="h-16 animate-pulse rounded-2xl bg-card" />
+            ) : (desafios ?? []).length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                Nenhum desafio criado ainda nesta equipe.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(desafios ?? []).map((d: any) => {
+                  const Icon = CATEGORIA_ICON[d.categoria] ?? Zap;
+                  const ok = d.status === "concluido";
+                  return (
+                    <div key={d.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary-light">
+                        <Icon size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold truncate">{d.titulo}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          {d.data_fim ? `Até ${fmtData(d.data_fim)}` : `${d.duracao_dias} dias`} · {d.duracao_dias} dias
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold">{fmtMoeda(Number(d.valor_entrada ?? 0))}</div>
+                        <div className={`inline-flex items-center gap-1 text-[10px] font-semibold capitalize ${ok ? "text-accent" : "text-primary-light"}`}>
+                          {d.status}
+                        </div>
+                      </div>
+                      <ChevronRight size={14} className="text-muted-foreground" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-        {/* Últimos desafios */}
-        <div className="mt-6 mb-3 flex items-center justify-between">
-          <h3 className="text-base font-bold">Últimos desafios</h3>
-          <Link to="/desafio-temporada" className="text-xs font-semibold text-primary-light">Ver todos</Link>
-        </div>
-        <div className="space-y-2">
-          {DESAFIOS.map((d) => (
-            <div key={d.titulo} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary-light">
-                <d.icon size={18} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold truncate">{d.titulo}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{d.sub}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold">{d.valor}</div>
-                <div className={`inline-flex items-center gap-1 text-[10px] font-semibold ${d.ok ? "text-accent" : "text-primary-light"}`}>
-                  {d.status} {d.ok ? <BadgeCheck size={11} /> : <TrendingUp size={11} />}
+            {/* Banner */}
+            <Link to="/desafio-temporada" className="mt-6 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/20 via-primary/5 to-background p-5">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/25 text-primary-light">
+                  <Trophy size={26} />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold">Juntos somos mais fortes</h4>
+                  <p className="mt-1 text-xs text-muted-foreground">Cada desafio é um passo rumo à nossa melhor versão. Continuem firmes.</p>
                 </div>
               </div>
-              <ChevronRight size={14} className="text-muted-foreground" />
-            </div>
-          ))}
-        </div>
+            </Link>
 
-        {/* Banner */}
-        <Link to="/desafio-temporada" className="mt-6 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/20 via-primary/5 to-background p-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/25 text-primary-light">
-              <Trophy size={26} />
-            </div>
-            <div>
-              <h4 className="text-base font-bold">Juntos somos mais fortes</h4>
-              <p className="mt-1 text-xs text-muted-foreground">Cada desafio é um passo rumo à nossa melhor versão. Continuem firmes.</p>
-            </div>
-          </div>
-        </Link>
+            {/* Sobre */}
+            <section className="mt-6 rounded-2xl border border-border bg-card p-4">
+              <h3 className="text-sm font-bold">Sobre a equipe</h3>
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                {equipe.descricao || equipe.regras || "Esta equipe ainda não adicionou uma descrição."}
+              </p>
+            </section>
+          </>
+        )}
 
-        {/* Membros em destaque */}
-        <div className="mt-6 mb-3 flex items-center justify-between">
-          <h3 className="text-base font-bold">Membros em destaque</h3>
-          <button className="text-xs font-semibold text-primary-light">Ver todos</button>
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {MEMBROS.map((m) => (
-            <div key={m.nome} className="rounded-2xl border border-border bg-card p-2 text-center">
-              <div className="relative mx-auto h-14 w-14">
-                <img src={m.avatar} className="h-full w-full rounded-full border-2 border-primary/60 object-cover" />
-                <BadgeCheck size={13} className="absolute -bottom-0.5 -right-0.5 rounded-full bg-primary text-primary-foreground" />
+        {tab === "membros" && (
+          <div className="mt-4">
+            {loadingMembros ? (
+              <div className="grid grid-cols-4 gap-2">
+                {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-card" />)}
               </div>
-              <div className="mt-2 text-[11px] font-bold truncate">{m.nome}</div>
-              <div className="text-[10px] text-muted-foreground">{m.pts} pts</div>
-              <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent truncate">{m.tag}</div>
-            </div>
-          ))}
-        </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {(membros ?? []).map((m: any) => (
+                  <div key={m.user_id} className="rounded-2xl border border-border bg-card p-2 text-center">
+                    <div className="relative mx-auto h-14 w-14">
+                      {m.profiles?.avatar_url ? (
+                        <img src={m.profiles.avatar_url} className="h-full w-full rounded-full border-2 border-primary/60 object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-lg font-bold">
+                          {(m.profiles?.nome ?? "?")[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      {m.papel === "admin" && <BadgeCheck size={13} className="absolute -bottom-0.5 -right-0.5 rounded-full bg-primary text-primary-foreground" />}
+                    </div>
+                    <div className="mt-2 text-[11px] font-bold truncate">{m.profiles?.nome ?? "—"}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">@{m.profiles?.username ?? "—"}</div>
+                    {m.papel === "admin" && <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent">Admin</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Sobre */}
-        <section className="mt-6 rounded-2xl border border-border bg-card p-4">
-          <h3 className="text-sm font-bold">Sobre a equipe</h3>
-          <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-            A equipe ALPHA reúne pessoas comprometidas em transformar disciplina em resultado. Aqui, cada desafio é uma prova de consistência coletiva.
-          </p>
-        </section>
+        {tab === "desafios" && (
+          <div className="mt-4 space-y-2">
+            {(desafios ?? []).length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                Nenhum desafio criado ainda.
+              </div>
+            ) : (
+              (desafios ?? []).map((d: any) => (
+                <div key={d.id} className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold">{d.titulo}</h4>
+                    <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary-light">{d.status}</span>
+                  </div>
+                  {d.descricao && <p className="mt-1 text-xs text-muted-foreground">{d.descricao}</p>}
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span>{fmtMoeda(Number(d.valor_entrada ?? 0))}</span>
+                    <span>{d.duracao_dias} dias</span>
+                    <span>{fmtData(d.data_inicio)}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Ações */}
         <div className="mt-5 flex gap-2">
-          <button className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
+          <button onClick={convidar} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
             <UserPlus size={16} /> Convidar membros
           </button>
-          <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id: "current" } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
+          <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
             <Sparkles size={16} /> Criar desafio
           </button>
         </div>
@@ -188,29 +309,6 @@ function QuickStat({ icon, value, label, small }: { icon: React.ReactNode; value
       <div className="mx-auto flex h-8 items-center justify-center text-primary-light">{icon}</div>
       <div className={`mt-1 font-bold ${small ? "text-[13px]" : "text-lg"}`}>{value}</div>
       <div className="text-[9px] text-muted-foreground leading-tight">{label}</div>
-    </div>
-  );
-}
-
-function ChartMock() {
-  const points = [30, 45, 55, 60, 85, 70];
-  const max = 100;
-  const w = 300, h = 90;
-  const step = w / (points.length - 1);
-  const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - (p / max) * h}`).join(" ");
-  return (
-    <div className="relative mt-2">
-      <svg viewBox={`0 0 ${w} ${h + 20}`} className="w-full">
-        <path d={path} fill="none" stroke="#A855F7" strokeWidth="2" />
-        {points.map((p, i) => (
-          <circle key={i} cx={i * step} cy={h - (p / max) * h} r="3.5" fill="#A855F7" />
-        ))}
-        {points.map((_, i) => {
-          const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
-          return <text key={i} x={i * step} y={h + 15} fontSize="9" fill="#94A3B8" textAnchor="middle">{labels[i]}</text>;
-        })}
-      </svg>
-      <div className="absolute -top-1 right-2 rounded-md bg-primary/20 border border-primary/40 px-2 py-0.5 text-[10px] font-bold text-primary-light">R$ 51.230</div>
     </div>
   );
 }
