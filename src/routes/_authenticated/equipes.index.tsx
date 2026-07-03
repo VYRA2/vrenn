@@ -69,7 +69,14 @@ function EquipesIndex() {
       <div className="h-px bg-border" />
 
       <div className="mx-auto max-w-md space-y-3 px-5 pt-4">
+        {tab === "descobrir" && (
+          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3">
+            <Search size={16} className="text-muted-foreground" />
+            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar equipes por nome..." className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+          </div>
+        )}
         {loading && [1, 2, 3].map((i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-card" />)}
+
 
         {!loading && tab === "convites" && (
           <EmptyState icon={<Shield size={28} />} title="Nenhum convite no momento" desc="Convites para equipes aparecerão aqui." />
