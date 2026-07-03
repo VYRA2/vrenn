@@ -48,7 +48,7 @@ function EquipesIndex() {
     <main className="min-h-screen bg-background text-foreground pb-28">
       <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-5 pb-3">
         <h1 className="text-2xl font-bold inline-flex items-center gap-2"><Users size={22} className="text-primary-light"/> Equipes</h1>
-        <button onClick={() => navigate({ to: "/equipes/nova" })} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow active:scale-95"><Plus size={20}/></button>
+        <button onClick={() => { setTab("descobrir"); }} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow active:scale-95" aria-label="Buscar equipes"><Search size={18}/></button>
       </header>
 
       <div className="mx-auto flex max-w-md px-3">
