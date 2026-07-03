@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { PublishProofModal } from "@/components/PublishProofModal";
+import { CommentsModal } from "@/components/CommentsModal";
+
 import { Bell, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -140,6 +142,8 @@ function Feed() {
 }
 
 function PostCard({ post, userId, onChange }: { post: any; userId: string; onChange: () => void }) {
+  const [showComments, setShowComments] = useState(false);
+
   const p = post.profiles;
   const m = post.metas;
   const initial = (p?.nome || p?.username || "?")[0].toUpperCase();
@@ -260,7 +264,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           <Heart size={20} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
         </button>
-        <button className="flex items-center gap-1.5 text-sm text-foreground">
+        <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 text-sm text-foreground">
           <MessageCircle size={20} />
           <span className="font-semibold">{stats?.comments ?? 0}</span>
         </button>
@@ -271,9 +275,11 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           <Bookmark size={20} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
         </button>
       </div>
+      {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
     </article>
   );
 }
+
 
 function formatWhen(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();

@@ -60,7 +60,12 @@ function Perfil() {
       <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-3">
         <VyraLogo size={32} />
         <div className="flex items-center gap-1">
-          <button className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
+          <button onClick={() => {
+            if (!profile?.username) return toast.error("Defina um username primeiro");
+            navigator.clipboard.writeText(`${window.location.origin}/u/${profile.username}`);
+            toast.success("Link do perfil copiado!");
+          }} className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
+
           <Link to="/configuracoes" className="rounded-full p-2 text-foreground/90"><Settings size={20} /></Link>
         </div>
       </header>
@@ -124,7 +129,8 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Conquistas</h2>
-            <button className="text-xs font-semibold text-primary-light">Ver todas</button>
+            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver todas</button>
+
           </div>
           <div className="flex justify-between gap-2">
             <Conquista icon={<Target size={22} />} label="Foco" sub="Nível 4" color="#A855F7" />
@@ -177,7 +183,7 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Resumo de atividade</h2>
-            <button className="text-xs font-semibold text-primary-light">Ver relatório</button>
+            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver relatório</button>
           </div>
           <div className="grid grid-cols-5 gap-2">
             <ActivityTile icon={<CheckCircle2 size={20} />} value={metas?.length ?? 0} label="Publicações" color="#A855F7" />
@@ -192,7 +198,7 @@ function Perfil() {
         <section className="mt-6 mb-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Medalhas recentes</h2>
-            <button className="text-xs font-semibold text-primary-light">Ver todas</button>
+            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver todas</button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             <Medal icon={<Flame size={16} />} title={`Sequência ${profile?.streak_dias ?? 0} dias`} sub="hoje" color="#A855F7" />

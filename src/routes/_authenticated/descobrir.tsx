@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,10 +18,13 @@ type Tab = "voce" | "pessoas" | "habitos" | "metas" | "provas";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "voce", label: "Para você", icon: Users },
-  { id: "pessoas", label: "Pessoas", icon: Users },
-  { id: "habitos", label: "Hábitos", icon: CheckCircle2 },
   { id: "metas", label: "Metas", icon: Target },
   { id: "provas", label: "Provas", icon: Shield },
+];
+
+const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
+  { id: "pessoas", label: "Pessoas", icon: Users },
+  { id: "habitos", label: "Hábitos", icon: CheckCircle2 },
 ];
 
 const DESTAQUES = [
@@ -38,16 +41,12 @@ const CATEGORIAS = [
   { label: "Produtividade", pubs: "5.1K", icon: Target, color: "#A855F7" },
 ];
 
-const PESSOAS = [
-  { nome: "Rafael Santos", user: "@rafaelsantos", tag: "Hábito consistente", avatar: "https://i.pravatar.cc/100?img=15" },
-  { nome: "Beatriz Almeida", user: "@beatrizalmeida", tag: "Meta concluída", avatar: "https://i.pravatar.cc/100?img=47" },
-  { nome: "Thiago Ferreira", user: "@thiagoferreira", tag: "Compromisso cumprido", avatar: "https://i.pravatar.cc/100?img=33" },
-];
-
 function DescobrirPage() {
   const { user } = Route.useRouteContext();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("voce");
   const [q, setQ] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
   const [countdown, setCountdown] = useState({ d: 23, h: 14, m: 38 });
 
   const buscando = q.trim().length >= 2;
@@ -61,8 +60,21 @@ function DescobrirPage() {
         const { data } = await supabase.from("metas").select("id, titulo, categoria, progresso, user_id, profiles:user_id(nome, username, avatar_url)").ilike("titulo", term).limit(20);
         return data ?? [];
       }
-      // Pessoas (padrão para "voce", "pessoas", "habitos", "provas")
       const { data } = await supabase.from("profiles").select("id, nome, username, avatar_url").or(`nome.ilike.${term},username.ilike.${term}`).neq("id", user.id).limit(20);
+      return data ?? [];
+    },
+  });
+
+  const { data: sugestoes } = useQuery({
+    queryKey: ["descobrir-sugestoes", user.id],
+    queryFn: async () => {
+      const { data: fol } = await supabase.from("follows").select("following_id").eq("follower_id", user.id);
+      const excluir = [user.id, ...((fol ?? []).map((f: any) => f.following_id))];
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, nome, username, avatar_url")
+        .not("id", "in", `(${excluir.join(",")})`)
+        .limit(5);
       return data ?? [];
     },
   });
@@ -101,7 +113,24 @@ function DescobrirPage() {
             <Search size={18} className="text-muted-foreground" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar pessoas, hábitos, metas, provas..." className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
           </div>
-          <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card text-primary-light"><SlidersHorizontal size={18} /></button>
+          <div className="relative">
+            <button onClick={() => setShowFilter(v => !v)} className={`flex h-12 w-12 items-center justify-center rounded-2xl border bg-card ${showFilter ? "border-primary text-primary-light" : "border-border text-primary-light"}`}>
+              <SlidersHorizontal size={18} />
+            </button>
+            {showFilter && (
+              <div className="absolute right-0 top-14 z-20 w-44 rounded-2xl border border-border bg-card p-2 shadow-glow">
+                <div className="mb-1 px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Filtrar por</div>
+                {FILTER_OPTIONS.map(({ id, label, icon: Icon }) => {
+                  const a = tab === id;
+                  return (
+                    <button key={id} onClick={() => { setTab(id); setShowFilter(false); }} className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${a ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}>
+                      <Icon size={14} /> {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-5 px-5">
@@ -113,6 +142,11 @@ function DescobrirPage() {
               </button>
             );
           })}
+          {(tab === "pessoas" || tab === "habitos") && (
+            <button onClick={() => setTab("voce")} className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light">
+              {tab === "pessoas" ? "Pessoas ✕" : "Hábitos ✕"}
+            </button>
+          )}
         </div>
 
         {buscando ? (
@@ -138,7 +172,6 @@ function DescobrirPage() {
           </section>
         ) : (
         <>
-        {/* Banner Desafio */}
         <Link to="/desafio-temporada" className="mt-5 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17] p-5 shadow-glow">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -161,10 +194,9 @@ function DescobrirPage() {
           </div>
         </Link>
 
-        {/* Destaques */}
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Destaques da comunidade</h3>
-          <button className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todos <ArrowRight size={12} /></button>
+          <button onClick={() => toast("Em breve")} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todos <ArrowRight size={12} /></button>
         </div>
         <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2">
           {DESTAQUES.map((d) => (
@@ -190,7 +222,6 @@ function DescobrirPage() {
           ))}
         </div>
 
-        {/* Categorias */}
         <h3 className="mt-6 mb-3 text-base font-bold">Explorar por categorias</h3>
         <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2">
           {CATEGORIAS.map(({ label, pubs, icon: Icon, color }) => (
@@ -202,28 +233,18 @@ function DescobrirPage() {
           ))}
         </div>
 
-        {/* Pessoas para seguir */}
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Pessoas para seguir</h3>
-          <button className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todas <ArrowRight size={12} /></button>
+          <button onClick={() => navigate({ to: "/busca" })} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todas <ArrowRight size={12} /></button>
         </div>
         <div className="space-y-3">
-          {PESSOAS.map((p) => (
-            <div key={p.user} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-              <img src={p.avatar} className="h-12 w-12 rounded-full border-2 border-primary/60 object-cover" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold truncate">{p.nome}</span>
-                  <CheckCircle2 size={12} className="text-primary-light" />
-                </div>
-                <div className="text-xs text-muted-foreground">{p.user}</div>
-                <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-accent/40 px-2 py-0.5 text-[10px] text-accent">
-                  <CheckCircle2 size={9} /> {p.tag}
-                </span>
-              </div>
-              <button className="rounded-2xl border border-primary px-4 py-2 text-xs font-bold text-primary-light">Seguir</button>
+          {(sugestoes ?? []).length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">
+              Nenhuma sugestão no momento
             </div>
-          ))}
+          ) : (
+            (sugestoes ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)
+          )}
         </div>
         </>
         )}
@@ -246,7 +267,9 @@ function TimeBox({ v, l }: { v: number; l: string }) {
 function PessoaRow({ pessoa, userId }: { pessoa: any; userId: string }) {
   const [seguindo, setSeguindo] = useState(false);
   const [busy, setBusy] = useState(false);
-  async function seguir() {
+  async function seguir(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
     if (pessoa.id === userId) return;
     setBusy(true);
     const { error } = await supabase.from("follows").insert({ follower_id: userId, following_id: pessoa.id, status: "aceito" });

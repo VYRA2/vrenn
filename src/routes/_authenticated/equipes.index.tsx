@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { Users, Plus, Search, Shield, Trophy } from "lucide-react";
+import { Users, Search, Shield, Trophy } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/equipes/")({
@@ -15,6 +15,8 @@ function EquipesIndex() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("minhas");
+  const [search, setSearch] = useState("");
+
 
   const { data: minhas, isLoading: l1 } = useQuery({
     queryKey: ["equipes-minhas", user.id],
@@ -28,10 +30,12 @@ function EquipesIndex() {
   });
 
   const { data: descobrir, isLoading: l2 } = useQuery({
-    queryKey: ["equipes-descobrir"],
+    queryKey: ["equipes-descobrir", search],
     enabled: tab === "descobrir",
     queryFn: async () => {
-      const { data } = await (supabase as any).from("equipes").select("*").eq("publica", true).order("created_at", { ascending: false }).limit(30);
+      let q = (supabase as any).from("equipes").select("*").eq("publica", true).order("created_at", { ascending: false }).limit(30);
+      if (search.trim().length >= 2) q = q.ilike("nome", `%${search.trim()}%`);
+      const { data } = await q;
       return data ?? [];
     },
   });
@@ -39,11 +43,12 @@ function EquipesIndex() {
   const lista = tab === "minhas" ? (minhas ?? []) : tab === "descobrir" ? (descobrir ?? []) : [];
   const loading = (tab === "minhas" && l1) || (tab === "descobrir" && l2);
 
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
       <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-5 pb-3">
         <h1 className="text-2xl font-bold inline-flex items-center gap-2"><Users size={22} className="text-primary-light"/> Equipes</h1>
-        <button onClick={() => navigate({ to: "/equipes/nova" })} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow active:scale-95"><Plus size={20}/></button>
+        <button onClick={() => { setTab("descobrir"); }} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow active:scale-95" aria-label="Buscar equipes"><Search size={18}/></button>
       </header>
 
       <div className="mx-auto flex max-w-md px-3">
@@ -64,7 +69,14 @@ function EquipesIndex() {
       <div className="h-px bg-border" />
 
       <div className="mx-auto max-w-md space-y-3 px-5 pt-4">
+        {tab === "descobrir" && (
+          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3">
+            <Search size={16} className="text-muted-foreground" />
+            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar equipes por nome..." className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+          </div>
+        )}
         {loading && [1, 2, 3].map((i) => <div key={i} className="h-28 animate-pulse rounded-2xl bg-card" />)}
+
 
         {!loading && tab === "convites" && (
           <EmptyState icon={<Shield size={28} />} title="Nenhum convite no momento" desc="Convites para equipes aparecerão aqui." />
