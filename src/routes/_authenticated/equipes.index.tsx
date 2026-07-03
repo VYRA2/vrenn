@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { Users, Plus, Search, Shield, Trophy } from "lucide-react";
+import { Users, Search, Shield, Trophy } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/equipes/")({
