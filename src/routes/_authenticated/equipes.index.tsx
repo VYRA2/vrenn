@@ -30,16 +30,19 @@ function EquipesIndex() {
   });
 
   const { data: descobrir, isLoading: l2 } = useQuery({
-    queryKey: ["equipes-descobrir"],
+    queryKey: ["equipes-descobrir", search],
     enabled: tab === "descobrir",
     queryFn: async () => {
-      const { data } = await (supabase as any).from("equipes").select("*").eq("publica", true).order("created_at", { ascending: false }).limit(30);
+      let q = (supabase as any).from("equipes").select("*").eq("publica", true).order("created_at", { ascending: false }).limit(30);
+      if (search.trim().length >= 2) q = q.ilike("nome", `%${search.trim()}%`);
+      const { data } = await q;
       return data ?? [];
     },
   });
 
   const lista = tab === "minhas" ? (minhas ?? []) : tab === "descobrir" ? (descobrir ?? []) : [];
   const loading = (tab === "minhas" && l1) || (tab === "descobrir" && l2);
+
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
