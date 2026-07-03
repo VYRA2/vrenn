@@ -129,7 +129,8 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Conquistas</h2>
-            <button className="text-xs font-semibold text-primary-light">Ver todas</button>
+            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver todas</button>
+
           </div>
           <div className="flex justify-between gap-2">
             <Conquista icon={<Target size={22} />} label="Foco" sub="Nível 4" color="#A855F7" />
