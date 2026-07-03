@@ -183,7 +183,7 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Resumo de atividade</h2>
-            <button className="text-xs font-semibold text-primary-light">Ver relatório</button>
+            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver relatório</button>
           </div>
           <div className="grid grid-cols-5 gap-2">
             <ActivityTile icon={<CheckCircle2 size={20} />} value={metas?.length ?? 0} label="Publicações" color="#A855F7" />
