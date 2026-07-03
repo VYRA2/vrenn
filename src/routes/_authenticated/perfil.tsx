@@ -60,7 +60,12 @@ function Perfil() {
       <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-3">
         <VyraLogo size={32} />
         <div className="flex items-center gap-1">
-          <button className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
+          <button onClick={() => {
+            if (!profile?.username) return toast.error("Defina um username primeiro");
+            navigator.clipboard.writeText(`${window.location.origin}/u/${profile.username}`);
+            toast.success("Link do perfil copiado!");
+          }} className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
+
           <Link to="/configuracoes" className="rounded-full p-2 text-foreground/90"><Settings size={20} /></Link>
         </div>
       </header>
