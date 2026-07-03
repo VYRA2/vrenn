@@ -15,6 +15,8 @@ function EquipesIndex() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("minhas");
+  const [search, setSearch] = useState("");
+
 
   const { data: minhas, isLoading: l1 } = useQuery({
     queryKey: ["equipes-minhas", user.id],
