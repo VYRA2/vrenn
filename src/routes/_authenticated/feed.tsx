@@ -142,6 +142,8 @@ function Feed() {
 }
 
 function PostCard({ post, userId, onChange }: { post: any; userId: string; onChange: () => void }) {
+  const [showComments, setShowComments] = useState(false);
+
   const p = post.profiles;
   const m = post.metas;
   const initial = (p?.nome || p?.username || "?")[0].toUpperCase();
