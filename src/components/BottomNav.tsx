@@ -12,8 +12,8 @@ export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
     { to: "/descobrir", icon: Compass, label: "Descobrir" },
   ] as const;
   const right = [
-    { to: "/equipes", icon: Users, label: "Equipes" },
     { to: "/wallet", icon: Wallet, label: "Carteira" },
+    { to: "/perfil", icon: User, label: "Perfil" },
   ] as const;
 
   function go(to: string) {
