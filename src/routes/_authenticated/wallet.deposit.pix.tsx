@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
@@ -10,13 +10,30 @@ export const Route = createFileRoute("/_authenticated/wallet/deposit/pix")({
 });
 
 function DepositPix() {
+  const { user } = Route.useRouteContext();
   const [amount, setAmount] = useState<string>("");
+  const [cpf, setCpf] = useState("");
+  const [cpfSalvo, setCpfSalvo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ pixCode: string; pixQrCodeImage: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("profiles").select("cpf").eq("id", user.id).maybeSingle();
+      if (data?.cpf) { setCpf(data.cpf); setCpfSalvo(true); }
+    })();
+  }, [user.id]);
+
+  function formatCpf(v: string) {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    return d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
 
   async function generate() {
     const value = Number(amount.replace(",", "."));
     if (!value || value < 10) return toast.error("Valor mínimo: R$ 10,00");
+    const cleanCpf = cpf.replace(/\D/g, "");
+    if (cleanCpf.length !== 11) return toast.error("Informe um CPF válido (11 dígitos)");
     setLoading(true);
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -27,11 +44,12 @@ function DepositPix() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ amount: value }),
+        body: JSON.stringify({ amount: value, cpf: cleanCpf }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Falha ao gerar PIX");
       setResult({ pixCode: data.pixCode, pixQrCodeImage: data.pixQrCodeImage });
+      setCpfSalvo(true);
       toast.success("PIX gerado!");
     } catch (e) {
       toast.error((e as Error).message);
@@ -51,6 +69,19 @@ function DepositPix() {
       </header>
 
       <div className="mx-auto max-w-md px-5 space-y-4">
+        <div>
+          <label className="mb-2 block text-sm font-semibold">CPF do titular</label>
+          <input
+            inputMode="numeric"
+            value={formatCpf(cpf)}
+            onChange={(e) => setCpf(e.target.value)}
+            placeholder="000.000.000-00"
+            disabled={cpfSalvo}
+            className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-70"
+          />
+          <p className="mt-2 text-xs text-muted-foreground">Exigido pela Asaas para gerar cobranças PIX no seu nome.</p>
+        </div>
+
         <div>
           <label className="mb-2 block text-sm font-semibold">Valor do depósito</label>
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
