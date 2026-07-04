@@ -57,6 +57,12 @@ serve(async (req) => {
     let customerId: string;
     if (customerData?.data?.length > 0) {
       customerId = customerData.data[0].id;
+      // Cliente já existia (possivelmente de um teste anterior sem CPF) — garante que o CPF fique atualizado
+      await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
+        method: "POST",
+        headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ cpfCnpj: cleanCpf }),
+      });
     } else {
       const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
         method: "POST",
