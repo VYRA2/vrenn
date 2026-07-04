@@ -53,16 +53,24 @@ serve(async (req) => {
       { headers: { access_token: ASAAS_API_KEY } },
     );
     const customerData = await customerRes.json();
+    console.log("Clientes encontrados na Asaas para este e-mail:", JSON.stringify(customerData?.data?.map((c: any) => ({ id: c.id, cpfCnpj: c.cpfCnpj }))));
 
     let customerId: string;
     if (customerData?.data?.length > 0) {
       customerId = customerData.data[0].id;
       // Cliente já existia (possivelmente de um teste anterior sem CPF) — garante que o CPF fique atualizado
-      await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
+      const updRes = await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
         method: "POST",
         headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
         body: JSON.stringify({ cpfCnpj: cleanCpf }),
       });
+      const updData = await updRes.json();
+      if (!updRes.ok || updData?.errors) {
+        return new Response(JSON.stringify({ error: "Falha ao atualizar CPF do cliente na Asaas", details: updData }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     } else {
       const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
         method: "POST",
