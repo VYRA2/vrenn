@@ -28,13 +28,24 @@ serve(async (req) => {
       });
     }
 
-    const { amount } = await req.json();
+    const { amount, cpf } = await req.json();
     if (!amount || amount < 10) {
       return new Response(JSON.stringify({ error: "Valor mínimo: R$10,00" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const cleanCpf = (cpf ?? "").replace(/\D/g, "");
+    if (cleanCpf.length !== 11) {
+      return new Response(JSON.stringify({ error: "CPF inválido. Informe os 11 dígitos." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Salva o CPF no perfil, se ainda não tiver
+    await supabase.from("profiles").update({ cpf: cleanCpf }).eq("id", user.id).is("cpf", null);
 
     // Find or create Asaas customer
     const customerRes = await fetch(
@@ -50,9 +61,15 @@ serve(async (req) => {
       const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
         method: "POST",
         headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: user.email, email: user.email }),
+        body: JSON.stringify({ name: user.email, email: user.email, cpfCnpj: cleanCpf }),
       });
       const nc = await newCustomer.json();
+      if (!nc?.id) {
+        return new Response(JSON.stringify({ error: "Falha ao criar cliente na Asaas", details: nc }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       customerId = nc.id;
     }
 
