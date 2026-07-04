@@ -44,33 +44,14 @@ serve(async (req) => {
       });
     }
 
-    // Salva o CPF no perfil, se ainda não tiver
-    await supabase.from("profiles").update({ cpf: cleanCpf }).eq("id", user.id).is("cpf", null);
+    // Salva o CPF no perfil sempre (garante que está atualizado)
+    await supabase.from("profiles").update({ cpf: cleanCpf }).eq("id", user.id);
 
-    // Find or create Asaas customer
-    const customerRes = await fetch(
-      `${ASAAS_API_URL}/customers?email=${encodeURIComponent(user.email ?? "")}`,
-      { headers: { access_token: ASAAS_API_KEY } },
-    );
-    const customerData = await customerRes.json();
-    console.log("Clientes encontrados na Asaas para este e-mail:", JSON.stringify(customerData?.data?.map((c: any) => ({ id: c.id, cpfCnpj: c.cpfCnpj }))));
+    const { data: profileRow } = await supabase.from("profiles").select("asaas_customer_id").eq("id", user.id).maybeSingle();
 
     let customerId: string;
-    if (customerData?.data?.length > 0) {
-      customerId = customerData.data[0].id;
-      // Cliente já existia (possivelmente de um teste anterior sem CPF) — garante que o CPF fique atualizado
-      const updRes = await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
-        method: "POST",
-        headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ cpfCnpj: cleanCpf }),
-      });
-      const updData = await updRes.json();
-      if (!updRes.ok || updData?.errors) {
-        return new Response(JSON.stringify({ error: "Falha ao atualizar CPF do cliente na Asaas", details: updData }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (profileRow?.asaas_customer_id) {
+      customerId = profileRow.asaas_customer_id;
     } else {
       const newCustomer = await fetch(`${ASAAS_API_URL}/customers`, {
         method: "POST",
@@ -85,6 +66,7 @@ serve(async (req) => {
         });
       }
       customerId = nc.id;
+      await supabase.from("profiles").update({ asaas_customer_id: customerId }).eq("id", user.id);
     }
 
     // Create PIX payment
