@@ -6,7 +6,7 @@ import { VyraLogo } from "@/components/VyraLogo";
 import { PublishProofModal } from "@/components/PublishProofModal";
 import { CommentsModal } from "@/components/CommentsModal";
 
-import { Bell, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock } from "lucide-react";
+import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -90,10 +90,15 @@ function Feed() {
         <div className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
           <div className="justify-self-start"><VyraLogo size={28} showWordmark={false} /></div>
           <div className="justify-self-center"><VyraLogo size={22} showWordmark={true} className="[&>img]:hidden" /></div>
-          <Link to="/notificacoes" className="relative justify-self-end rounded-full p-2 text-foreground/90">
-            <Bell size={22} />
-            {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}
-          </Link>
+          <div className="justify-self-end flex items-center gap-1">
+            <Link to="/notificacoes" className="relative rounded-full p-2 text-foreground/90">
+              <Bell size={22} />
+              {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}
+            </Link>
+            <Link to="/wallet" className="rounded-full p-2 text-primary-light" aria-label="Carteira">
+              <Wallet size={22} />
+            </Link>
+          </div>
         </div>
         <div className="mx-auto flex max-w-md px-3">
           {([["feed", "Feed"], ["seguindo", "Seguindo"], ["destaques", "Destaques"], ["comunidades", "Comunidades"]] as const).map(([k, l]) => {
