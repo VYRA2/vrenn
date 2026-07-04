@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Compass, Plus, User, X, Flag, Camera, Swords, Shield, UserPlus, Users, Wallet } from "lucide-react";
+import { Home, Compass, Plus, User, X, Flag, Camera, Swords, Shield, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 
 export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
@@ -12,7 +12,7 @@ export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
     { to: "/descobrir", icon: Compass, label: "Descobrir" },
   ] as const;
   const right = [
-    { to: "/wallet", icon: Wallet, label: "Carteira" },
+    { to: "/equipes", icon: Users, label: "Equipes" },
     { to: "/perfil", icon: User, label: "Perfil" },
   ] as const;
 
