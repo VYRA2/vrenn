@@ -23,12 +23,17 @@ import { Route as AuthenticatedDescobrirRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDesafioTemporadaRouteImport } from './routes/_authenticated/desafio-temporada'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
+import { Route as AuthenticatedWalletIndexRouteImport } from './routes/_authenticated/wallet.index'
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil_.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
+import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
 import { Route as AuthenticatedEquipesIdIndexRouteImport } from './routes/_authenticated/equipes.$id.index'
+import { Route as AuthenticatedWalletWithdrawSuccessRouteImport } from './routes/_authenticated/wallet.withdraw.success'
+import { Route as AuthenticatedWalletDepositPixRouteImport } from './routes/_authenticated/wallet.deposit.pix'
+import { Route as AuthenticatedWalletDepositCardRouteImport } from './routes/_authenticated/wallet.deposit.card'
 import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
 
 const AuthRoute = AuthRouteImport.update({
@@ -103,6 +108,12 @@ const AuthenticatedBuscaRoute = AuthenticatedBuscaRouteImport.update({
   path: '/busca',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWalletIndexRoute =
+  AuthenticatedWalletIndexRouteImport.update({
+    id: '/wallet/',
+    path: '/wallet/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEquipesIndexRoute =
   AuthenticatedEquipesIndexRouteImport.update({
     id: '/equipes/',
@@ -131,10 +142,34 @@ const AuthenticatedEquipesNovaRoute =
     path: '/equipes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWalletWithdrawIndexRoute =
+  AuthenticatedWalletWithdrawIndexRouteImport.update({
+    id: '/wallet/withdraw/',
+    path: '/wallet/withdraw/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEquipesIdIndexRoute =
   AuthenticatedEquipesIdIndexRouteImport.update({
     id: '/equipes/$id/',
     path: '/equipes/$id/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWalletWithdrawSuccessRoute =
+  AuthenticatedWalletWithdrawSuccessRouteImport.update({
+    id: '/wallet/withdraw/success',
+    path: '/wallet/withdraw/success',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWalletDepositPixRoute =
+  AuthenticatedWalletDepositPixRouteImport.update({
+    id: '/wallet/deposit/pix',
+    path: '/wallet/deposit/pix',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWalletDepositCardRoute =
+  AuthenticatedWalletDepositCardRouteImport.update({
+    id: '/wallet/deposit/card',
+    path: '/wallet/deposit/card',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEquipesIdDesafioNovoRoute =
@@ -163,7 +198,12 @@ export interface FileRoutesByFullPath {
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
+  '/wallet/': typeof AuthenticatedWalletIndexRoute
+  '/wallet/deposit/card': typeof AuthenticatedWalletDepositCardRoute
+  '/wallet/deposit/pix': typeof AuthenticatedWalletDepositPixRoute
+  '/wallet/withdraw/success': typeof AuthenticatedWalletWithdrawSuccessRoute
   '/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
+  '/wallet/withdraw/': typeof AuthenticatedWalletWithdrawIndexRoute
   '/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRoutesByTo {
@@ -185,7 +225,12 @@ export interface FileRoutesByTo {
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
+  '/wallet': typeof AuthenticatedWalletIndexRoute
+  '/wallet/deposit/card': typeof AuthenticatedWalletDepositCardRoute
+  '/wallet/deposit/pix': typeof AuthenticatedWalletDepositPixRoute
+  '/wallet/withdraw/success': typeof AuthenticatedWalletWithdrawSuccessRoute
   '/equipes/$id': typeof AuthenticatedEquipesIdIndexRoute
+  '/wallet/withdraw': typeof AuthenticatedWalletWithdrawIndexRoute
   '/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRoutesById {
@@ -209,7 +254,12 @@ export interface FileRoutesById {
   '/_authenticated/perfil_/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
+  '/_authenticated/wallet/': typeof AuthenticatedWalletIndexRoute
+  '/_authenticated/wallet/deposit/card': typeof AuthenticatedWalletDepositCardRoute
+  '/_authenticated/wallet/deposit/pix': typeof AuthenticatedWalletDepositPixRoute
+  '/_authenticated/wallet/withdraw/success': typeof AuthenticatedWalletWithdrawSuccessRoute
   '/_authenticated/equipes/$id/': typeof AuthenticatedEquipesIdIndexRoute
+  '/_authenticated/wallet/withdraw/': typeof AuthenticatedWalletWithdrawIndexRoute
   '/_authenticated/equipes/$id/desafio/novo': typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 export interface FileRouteTypes {
@@ -233,7 +283,12 @@ export interface FileRouteTypes {
     | '/perfil/editar'
     | '/u/$username'
     | '/equipes/'
+    | '/wallet/'
+    | '/wallet/deposit/card'
+    | '/wallet/deposit/pix'
+    | '/wallet/withdraw/success'
     | '/equipes/$id/'
+    | '/wallet/withdraw/'
     | '/equipes/$id/desafio/novo'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,7 +310,12 @@ export interface FileRouteTypes {
     | '/perfil/editar'
     | '/u/$username'
     | '/equipes'
+    | '/wallet'
+    | '/wallet/deposit/card'
+    | '/wallet/deposit/pix'
+    | '/wallet/withdraw/success'
     | '/equipes/$id'
+    | '/wallet/withdraw'
     | '/equipes/$id/desafio/novo'
   id:
     | '__root__'
@@ -278,7 +338,12 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil_/editar'
     | '/_authenticated/u/$username'
     | '/_authenticated/equipes/'
+    | '/_authenticated/wallet/'
+    | '/_authenticated/wallet/deposit/card'
+    | '/_authenticated/wallet/deposit/pix'
+    | '/_authenticated/wallet/withdraw/success'
     | '/_authenticated/equipes/$id/'
+    | '/_authenticated/wallet/withdraw/'
     | '/_authenticated/equipes/$id/desafio/novo'
   fileRoutesById: FileRoutesById
 }
@@ -388,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuscaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/wallet/': {
+      id: '/_authenticated/wallet/'
+      path: '/wallet'
+      fullPath: '/wallet/'
+      preLoaderRoute: typeof AuthenticatedWalletIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/equipes/': {
       id: '/_authenticated/equipes/'
       path: '/equipes'
@@ -423,11 +495,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/wallet/withdraw/': {
+      id: '/_authenticated/wallet/withdraw/'
+      path: '/wallet/withdraw'
+      fullPath: '/wallet/withdraw/'
+      preLoaderRoute: typeof AuthenticatedWalletWithdrawIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/equipes/$id/': {
       id: '/_authenticated/equipes/$id/'
       path: '/equipes/$id'
       fullPath: '/equipes/$id/'
       preLoaderRoute: typeof AuthenticatedEquipesIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet/withdraw/success': {
+      id: '/_authenticated/wallet/withdraw/success'
+      path: '/wallet/withdraw/success'
+      fullPath: '/wallet/withdraw/success'
+      preLoaderRoute: typeof AuthenticatedWalletWithdrawSuccessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet/deposit/pix': {
+      id: '/_authenticated/wallet/deposit/pix'
+      path: '/wallet/deposit/pix'
+      fullPath: '/wallet/deposit/pix'
+      preLoaderRoute: typeof AuthenticatedWalletDepositPixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet/deposit/card': {
+      id: '/_authenticated/wallet/deposit/card'
+      path: '/wallet/deposit/card'
+      fullPath: '/wallet/deposit/card'
+      preLoaderRoute: typeof AuthenticatedWalletDepositCardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/equipes/$id/desafio/novo': {
@@ -457,7 +557,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerfilEditarRoute: typeof AuthenticatedPerfilEditarRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
+  AuthenticatedWalletIndexRoute: typeof AuthenticatedWalletIndexRoute
+  AuthenticatedWalletDepositCardRoute: typeof AuthenticatedWalletDepositCardRoute
+  AuthenticatedWalletDepositPixRoute: typeof AuthenticatedWalletDepositPixRoute
+  AuthenticatedWalletWithdrawSuccessRoute: typeof AuthenticatedWalletWithdrawSuccessRoute
   AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
+  AuthenticatedWalletWithdrawIndexRoute: typeof AuthenticatedWalletWithdrawIndexRoute
   AuthenticatedEquipesIdDesafioNovoRoute: typeof AuthenticatedEquipesIdDesafioNovoRoute
 }
 
@@ -478,7 +583,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilEditarRoute: AuthenticatedPerfilEditarRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
+  AuthenticatedWalletIndexRoute: AuthenticatedWalletIndexRoute,
+  AuthenticatedWalletDepositCardRoute: AuthenticatedWalletDepositCardRoute,
+  AuthenticatedWalletDepositPixRoute: AuthenticatedWalletDepositPixRoute,
+  AuthenticatedWalletWithdrawSuccessRoute:
+    AuthenticatedWalletWithdrawSuccessRoute,
   AuthenticatedEquipesIdIndexRoute: AuthenticatedEquipesIdIndexRoute,
+  AuthenticatedWalletWithdrawIndexRoute: AuthenticatedWalletWithdrawIndexRoute,
   AuthenticatedEquipesIdDesafioNovoRoute:
     AuthenticatedEquipesIdDesafioNovoRoute,
 }
