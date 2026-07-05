@@ -34,9 +34,14 @@ function DepositPix() {
     if (!value || value < 10) return toast.error("Valor mínimo: R$ 10,00");
     const cleanCpf = cpf.replace(/\D/g, "");
     if (cleanCpf.length !== 11) return toast.error("Informe um CPF válido (11 dígitos)");
-    setLoading(true);
+  setLoading(true);
     try {
+      // 1. Salva CPF direto no banco pelo frontend
+      await supabase.from("profiles").update({ cpf: cleanCpf }).eq("id", user.id);
+      setCpfSalvo(true);
+
       const { data: session } = await supabase.auth.getSession();
+Só isso — 3 linhas inseridas. O resto do arquivo fica igual. Qual prefere fazer?Quer ser notificado quando Claude responder?
       const token = session.session?.access_token;
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-payment`, {
         method: "POST",
