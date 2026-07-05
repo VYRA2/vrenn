@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { ArrowLeft, Info, Users, ClipboardCheck, Shield, Flag, Trophy, ArrowRight, ChevronRight } from "lucide-react";
@@ -20,8 +22,29 @@ const STEPS = [
   { n: 3, icon: Trophy, title: "Seja recompensado", desc: "Ao final da temporada, o valor do fundo será distribuído entre os melhores." },
 ];
 
+function formatBRL(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 function DesafioTemporada() {
   const navigate = useNavigate();
+
+  const { data: fundo } = useQuery({
+    queryKey: ["fundo_temporada"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fundo_temporada")
+        .select("valor_acumulado, meta_valor")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const valorAcumulado = fundo?.valor_acumulado ?? 0;
+  const metaValor = fundo?.meta_valor ?? 300000;
+  const progresso = metaValor > 0 ? Math.min(100, Math.round((valorAcumulado / metaValor) * 100)) : 0;
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-32">
       <header className="relative mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
@@ -55,16 +78,12 @@ function DesafioTemporada() {
             <span className="text-sm font-bold text-primary-light">Fundo acumulado</span>
             <Info size={12} className="text-muted-foreground" />
           </div>
-          <div className="mt-2 text-3xl font-black">R$ 248.750,00</div>
-          <div className="mt-2 inline-flex items-center gap-2">
-            <span className="rounded-md border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary-light">▲ +12%</span>
-            <span className="text-xs text-muted-foreground">desde o início da temporada</span>
-          </div>
+          <div className="mt-2 text-3xl font-black">{formatBRL(valorAcumulado)}</div>
           <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>0</span><span className="font-bold text-primary-light">82%</span><span>R$ 300.000</span>
+            <span>0</span><span className="font-bold text-primary-light">{progresso}%</span><span>{formatBRL(metaValor)}</span>
           </div>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light" style={{ width: "82%" }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light" style={{ width: `${progresso}%` }} />
           </div>
           <p className="mt-2 text-center text-[11px] text-muted-foreground">Meta da temporada</p>
         </section>
