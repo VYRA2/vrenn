@@ -44,7 +44,6 @@ serve(async (req) => {
       });
     }
 
-    // Salva o CPF no perfil sempre (garante que está atualizado)
     await supabase.from("profiles").update({ cpf: cleanCpf }).eq("id", user.id);
 
     const { data: profileRow } = await supabase.from("profiles").select("asaas_customer_id").eq("id", user.id).maybeSingle();
@@ -69,7 +68,6 @@ serve(async (req) => {
       await supabase.from("profiles").update({ asaas_customer_id: customerId }).eq("id", user.id);
     }
 
-    // Create PIX payment
     const paymentRes = await fetch(`${ASAAS_API_URL}/payments`, {
       method: "POST",
       headers: { access_token: ASAAS_API_KEY, "Content-Type": "application/json" },
@@ -90,10 +88,16 @@ serve(async (req) => {
       });
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const qrRes = await fetch(`${ASAAS_API_URL}/payments/${payment.id}/pixQrCode`, {
       headers: { access_token: ASAAS_API_KEY },
     });
     const qrData = await qrRes.json();
+
+    const rawImage = qrData.encodedImage ?? "";
+    const pixQrCodeImage = rawImage.startsWith("data:") ? rawImage.split(",")[1] : rawImage;
+    const pixCode = qrData.payload ?? "";
 
     await supabase.from("transactions").insert({
       user_id: user.id,
@@ -107,8 +111,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         paymentId: payment.id,
-        pixCode: qrData.payload,
-        pixQrCodeImage: qrData.encodedImage,
+        pixCode,
+        pixQrCodeImage,
         expiresAt: qrData.expirationDate,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
