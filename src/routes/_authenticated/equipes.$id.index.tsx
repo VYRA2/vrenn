@@ -1,12 +1,17 @@
+bash
+
+cd /home/claude/vrenn && cat src/routes/_authenticated/equipes.\$id.index.tsx
+Saída
+
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target,
-  Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy,
+  Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
@@ -38,6 +43,8 @@ function EquipeProfile() {
   const { user } = Route.useRouteContext();
   const { id } = Route.useParams();
   const [tab, setTab] = useState<Tab>("resumo");
+  const [entrando, setEntrando] = useState<string | null>(null);
+  const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
     queryKey: ["equipe", id],
@@ -71,6 +78,21 @@ function EquipeProfile() {
     },
   });
 
+  const { data: participacoes } = useQuery({
+    queryKey: ["equipe-desafios-participacoes", id, user.id],
+    queryFn: async () => {
+      if (!desafios?.length) return [];
+      const ids = desafios.map((d: any) => d.id);
+      const { data } = await (supabase as any)
+        .from("desafio_equipe_participantes")
+        .select("desafio_id, status")
+        .in("desafio_id", ids)
+        .eq("user_id", user.id);
+      return data ?? [];
+    },
+    enabled: !!desafios?.length,
+  });
+
   if (loadingEquipe) {
     return (
       <main className="min-h-screen bg-background px-5 pt-6">
@@ -97,6 +119,63 @@ function EquipeProfile() {
   const ativos = (desafios ?? []).filter((d: any) => d.status === "ativo").length;
   const concluidos = (desafios ?? []).filter((d: any) => d.status === "concluido").length;
   const souAdmin = (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "admin");
+
+  function jaParticipa(desafioId: string) {
+    return (participacoes ?? []).some((p: any) => p.desafio_id === desafioId);
+  }
+
+  async function entrarNoDesafio(desafio: any) {
+    if (jaParticipa(desafio.id)) return;
+    if (desafio.status !== "ativo") return toast.error("Este desafio não está mais aberto para entradas.");
+    setEntrando(desafio.id);
+    try {
+      const entrada = Number(desafio.valor_entrada ?? 0);
+
+      // 1. Verifica e trava saldo se houver valor de entrada
+      if (entrada > 0) {
+        const { data: wallet } = await (supabase as any)
+          .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
+        const saldo = Number(wallet?.balance ?? 0);
+        if (saldo < entrada) {
+          toast.error(`Saldo insuficiente. Você tem ${fmtMoeda(saldo)} e a entrada é ${fmtMoeda(entrada)}.`);
+          setEntrando(null);
+          return;
+        }
+        const { error: lockErr } = await (supabase as any).from("wallets").update({
+          balance: saldo - entrada,
+          locked_balance: Number(wallet?.locked_balance ?? 0) + entrada,
+        }).eq("user_id", user.id);
+        if (lockErr) throw new Error(lockErr.message);
+      }
+
+      // 2. Insere participação
+      const { error: insErr } = await (supabase as any).from("desafio_equipe_participantes").insert({
+        desafio_id: desafio.id,
+        user_id: user.id,
+        status: "em_andamento",
+        progresso: 0,
+      });
+      if (insErr) {
+        // Desfaz o lock se insert falhou
+        if (entrada > 0) {
+          const { data: wallet } = await (supabase as any)
+            .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
+          await (supabase as any).from("wallets").update({
+            balance: Number(wallet?.balance ?? 0) + entrada,
+            locked_balance: Math.max(0, Number(wallet?.locked_balance ?? 0) - entrada),
+          }).eq("user_id", user.id);
+        }
+        throw new Error(insErr.message);
+      }
+
+      toast.success("Você entrou no desafio! Valor em custódia: " + (entrada > 0 ? fmtMoeda(entrada) : "sem valor"));
+      qc.invalidateQueries({ queryKey: ["equipe-desafios-participacoes", id, user.id] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao entrar no desafio");
+    } finally {
+      setEntrando(null);
+    }
+  }
 
   async function convidar() {
     const link = `${window.location.origin}/equipes/${id}`;
@@ -275,7 +354,10 @@ function EquipeProfile() {
                 Nenhum desafio criado ainda.
               </div>
             ) : (
-              (desafios ?? []).map((d: any) => (
+              (desafios ?? []).map((d: any) => {
+                const participa = jaParticipa(d.id);
+                const carregando = entrando === d.id;
+                return (
                 <div key={d.id} className="rounded-2xl border border-border bg-card p-4">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold">{d.titulo}</h4>
@@ -287,8 +369,27 @@ function EquipeProfile() {
                     <span>{d.duracao_dias} dias</span>
                     <span>{fmtData(d.data_inicio)}</span>
                   </div>
+                  {d.status === "ativo" && (
+                    <div className="mt-3">
+                      {participa ? (
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
+                          <CheckCircle2 size={14} /> Você já está participando
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => entrarNoDesafio(d)}
+                          disabled={carregando}
+                          className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+                        >
+                          {carregando ? <Loader2 size={13} className="animate-spin" /> : <LogIn size={13} />}
+                          {carregando ? "Entrando…" : `Entrar — ${fmtMoeda(Number(d.valor_entrada ?? 0))}`}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
