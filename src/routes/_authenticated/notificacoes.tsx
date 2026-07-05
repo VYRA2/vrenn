@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { toast } from "sonner";
-import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target } from "lucide-react";
+import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target, Swords } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: Notificacoes,
@@ -20,6 +20,7 @@ const TYPE_STYLES: Record<string, { icon: any; color: string; bg: string }> = {
   checkin_questionado:   { icon: AlertCircle,   color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
   arbitro_aceitou:       { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
   arbitro_recusou:       { icon: AlertCircle,   color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
+  convite_duelo:         { icon: Swords,        color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
 };
 
 function Notificacoes() {
@@ -91,8 +92,10 @@ function Notificacoes() {
                 const style = TYPE_STYLES[n.tipo] ?? { icon: Bell, color: "#A855F7", bg: "rgba(168,85,247,0.15)" };
                 const Icon = style.icon;
                 const isConvite = n.tipo === "convite_arbitro" && !n.lida;
-                return (
-                  <div key={n.id} className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
+                const isDueloConvite = n.tipo === "convite_duelo";
+
+                const card = (
+                  <div className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: style.bg, color: style.color }}>
                         <Icon size={18} />
@@ -110,6 +113,14 @@ function Notificacoes() {
                       </div>
                     )}
                   </div>
+                );
+
+                return isDueloConvite ? (
+                  <Link key={n.id} to="/duelo-convite/$id" params={{ id: n.link_id }} className="block">
+                    {card}
+                  </Link>
+                ) : (
+                  <div key={n.id}>{card}</div>
                 );
               })}
             </div>
