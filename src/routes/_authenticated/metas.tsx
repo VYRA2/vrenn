@@ -24,7 +24,7 @@ function Metas() {
   const { data: metas, isLoading } = useQuery({
     queryKey: ["my-metas-list", user.id],
     queryFn: async () => {
-      const { data } = await supabase.from("metas").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      const { data } = await supabase.from("metas").select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false });
       return data ?? [];
     },
   });
