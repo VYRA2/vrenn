@@ -41,7 +41,7 @@ function DepositPix() {
       setCpfSalvo(true);
 
       const { data: session } = await supabase.auth.getSession();
-Só isso — 3 linhas inseridas. O resto do arquivo fica igual. Qual prefere fazer?Quer ser notificado quando Claude responder?
+
       const token = session.session?.access_token;
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-payment`, {
         method: "POST",
