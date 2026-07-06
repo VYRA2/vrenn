@@ -171,6 +171,44 @@ export type Database = {
           },
         ]
       }
+      desafio_equipe_participantes: {
+        Row: {
+          created_at: string
+          desafio_id: string
+          id: string
+          progresso: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          desafio_id: string
+          id?: string
+          progresso?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          desafio_id?: string
+          id?: string
+          progresso?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desafio_equipe_participantes_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafios_equipe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       desafios_equipe: {
         Row: {
           categoria: string
@@ -183,6 +221,7 @@ export type Database = {
           equipe_id: string
           id: string
           premiacao: string | null
+          premio_acumulado: number
           regras: Json
           status: string
           titulo: string
@@ -199,6 +238,7 @@ export type Database = {
           equipe_id: string
           id?: string
           premiacao?: string | null
+          premio_acumulado?: number
           regras?: Json
           status?: string
           titulo: string
@@ -215,6 +255,7 @@ export type Database = {
           equipe_id?: string
           id?: string
           premiacao?: string | null
+          premio_acumulado?: number
           regras?: Json
           status?: string
           titulo?: string
@@ -232,7 +273,6 @@ export type Database = {
       }
       duelos: {
         Row: {
-          aposta_creditos: number | null
           categoria: string | null
           challenger_id: string
           created_at: string
@@ -244,10 +284,10 @@ export type Database = {
           progresso_opponent: number | null
           status: string
           titulo: string
+          valor_custodia: number | null
           winner_id: string | null
         }
         Insert: {
-          aposta_creditos?: number | null
           categoria?: string | null
           challenger_id: string
           created_at?: string
@@ -259,10 +299,10 @@ export type Database = {
           progresso_opponent?: number | null
           status?: string
           titulo: string
+          valor_custodia?: number | null
           winner_id?: string | null
         }
         Update: {
-          aposta_creditos?: number | null
           categoria?: string | null
           challenger_id?: string
           created_at?: string
@@ -274,6 +314,7 @@ export type Database = {
           progresso_opponent?: number | null
           status?: string
           titulo?: string
+          valor_custodia?: number | null
           winner_id?: string | null
         }
         Relationships: [
@@ -382,6 +423,30 @@ export type Database = {
           following_id?: string
           id?: string
           status?: string
+        }
+        Relationships: []
+      }
+      fundo_temporada: {
+        Row: {
+          data_inicio: string
+          id: string
+          meta_valor: number
+          updated_at: string
+          valor_acumulado: number
+        }
+        Insert: {
+          data_inicio?: string
+          id?: string
+          meta_valor?: number
+          updated_at?: string
+          valor_acumulado?: number
+        }
+        Update: {
+          data_inicio?: string
+          id?: string
+          meta_valor?: number
+          updated_at?: string
+          valor_acumulado?: number
         }
         Relationships: []
       }
