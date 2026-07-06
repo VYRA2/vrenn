@@ -29,6 +29,7 @@ import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil_.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
+import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
 import { Route as AuthenticatedEquipesIdIndexRouteImport } from './routes/_authenticated/equipes.$id.index'
 import { Route as AuthenticatedWalletWithdrawSuccessRouteImport } from './routes/_authenticated/wallet.withdraw.success'
@@ -142,6 +143,12 @@ const AuthenticatedEquipesNovaRoute =
     path: '/equipes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDueloConviteIdRoute =
+  AuthenticatedDueloConviteIdRouteImport.update({
+    id: '/duelo-convite/$id',
+    path: '/duelo-convite/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedWalletWithdrawIndexRoute =
   AuthenticatedWalletWithdrawIndexRouteImport.update({
     id: '/wallet/withdraw/',
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
@@ -220,6 +228,7 @@ export interface FileRoutesByTo {
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
@@ -249,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
   '/_authenticated/perfil_/editar': typeof AuthenticatedPerfilEditarRoute
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/nova-meta'
     | '/perfil'
     | '/ranking'
+    | '/duelo-convite/$id'
     | '/equipes/nova'
     | '/meta/$id'
     | '/perfil/editar'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/nova-meta'
     | '/perfil'
     | '/ranking'
+    | '/duelo-convite/$id'
     | '/equipes/nova'
     | '/meta/$id'
     | '/perfil/editar'
@@ -333,6 +345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nova-meta'
     | '/_authenticated/perfil'
     | '/_authenticated/ranking'
+    | '/_authenticated/duelo-convite/$id'
     | '/_authenticated/equipes/nova'
     | '/_authenticated/meta/$id'
     | '/_authenticated/perfil_/editar'
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/duelo-convite/$id': {
+      id: '/_authenticated/duelo-convite/$id'
+      path: '/duelo-convite/$id'
+      fullPath: '/duelo-convite/$id'
+      preLoaderRoute: typeof AuthenticatedDueloConviteIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/wallet/withdraw/': {
       id: '/_authenticated/wallet/withdraw/'
       path: '/wallet/withdraw'
@@ -552,6 +572,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedDueloConviteIdRoute: typeof AuthenticatedDueloConviteIdRoute
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
   AuthenticatedPerfilEditarRoute: typeof AuthenticatedPerfilEditarRoute
@@ -578,6 +599,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedDueloConviteIdRoute: AuthenticatedDueloConviteIdRoute,
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
   AuthenticatedPerfilEditarRoute: AuthenticatedPerfilEditarRoute,
@@ -605,13 +627,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
