@@ -1,7 +1,3 @@
-bash
-
-cd /home/claude/vrenn && cat src/routes/_authenticated/equipes.\$id.index.tsx
-Saída
 
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
