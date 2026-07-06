@@ -189,7 +189,7 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
           else throw new Error("Oponente não encontrado");
         }
       }
-      const { data: duelo, error } = await supabase.from("duelos").insert({
+      const { data: duelo, error } = await (supabase as any).from("duelos").insert({
         challenger_id: userId,
         opponent_id: opponentId,
         opponent_email: opponentEmail,
