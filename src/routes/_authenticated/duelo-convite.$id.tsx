@@ -80,7 +80,7 @@ function DueloConvite() {
             <Calendar size={18} className="text-primary-light" />
             <div>
               <p className="text-[11px] text-muted-foreground">Prazo</p>
-              <p className="text-sm font-semibold">{new Date(duelo.prazo).toLocaleDateString("pt-BR")}</p>
+              <p className="text-sm font-semibold">{duelo.prazo ? new Date(duelo.prazo).toLocaleDateString("pt-BR") : "—"}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
