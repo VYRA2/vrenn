@@ -52,20 +52,45 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
     fileRef.current.click();
   }
 
+  async function compressImage(input: File): Promise<File> {
+    if (!input.type.startsWith("image")) return input;
+    try {
+      const bmp = await createImageBitmap(input);
+      const maxW = 1080;
+      const scale = Math.min(1, maxW / bmp.width);
+      const w = Math.round(bmp.width * scale);
+      const h = Math.round(bmp.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return input;
+      ctx.drawImage(bmp, 0, 0, w, h);
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85),
+      );
+      if (!blob) return input;
+      return new File([blob], input.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+    } catch {
+      return input;
+    }
+  }
+
   async function publish() {
     if (!file) return toast.error("Escolha uma foto ou vídeo");
     if (!metaId) return toast.error("Vincule a uma meta");
     setSaving(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
+      const finalFile = await compressImage(file);
+      const ext = finalFile.name.split(".").pop() || "jpg";
       const path = `${userId}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("posts").upload(path, file, { upsert: false });
+      const { error: upErr } = await supabase.storage.from("posts").upload(path, finalFile, { upsert: false, contentType: finalFile.type });
       if (upErr) throw upErr;
      const { data: signed, error: sErr } = await supabase.storage.from("posts").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
       if (sErr || !signed?.signedUrl) throw new Error(sErr?.message ?? "Não foi possível gerar o link da mídia. Tenta de novo.");
       const tags = (hashtags.trim() ? hashtags : suggested.join(" "))
         .split(/\s+/).map((t) => t.startsWith("#") ? t : `#${t}`).filter((t) => t.length > 1);
-      const tipo = file.type.startsWith("video") ? "video" : "foto";
+      const tipo = finalFile.type.startsWith("video") ? "video" : "foto";
       const { error } = await supabase.from("posts").insert({
         user_id: userId,
         meta_id: metaId,

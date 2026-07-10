@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { ArrowLeft, CreditCard, Info, Key, Lock, Upload, Wallet } from "lucide-react";
+import { ArrowLeft, ChevronDown, Check, CreditCard, Info, Key, Lock, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/wallet/withdraw/")({
   component: Withdraw,
@@ -102,20 +102,7 @@ function Withdraw() {
 
         <div>
           <label className="mb-2 block text-sm font-semibold">Tipo de chave PIX</label>
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3">
-            <Key size={16} className="text-primary-light" />
-            <select
-              value={pixType}
-              onChange={e => setPixType(e.target.value as PixType)}
-              className="flex-1 bg-transparent text-sm outline-none"
-            >
-              <option value="">Selecione o tipo de chave</option>
-              <option value="CPF">CPF</option>
-              <option value="EMAIL">E-mail</option>
-              <option value="PHONE">Telefone</option>
-              <option value="EVP">Chave Aleatória</option>
-            </select>
-          </div>
+          <PixTypeSelect value={pixType} onChange={setPixType} />
         </div>
 
         <div>
