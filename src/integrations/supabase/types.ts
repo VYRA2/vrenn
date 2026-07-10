@@ -41,6 +41,13 @@ export type Database = {
             referencedRelation: "metas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "apoios_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       arbitros: {
@@ -84,6 +91,13 @@ export type Database = {
             columns: ["meta_id"]
             isOneToOne: false
             referencedRelation: "metas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arbitros_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_public"
             referencedColumns: ["id"]
           },
         ]
@@ -166,6 +180,13 @@ export type Database = {
             columns: ["meta_id"]
             isOneToOne: false
             referencedRelation: "metas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_public"
             referencedColumns: ["id"]
           },
           {
@@ -734,6 +755,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "posts_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "posts_user_id_profiles_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -903,6 +931,13 @@ export type Database = {
             referencedRelation: "metas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "transactions_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_searches: {
@@ -1029,12 +1064,66 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      metas_public: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          descricao: string | null
+          foto_capa_url: string | null
+          id: string | null
+          prazo: string | null
+          progresso: number | null
+          status: string | null
+          titulo: string | null
+          user_id: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          foto_capa_url?: string | null
+          id?: string | null
+          prazo?: string | null
+          progresso?: number | null
+          status?: string | null
+          titulo?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          foto_capa_url?: string | null
+          id?: string | null
+          prazo?: string | null
+          progresso?: number | null
+          status?: string | null
+          titulo?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       distancia_metros: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
+      }
+      duelo_respond: {
+        Args: { _accept: boolean; _duelo_id: string }
+        Returns: undefined
+      }
+      duelo_update_progresso: {
+        Args: { _duelo_id: string; _progresso: number }
+        Returns: undefined
       }
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
