@@ -78,7 +78,17 @@ function MetaDetail() {
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
           <Link to="/feed" className="rounded-full p-2 hover:bg-card"><ArrowLeft size={20} /></Link>
           <h1 className="flex-1 text-base font-bold truncate text-center">Minha Meta</h1>
-          <div className="w-8" />
+          {meta && meta.user_id === user.id && meta.status === "em_andamento" ? (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="rounded-full p-2 text-muted-foreground hover:text-destructive hover:bg-card"
+              aria-label="Excluir meta"
+            >
+              <Trash2 size={18} />
+            </button>
+          ) : (
+            <div className="w-8" />
+          )}
         </div>
       </header>
 
