@@ -39,6 +39,32 @@ function Perfil() {
     },
   });
 
+  const { data: profileStats } = useQuery({
+    queryKey: ["profile-stats", user.id],
+    queryFn: async () => {
+      const [postsRes, commentsRes, seguidoresRes, seguindoRes, myPostsRes] = await Promise.all([
+        supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("post_comments").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id).eq("status", "aceito"),
+        supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id).eq("status", "aceito"),
+        supabase.from("posts").select("id").eq("user_id", user.id),
+      ]);
+      const postIds = (myPostsRes.data ?? []).map((p: any) => p.id);
+      let curtidasRecebidas = 0;
+      if (postIds.length) {
+        const { count } = await supabase.from("post_likes").select("*", { count: "exact", head: true }).in("post_id", postIds);
+        curtidasRecebidas = count ?? 0;
+      }
+      return {
+        publicacoes: postsRes.count ?? 0,
+        comentarios: commentsRes.count ?? 0,
+        curtidasRecebidas,
+        seguidores: seguidoresRes.count ?? 0,
+        seguindo: seguindoRes.count ?? 0,
+      };
+    },
+  });
+
   // Detect auto-generated username (handle_new_user appends first 4 chars of UUID)
   const autoSuffix = user.id.replace(/-/g, "").slice(0, 4);
   const needsUsername = !!profile && (!profile.username || profile.username.endsWith(autoSuffix));
