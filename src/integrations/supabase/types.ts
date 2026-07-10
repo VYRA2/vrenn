@@ -127,32 +127,38 @@ export type Database = {
         Row: {
           created_at: string
           data: string
+          dia: string | null
           foto_url: string | null
           id: string
           mensagem: string | null
           meta_id: string
           user_id: string
           validado: boolean
+          wearable_activity_id: string | null
         }
         Insert: {
           created_at?: string
           data?: string
+          dia?: string | null
           foto_url?: string | null
           id?: string
           mensagem?: string | null
           meta_id: string
           user_id: string
           validado?: boolean
+          wearable_activity_id?: string | null
         }
         Update: {
           created_at?: string
           data?: string
+          dia?: string | null
           foto_url?: string | null
           id?: string
           mensagem?: string | null
           meta_id?: string
           user_id?: string
           validado?: boolean
+          wearable_activity_id?: string | null
         }
         Relationships: [
           {
@@ -450,6 +456,39 @@ export type Database = {
         }
         Relationships: []
       }
+      locais_validacao: {
+        Row: {
+          created_at: string
+          criado_por: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nome: string
+          qrcode_token: string
+          raio_geofence_metros: number
+        }
+        Insert: {
+          created_at?: string
+          criado_por: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome: string
+          qrcode_token?: string
+          raio_geofence_metros?: number
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+          qrcode_token?: string
+          raio_geofence_metros?: number
+        }
+        Relationships: []
+      }
       metas: {
         Row: {
           categoria: string
@@ -457,14 +496,17 @@ export type Database = {
           descricao: string | null
           foto_capa_url: string | null
           id: string
+          local_id: string | null
           motivacao: string | null
           prazo: string | null
           progresso: number
           status: string
+          tipo_validacao: string
           titulo: string
           user_id: string
           valor_custodia: number | null
           valor_destino: string | null
+          wearable_criterio: Json | null
         }
         Insert: {
           categoria: string
@@ -472,14 +514,17 @@ export type Database = {
           descricao?: string | null
           foto_capa_url?: string | null
           id?: string
+          local_id?: string | null
           motivacao?: string | null
           prazo?: string | null
           progresso?: number
           status?: string
+          tipo_validacao?: string
           titulo: string
           user_id: string
           valor_custodia?: number | null
           valor_destino?: string | null
+          wearable_criterio?: Json | null
         }
         Update: {
           categoria?: string
@@ -487,16 +532,26 @@ export type Database = {
           descricao?: string | null
           foto_capa_url?: string | null
           id?: string
+          local_id?: string | null
           motivacao?: string | null
           prazo?: string | null
           progresso?: number
           status?: string
+          tipo_validacao?: string
           titulo?: string
           user_id?: string
           valor_custodia?: number | null
           valor_destino?: string | null
+          wearable_criterio?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "metas_local_id_fkey"
+            columns: ["local_id"]
+            isOneToOne: false
+            referencedRelation: "locais_validacao"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "metas_user_id_profiles_fkey"
             columns: ["user_id"]
@@ -898,6 +953,33 @@ export type Database = {
         }
         Relationships: []
       }
+      wearable_connections: {
+        Row: {
+          connected_at: string
+          id: string
+          open_wearables_user_id: string
+          provider: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string
+          id?: string
+          open_wearables_user_id: string
+          provider?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connected_at?: string
+          id?: string
+          open_wearables_user_id?: string
+          provider?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       withdrawal_requests: {
         Row: {
           admin_note: string | null
@@ -950,6 +1032,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      distancia_metros: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
       get_meta_valor_destino: { Args: { _meta_id: string }; Returns: string }
