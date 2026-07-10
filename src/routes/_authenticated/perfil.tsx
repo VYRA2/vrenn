@@ -212,11 +212,11 @@ function Perfil() {
             <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver relatório</button>
           </div>
           <div className="grid grid-cols-5 gap-2">
-            <ActivityTile icon={<CheckCircle2 size={20} />} value={metas?.length ?? 0} label="Publicações" color="#A855F7" />
-            <ActivityTile icon={<MessageCircle size={20} />} value={0} label="Comentários" color="#22D3A1" />
-            <ActivityTile icon={<Heart size={20} />} value={0} label="Curtidas recebidas" color="#F59E0B" />
-            <ActivityTile icon={<Users size={20} />} value={0} label="Seguidores" color="#38BDF8" />
-            <ActivityTile icon={<TrendingUp size={20} />} value={0} label="Seguindo" color="#A855F7" />
+            <ActivityTile as={Link} to="/perfil/publicacoes" icon={<CheckCircle2 size={20} />} value={profileStats?.publicacoes ?? 0} label="Publicações" color="#A855F7" />
+            <ActivityTile icon={<MessageCircle size={20} />} value={profileStats?.comentarios ?? 0} label="Comentários" color="#22D3A1" />
+            <ActivityTile icon={<Heart size={20} />} value={profileStats?.curtidasRecebidas ?? 0} label="Curtidas recebidas" color="#F59E0B" />
+            <ActivityTile as={Link} to="/perfil/seguidores" icon={<Users size={20} />} value={profileStats?.seguidores ?? 0} label="Seguidores" color="#38BDF8" />
+            <ActivityTile as={Link} to="/perfil/seguindo" icon={<TrendingUp size={20} />} value={profileStats?.seguindo ?? 0} label="Seguindo" color="#A855F7" />
           </div>
         </section>
 
