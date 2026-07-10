@@ -147,3 +147,66 @@ function Withdraw() {
     </main>
   );
 }
+
+const PIX_OPTIONS: { value: PixType; label: string }[] = [
+  { value: "CPF", label: "CPF" },
+  { value: "EMAIL", label: "E-mail" },
+  { value: "PHONE", label: "Telefone" },
+  { value: "EVP", label: "Chave Aleatória" },
+];
+
+function PixTypeSelect({ value, onChange }: { value: PixType | ""; onChange: (v: PixType) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = PIX_OPTIONS.find((o) => o.value === value);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-left"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <Key size={16} className="text-primary-light" />
+        <span className={`flex-1 text-sm ${selected ? "text-foreground" : "text-muted-foreground"}`}>
+          {selected ? selected.label : "Selecione o tipo de chave"}
+        </span>
+        <ChevronDown size={16} className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+        >
+          {PIX_OPTIONS.map((o) => {
+            const active = o.value === value;
+            return (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => { onChange(o.value); setOpen(false); }}
+                  className={`flex w-full items-center gap-2 px-4 py-3 text-sm transition-colors ${active ? "bg-primary/15 text-primary-light" : "text-foreground hover:bg-background"}`}
+                  role="option"
+                  aria-selected={active}
+                >
+                  <span className="flex-1 text-left">{o.label}</span>
+                  {active && <Check size={16} className="text-primary-light" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
