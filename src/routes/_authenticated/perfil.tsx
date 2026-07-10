@@ -39,6 +39,32 @@ function Perfil() {
     },
   });
 
+  const { data: profileStats } = useQuery({
+    queryKey: ["profile-stats", user.id],
+    queryFn: async () => {
+      const [postsRes, commentsRes, seguidoresRes, seguindoRes, myPostsRes] = await Promise.all([
+        supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("post_comments").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id).eq("status", "aceito"),
+        supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id).eq("status", "aceito"),
+        supabase.from("posts").select("id").eq("user_id", user.id),
+      ]);
+      const postIds = (myPostsRes.data ?? []).map((p: any) => p.id);
+      let curtidasRecebidas = 0;
+      if (postIds.length) {
+        const { count } = await supabase.from("post_likes").select("*", { count: "exact", head: true }).in("post_id", postIds);
+        curtidasRecebidas = count ?? 0;
+      }
+      return {
+        publicacoes: postsRes.count ?? 0,
+        comentarios: commentsRes.count ?? 0,
+        curtidasRecebidas,
+        seguidores: seguidoresRes.count ?? 0,
+        seguindo: seguindoRes.count ?? 0,
+      };
+    },
+  });
+
   // Detect auto-generated username (handle_new_user appends first 4 chars of UUID)
   const autoSuffix = user.id.replace(/-/g, "").slice(0, 4);
   const needsUsername = !!profile && (!profile.username || profile.username.endsWith(autoSuffix));
@@ -186,11 +212,11 @@ function Perfil() {
             <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver relatório</button>
           </div>
           <div className="grid grid-cols-5 gap-2">
-            <ActivityTile icon={<CheckCircle2 size={20} />} value={metas?.length ?? 0} label="Publicações" color="#A855F7" />
-            <ActivityTile icon={<MessageCircle size={20} />} value={0} label="Comentários" color="#22D3A1" />
-            <ActivityTile icon={<Heart size={20} />} value={0} label="Curtidas recebidas" color="#F59E0B" />
-            <ActivityTile icon={<Users size={20} />} value={0} label="Seguidores" color="#38BDF8" />
-            <ActivityTile icon={<TrendingUp size={20} />} value={0} label="Seguindo" color="#A855F7" />
+            <Link to="/perfil/publicacoes" className="block"><ActivityTile icon={<CheckCircle2 size={20} />} value={profileStats?.publicacoes ?? 0} label="Publicações" color="#A855F7" /></Link>
+            <ActivityTile icon={<MessageCircle size={20} />} value={profileStats?.comentarios ?? 0} label="Comentários" color="#22D3A1" />
+            <ActivityTile icon={<Heart size={20} />} value={profileStats?.curtidasRecebidas ?? 0} label="Curtidas recebidas" color="#F59E0B" />
+            <Link to="/perfil/seguidores" className="block"><ActivityTile icon={<Users size={20} />} value={profileStats?.seguidores ?? 0} label="Seguidores" color="#38BDF8" /></Link>
+            <Link to="/perfil/seguindo" className="block"><ActivityTile icon={<TrendingUp size={20} />} value={profileStats?.seguindo ?? 0} label="Seguindo" color="#A855F7" /></Link>
           </div>
         </section>
 

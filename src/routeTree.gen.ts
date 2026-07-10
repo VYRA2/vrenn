@@ -27,6 +27,9 @@ import { Route as AuthenticatedWalletIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil_.editar'
+import { Route as AuthenticatedPerfilSeguindoRouteImport } from './routes/_authenticated/perfil.seguindo'
+import { Route as AuthenticatedPerfilSeguidoresRouteImport } from './routes/_authenticated/perfil.seguidores'
+import { Route as AuthenticatedPerfilPublicacoesRouteImport } from './routes/_authenticated/perfil.publicacoes'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
@@ -132,6 +135,24 @@ const AuthenticatedPerfilEditarRoute =
     path: '/perfil/editar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPerfilSeguindoRoute =
+  AuthenticatedPerfilSeguindoRouteImport.update({
+    id: '/seguindo',
+    path: '/seguindo',
+    getParentRoute: () => AuthenticatedPerfilRoute,
+  } as any)
+const AuthenticatedPerfilSeguidoresRoute =
+  AuthenticatedPerfilSeguidoresRouteImport.update({
+    id: '/seguidores',
+    path: '/seguidores',
+    getParentRoute: () => AuthenticatedPerfilRoute,
+  } as any)
+const AuthenticatedPerfilPublicacoesRoute =
+  AuthenticatedPerfilPublicacoesRouteImport.update({
+    id: '/publicacoes',
+    path: '/publicacoes',
+    getParentRoute: () => AuthenticatedPerfilRoute,
+  } as any)
 const AuthenticatedMetaIdRoute = AuthenticatedMetaIdRouteImport.update({
   id: '/meta/$id',
   path: '/meta/$id',
@@ -198,11 +219,14 @@ export interface FileRoutesByFullPath {
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
-  '/perfil': typeof AuthenticatedPerfilRoute
+  '/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/ranking': typeof AuthenticatedRankingRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
+  '/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
+  '/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
+  '/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
@@ -226,11 +250,14 @@ export interface FileRoutesByTo {
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
-  '/perfil': typeof AuthenticatedPerfilRoute
+  '/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/ranking': typeof AuthenticatedRankingRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
+  '/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
+  '/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
+  '/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
@@ -256,11 +283,14 @@ export interface FileRoutesById {
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
-  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRouteWithChildren
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
+  '/_authenticated/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
+  '/_authenticated/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
+  '/_authenticated/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
   '/_authenticated/perfil_/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
@@ -291,6 +321,9 @@ export interface FileRouteTypes {
     | '/duelo-convite/$id'
     | '/equipes/nova'
     | '/meta/$id'
+    | '/perfil/publicacoes'
+    | '/perfil/seguidores'
+    | '/perfil/seguindo'
     | '/perfil/editar'
     | '/u/$username'
     | '/equipes/'
@@ -319,6 +352,9 @@ export interface FileRouteTypes {
     | '/duelo-convite/$id'
     | '/equipes/nova'
     | '/meta/$id'
+    | '/perfil/publicacoes'
+    | '/perfil/seguidores'
+    | '/perfil/seguindo'
     | '/perfil/editar'
     | '/u/$username'
     | '/equipes'
@@ -348,6 +384,9 @@ export interface FileRouteTypes {
     | '/_authenticated/duelo-convite/$id'
     | '/_authenticated/equipes/nova'
     | '/_authenticated/meta/$id'
+    | '/_authenticated/perfil/publicacoes'
+    | '/_authenticated/perfil/seguidores'
+    | '/_authenticated/perfil/seguindo'
     | '/_authenticated/perfil_/editar'
     | '/_authenticated/u/$username'
     | '/_authenticated/equipes/'
@@ -494,6 +533,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilEditarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/perfil/seguindo': {
+      id: '/_authenticated/perfil/seguindo'
+      path: '/seguindo'
+      fullPath: '/perfil/seguindo'
+      preLoaderRoute: typeof AuthenticatedPerfilSeguindoRouteImport
+      parentRoute: typeof AuthenticatedPerfilRoute
+    }
+    '/_authenticated/perfil/seguidores': {
+      id: '/_authenticated/perfil/seguidores'
+      path: '/seguidores'
+      fullPath: '/perfil/seguidores'
+      preLoaderRoute: typeof AuthenticatedPerfilSeguidoresRouteImport
+      parentRoute: typeof AuthenticatedPerfilRoute
+    }
+    '/_authenticated/perfil/publicacoes': {
+      id: '/_authenticated/perfil/publicacoes'
+      path: '/publicacoes'
+      fullPath: '/perfil/publicacoes'
+      preLoaderRoute: typeof AuthenticatedPerfilPublicacoesRouteImport
+      parentRoute: typeof AuthenticatedPerfilRoute
+    }
     '/_authenticated/meta/$id': {
       id: '/_authenticated/meta/$id'
       path: '/meta/$id'
@@ -560,6 +620,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPerfilRouteChildren {
+  AuthenticatedPerfilPublicacoesRoute: typeof AuthenticatedPerfilPublicacoesRoute
+  AuthenticatedPerfilSeguidoresRoute: typeof AuthenticatedPerfilSeguidoresRoute
+  AuthenticatedPerfilSeguindoRoute: typeof AuthenticatedPerfilSeguindoRoute
+}
+
+const AuthenticatedPerfilRouteChildren: AuthenticatedPerfilRouteChildren = {
+  AuthenticatedPerfilPublicacoesRoute: AuthenticatedPerfilPublicacoesRoute,
+  AuthenticatedPerfilSeguidoresRoute: AuthenticatedPerfilSeguidoresRoute,
+  AuthenticatedPerfilSeguindoRoute: AuthenticatedPerfilSeguindoRoute,
+}
+
+const AuthenticatedPerfilRouteWithChildren =
+  AuthenticatedPerfilRoute._addFileChildren(AuthenticatedPerfilRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -570,7 +645,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
-  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRouteWithChildren
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedDueloConviteIdRoute: typeof AuthenticatedDueloConviteIdRoute
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
@@ -597,7 +672,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
-  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRouteWithChildren,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedDueloConviteIdRoute: AuthenticatedDueloConviteIdRoute,
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,

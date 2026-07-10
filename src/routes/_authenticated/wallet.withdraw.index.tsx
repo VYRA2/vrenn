@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { ArrowLeft, CreditCard, Info, Key, Lock, Upload, Wallet } from "lucide-react";
+import { ArrowLeft, ChevronDown, Check, CreditCard, Info, Key, Lock, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/wallet/withdraw/")({
   component: Withdraw,
@@ -102,20 +102,7 @@ function Withdraw() {
 
         <div>
           <label className="mb-2 block text-sm font-semibold">Tipo de chave PIX</label>
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3">
-            <Key size={16} className="text-primary-light" />
-            <select
-              value={pixType}
-              onChange={e => setPixType(e.target.value as PixType)}
-              className="flex-1 bg-transparent text-sm outline-none"
-            >
-              <option value="">Selecione o tipo de chave</option>
-              <option value="CPF">CPF</option>
-              <option value="EMAIL">E-mail</option>
-              <option value="PHONE">Telefone</option>
-              <option value="EVP">Chave Aleatória</option>
-            </select>
-          </div>
+          <PixTypeSelect value={pixType} onChange={setPixType} />
         </div>
 
         <div>
@@ -158,5 +145,68 @@ function Withdraw() {
 
       <BottomNav />
     </main>
+  );
+}
+
+const PIX_OPTIONS: { value: PixType; label: string }[] = [
+  { value: "CPF", label: "CPF" },
+  { value: "EMAIL", label: "E-mail" },
+  { value: "PHONE", label: "Telefone" },
+  { value: "EVP", label: "Chave Aleatória" },
+];
+
+function PixTypeSelect({ value, onChange }: { value: PixType | ""; onChange: (v: PixType) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = PIX_OPTIONS.find((o) => o.value === value);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-left"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <Key size={16} className="text-primary-light" />
+        <span className={`flex-1 text-sm ${selected ? "text-foreground" : "text-muted-foreground"}`}>
+          {selected ? selected.label : "Selecione o tipo de chave"}
+        </span>
+        <ChevronDown size={16} className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+        >
+          {PIX_OPTIONS.map((o) => {
+            const active = o.value === value;
+            return (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => { onChange(o.value); setOpen(false); }}
+                  className={`flex w-full items-center gap-2 px-4 py-3 text-sm transition-colors ${active ? "bg-primary/15 text-primary-light" : "text-foreground hover:bg-background"}`}
+                  role="option"
+                  aria-selected={active}
+                >
+                  <span className="flex-1 text-left">{o.label}</span>
+                  {active && <Check size={16} className="text-primary-light" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -14,7 +14,7 @@ type Tab = "em_andamento" | "concluida" | "abandonada";
 const TABS: { id: Tab; label: string }[] = [
   { id: "em_andamento", label: "Em andamento" },
   { id: "concluida", label: "Concluídas" },
-  { id: "abandonada", label: "Abandonadas" },
+  { id: "abandonada", label: "Falhadas / Abandonadas" },
 ];
 
 function Metas() {

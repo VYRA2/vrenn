@@ -237,11 +237,11 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
       )}
 
       {post.media_url && (
-        <div className="relative mt-3 overflow-hidden rounded-xl">
+        <div className="relative mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-black">
           {isVideo ? (
-            <video src={post.media_url} controls playsInline className="w-full max-h-96 object-cover bg-black" />
+            <video src={post.media_url} controls playsInline className="h-full w-full object-cover object-center" />
           ) : (
-            <img src={post.media_url} className="w-full max-h-96 object-cover" alt="" />
+            <img src={post.media_url} className="h-full w-full object-cover object-center" alt="" />
           )}
           {m?.progresso != null && (
             <span className="absolute top-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-bold text-white">{m.progresso}%</span>

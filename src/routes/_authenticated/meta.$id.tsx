@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/meta/$id")({
   component: MetaDetail,
@@ -15,7 +15,9 @@ function MetaDetail() {
   const { id } = Route.useParams();
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [showCheckinModal, setShowCheckinModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const { data: meta, isLoading } = useQuery({
     queryKey: ["meta", id],
@@ -76,7 +78,17 @@ function MetaDetail() {
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
           <Link to="/feed" className="rounded-full p-2 hover:bg-card"><ArrowLeft size={20} /></Link>
           <h1 className="flex-1 text-base font-bold truncate text-center">Minha Meta</h1>
-          <div className="w-8" />
+          {meta && meta.user_id === user.id && meta.status === "em_andamento" ? (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="rounded-full p-2 text-muted-foreground hover:text-destructive hover:bg-card"
+              aria-label="Excluir meta"
+            >
+              <Trash2 size={18} />
+            </button>
+          ) : (
+            <div className="w-8" />
+          )}
         </div>
       </header>
 
@@ -183,7 +195,80 @@ function MetaDetail() {
           }}
         />
       )}
+
+      {showDeleteModal && (
+        <DeleteMetaModal
+          metaId={id}
+          createdAt={meta.created_at}
+          valorCustodia={Number(valorCustodia ?? 0)}
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={() => {
+            qc.invalidateQueries({ queryKey: ["my-metas-list"] });
+            qc.invalidateQueries({ queryKey: ["my-metas"] });
+            qc.invalidateQueries({ queryKey: ["wallet"] });
+            navigate({ to: "/metas" });
+          }}
+        />
+      )}
     </main>
+  );
+}
+
+function DeleteMetaModal({ metaId, createdAt, valorCustodia, onClose, onDeleted }: {
+  metaId: string; createdAt: string; valorCustodia: number; onClose: () => void; onDeleted: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const dias = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000);
+  const dentroPrazo = dias <= 7;
+  const temCustodia = valorCustodia > 0;
+
+  const mensagem = !temCustodia
+    ? "Tem certeza que deseja excluir esta meta? Essa ação não pode ser desfeita."
+    : dentroPrazo
+      ? "Você ainda está dentro do prazo de arrependimento (7 dias). O valor em custódia será devolvido integralmente à sua carteira."
+      : `Atenção: já se passaram mais de 7 dias. Se excluir agora, você perderá o valor em custódia (${valorCustodia.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}), que será redistribuído. Essa ação não pode ser desfeita.`;
+
+  const critico = temCustodia && !dentroPrazo;
+
+  async function confirmar() {
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("metas").delete().eq("id", metaId);
+      if (error) throw error;
+      toast.success("Meta excluída");
+      onDeleted();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao excluir meta");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${critico ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary-light"}`}>
+            {critico ? <AlertCircle size={20} /> : <Trash2 size={18} />}
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold">Excluir meta</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{mensagem}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-muted-foreground disabled:opacity-60">
+            Cancelar
+          </button>
+          <button
+            onClick={confirmar}
+            disabled={loading}
+            className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 ${critico ? "bg-destructive" : "bg-gradient-primary"}`}
+          >
+            {loading && <Loader2 size={14} className="animate-spin" />} Excluir
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
