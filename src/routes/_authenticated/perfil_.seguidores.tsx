@@ -16,16 +16,18 @@ function MeusSeguidores() {
   const { data: seguidores, isLoading } = useQuery({
     queryKey: ["meus-seguidores", user.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("follows")
-        .select("id, follower_id, profiles:follower_id (nome, username, avatar_url)")
-        .eq("following_id", user.id)
-        .eq("status", "aceito")
-        .order("created_at", { ascending: false });
-      return (data ?? []).map((f: any) => f.profiles).filter(Boolean);
-    },
-  });
-
+  const { data, error } = await supabase
+    .from("follows")
+    .select("id, follower_id, profiles!follows_follower_id_fkey (nome, username, avatar_url)")
+    .eq("following_id", user.id)
+    .eq("status", "aceito")
+    .order("created_at", { ascending: false });
+  if (error) console.error("seguidores error:", error);
+  return (data ?? []).map((f: any) => ({
+    ...(f.profiles ?? {}),
+    follower_id: f.follower_id,
+  })).filter((p: any) => p.username);
+},
   const filtrados = (seguidores ?? []).filter((p: any) => {
     if (!q.trim()) return true;
     const term = q.toLowerCase();
