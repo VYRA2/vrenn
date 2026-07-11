@@ -13,28 +13,30 @@ function MeusSeguidores() {
   const { user } = Route.useRouteContext();
   const [q, setQ] = useState("");
 
-  const { data: seguidores, isLoading } = useQuery({
+  const { data: seguidores = [], isLoading } = useQuery({
     queryKey: ["meus-seguidores", user.id],
     queryFn: async () => {
-  const { data: follows, error } = await supabase
-    .from("follows")
-    .select("follower_id")
-    .eq("following_id", user.id)
-    .eq("status", "aceito")
-    .order("created_at", { ascending: false });
+      const { data: follows, error } = await supabase
+        .from("follows")
+        .select("follower_id")
+        .eq("following_id", user.id)
+        .eq("status", "aceito")
+        .order("created_at", { ascending: false });
 
-  if (error || !follows?.length) return [];
+      if (error || !follows?.length) return [];
 
-  const ids = follows.map((f: any) => f.follower_id);
+      const ids = follows.map((f: any) => f.follower_id);
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("nome, username, avatar_url")
-    .in("id", ids);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("nome, username, avatar_url")
+        .in("id", ids);
 
-  return profiles ?? [];
-},
-  const filtrados = (seguidores ?? []).filter((p: any) => {
+      return profiles ?? [];
+    },
+  });
+
+  const filtrados = seguidores.filter((p: any) => {
     if (!q.trim()) return true;
     const term = q.toLowerCase();
     return p.nome?.toLowerCase().includes(term) || p.username?.toLowerCase().includes(term);
@@ -59,7 +61,7 @@ function MeusSeguidores() {
             />
           </div>
           <p className="mt-3 text-xs">
-            <span className="font-bold text-primary-light">{seguidores?.length ?? 0}</span>{" "}
+            <span className="font-bold text-primary-light">{seguidores.length}</span>{" "}
             <span className="text-muted-foreground">seguidores</span>
           </p>
         </div>
@@ -89,7 +91,6 @@ function MeusSeguidores() {
           </Link>
         ))}
       </div>
-
       <BottomNav />
     </main>
   );
