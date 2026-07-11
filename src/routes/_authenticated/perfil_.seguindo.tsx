@@ -13,28 +13,30 @@ function Seguindo() {
   const { user } = Route.useRouteContext();
   const [q, setQ] = useState("");
 
-  const { data: seguindo, isLoading } = useQuery({
+  const { data: seguindo = [], isLoading } = useQuery({
     queryKey: ["meus-seguindo", user.id],
-   queryFn: async () => {
-  const { data: follows, error } = await supabase
-    .from("follows")
-    .select("following_id")
-    .eq("follower_id", user.id)
-    .eq("status", "aceito")
-    .order("created_at", { ascending: false });
+    queryFn: async () => {
+      const { data: follows, error } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id)
+        .eq("status", "aceito")
+        .order("created_at", { ascending: false });
 
-  if (error || !follows?.length) return [];
+      if (error || !follows?.length) return [];
 
-  const ids = follows.map((f: any) => f.following_id);
+      const ids = follows.map((f: any) => f.following_id);
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("nome, username, avatar_url")
-    .in("id", ids);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("nome, username, avatar_url")
+        .in("id", ids);
 
-  return profiles ?? [];
-},
-  const filtrados = (seguindo ?? []).filter((p: any) => {
+      return profiles ?? [];
+    },
+  });
+
+  const filtrados = seguindo.filter((p: any) => {
     if (!q.trim()) return true;
     const term = q.toLowerCase();
     return p.nome?.toLowerCase().includes(term) || p.username?.toLowerCase().includes(term);
@@ -59,7 +61,7 @@ function Seguindo() {
             />
           </div>
           <p className="mt-3 text-xs">
-            <span className="font-bold text-primary-light">{seguindo?.length ?? 0}</span>{" "}
+            <span className="font-bold text-primary-light">{seguindo.length}</span>{" "}
             <span className="text-muted-foreground">seguindo</span>
           </p>
         </div>
@@ -90,7 +92,6 @@ function Seguindo() {
           </div>
         ))}
       </div>
-
       <BottomNav />
     </main>
   );
