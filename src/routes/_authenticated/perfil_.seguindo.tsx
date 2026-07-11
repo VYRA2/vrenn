@@ -15,20 +15,25 @@ function Seguindo() {
 
   const { data: seguindo, isLoading } = useQuery({
     queryKey: ["meus-seguindo", user.id],
-    queryFn: async () => {
-  const { data, error } = await supabase
+   queryFn: async () => {
+  const { data: follows, error } = await supabase
     .from("follows")
-    .select("id, following_id, profiles!follows_following_id_fkey (nome, username, avatar_url)")
+    .select("following_id")
     .eq("follower_id", user.id)
     .eq("status", "aceito")
     .order("created_at", { ascending: false });
-  if (error) console.error("seguindo error:", error);
-  return (data ?? []).map((f: any) => ({
-    ...(f.profiles ?? {}),
-    following_id: f.following_id,
-  })).filter((p: any) => p.username);
-},
 
+  if (error || !follows?.length) return [];
+
+  const ids = follows.map((f: any) => f.following_id);
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("nome, username, avatar_url")
+    .in("id", ids);
+
+  return profiles ?? [];
+},
   const filtrados = (seguindo ?? []).filter((p: any) => {
     if (!q.trim()) return true;
     const term = q.toLowerCase();
