@@ -16,15 +16,18 @@ function Seguindo() {
   const { data: seguindo, isLoading } = useQuery({
     queryKey: ["meus-seguindo", user.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("follows")
-        .select("id, following_id, profiles:following_id (nome, username, avatar_url)")
-        .eq("follower_id", user.id)
-        .eq("status", "aceito")
-        .order("created_at", { ascending: false });
-      return (data ?? []).map((f: any) => f.profiles).filter(Boolean);
-    },
-  });
+  const { data, error } = await supabase
+    .from("follows")
+    .select("id, following_id, profiles!follows_following_id_fkey (nome, username, avatar_url)")
+    .eq("follower_id", user.id)
+    .eq("status", "aceito")
+    .order("created_at", { ascending: false });
+  if (error) console.error("seguindo error:", error);
+  return (data ?? []).map((f: any) => ({
+    ...(f.profiles ?? {}),
+    following_id: f.following_id,
+  })).filter((p: any) => p.username);
+},
 
   const filtrados = (seguindo ?? []).filter((p: any) => {
     if (!q.trim()) return true;
