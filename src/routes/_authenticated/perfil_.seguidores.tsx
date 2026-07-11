@@ -16,17 +16,23 @@ function MeusSeguidores() {
   const { data: seguidores, isLoading } = useQuery({
     queryKey: ["meus-seguidores", user.id],
     queryFn: async () => {
-  const { data, error } = await supabase
+  const { data: follows, error } = await supabase
     .from("follows")
-    .select("id, follower_id, profiles!follows_follower_id_fkey (nome, username, avatar_url)")
+    .select("follower_id")
     .eq("following_id", user.id)
     .eq("status", "aceito")
     .order("created_at", { ascending: false });
-  if (error) console.error("seguidores error:", error);
-  return (data ?? []).map((f: any) => ({
-    ...(f.profiles ?? {}),
-    follower_id: f.follower_id,
-  })).filter((p: any) => p.username);
+
+  if (error || !follows?.length) return [];
+
+  const ids = follows.map((f: any) => f.follower_id);
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("nome, username, avatar_url")
+    .in("id", ids);
+
+  return profiles ?? [];
 },
   const filtrados = (seguidores ?? []).filter((p: any) => {
     if (!q.trim()) return true;
