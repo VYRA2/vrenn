@@ -148,6 +148,8 @@ function Feed() {
 
 function PostCard({ post, userId, onChange }: { post: any; userId: string; onChange: () => void }) {
   const [showComments, setShowComments] = useState(false);
+  const [showMedia, setShowMedia] = useState(false);
+  const navigate = useNavigate();
 
   const p = post.profiles;
   const m = post.metas;
