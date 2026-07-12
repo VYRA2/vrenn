@@ -189,14 +189,65 @@ function EquipeProfile() {
     }
   }
 
+  const souCriador = equipe.criador_id === user.id;
+  const souMembro = (membros ?? []).some((m: any) => m.user_id === user.id);
+
+  async function salvarEdicao(patch: { nome?: string; descricao?: string; avatar_url?: string; categoria?: string }) {
+    setBusy(true);
+    const { error } = await (supabase as any).from("equipes").update(patch).eq("id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Equipe atualizada");
+    setShowEdit(false);
+    qc.invalidateQueries({ queryKey: ["equipe", id] });
+  }
+
+  async function excluirEquipe() {
+    setBusy(true);
+    const { error } = await (supabase as any).from("equipes").delete().eq("id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Equipe excluída");
+    navigate({ to: "/equipes" });
+  }
+
+  async function sairDaEquipe() {
+    setBusy(true);
+    const { error } = await (supabase as any).from("equipe_membros").delete().eq("user_id", user.id).eq("equipe_id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Você saiu da equipe");
+    navigate({ to: "/equipes" });
+  }
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
+      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2 relative">
         <button onClick={() => navigate({ to: "/equipes" })} className="flex h-9 w-9 items-center justify-center rounded-full text-primary-light">
           <ArrowLeft size={20} />
         </button>
-        <button className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><MoreHorizontal size={16} /></button>
+        <div className="relative">
+          <button onClick={() => setMenuOpen((v) => !v)} className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><MoreHorizontal size={16} /></button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-11 z-40 w-52 rounded-2xl border border-border bg-card p-1 shadow-glow">
+                {souCriador ? (
+                  <>
+                    <button onClick={() => { setMenuOpen(false); setShowEdit(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm hover:bg-secondary"><Pencil size={14} /> Editar equipe</button>
+                    <button onClick={() => { setMenuOpen(false); setShowDelete(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-rose-400 hover:bg-secondary"><Trash2 size={14} /> Excluir equipe</button>
+                  </>
+                ) : souMembro ? (
+                  <button onClick={() => { setMenuOpen(false); setShowLeave(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-rose-400 hover:bg-secondary"><LogOut size={14} /> Sair da equipe</button>
+                ) : (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhuma ação disponível</div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </header>
+
 
       <div className="mx-auto max-w-md px-5">
         {/* Hero */}
