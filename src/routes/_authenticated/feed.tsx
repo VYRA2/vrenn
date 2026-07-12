@@ -5,8 +5,9 @@ import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { PublishProofModal } from "@/components/PublishProofModal";
 import { CommentsModal } from "@/components/CommentsModal";
+import { shareToInstagram } from "@/lib/shareToInstagram";
 
-import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink } from "lucide-react";
+import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
