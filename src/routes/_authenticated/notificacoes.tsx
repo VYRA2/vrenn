@@ -122,6 +122,10 @@ function Notificacoes() {
                   <Link key={n.id} to="/duelo-convite/$id" params={{ id: n.link_id }} className="block">
                     {card}
                   </Link>
+                ) : isEquipeNav ? (
+                  <Link key={n.id} to="/equipes" className="block">
+                    {card}
+                  </Link>
                 ) : (
                   <div key={n.id}>{card}</div>
                 );
