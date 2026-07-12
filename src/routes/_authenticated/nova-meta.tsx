@@ -18,8 +18,6 @@ const CATEGORIAS = [
   { id: "outro", label: "Outro", icon: Sparkles },
 ];
 
-type TipoValidacao = "qrcode" | "geolocalizacao" | "foto_arbitro";
-type ValStep = "metodo" | "buscar" | "cadastrar";
 
 function NovaMeta() {
   const navigate = useNavigate();
