@@ -33,73 +33,16 @@ function NovaMeta() {
   const [prazo, setPrazo] = useState("");
   const [valorCustodia, setValorCustodia] = useState("");
 
-  // Validação
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("qrcode");
-  const [valStep, setValStep] = useState<ValStep>("metodo");
   const [localId, setLocalId] = useState<string | null>(null);
-  const [localNome, setLocalNome] = useState<string>("");
-  const [busca, setBusca] = useState("");
-  // Cadastrar local
-  const [novoNome, setNovoNome] = useState("");
-  const [novoEndereco, setNovoEndereco] = useState("");
-  const [novoLat, setNovoLat] = useState<number | null>(null);
-  const [novoLng, setNovoLng] = useState<number | null>(null);
-  const [novoRaio, setNovoRaio] = useState(100);
-  const [savingLocal, setSavingLocal] = useState(false);
-
-  const { data: locais } = useQuery({
-    queryKey: ["locais-validacao", busca],
-    queryFn: async () => {
-      let q = supabase.from("locais_validacao").select("id, nome, latitude, longitude, raio_geofence_metros").limit(20);
-      if (busca.trim()) q = q.ilike("nome", `%${busca.trim()}%`);
-      const { data } = await q;
-      return data ?? [];
-    },
-    enabled: step === 3 && valStep === "buscar",
-  });
-
-  function usarLocalizacaoAtual() {
-    if (!navigator.geolocation) return toast.error("Geolocalização não suportada");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setNovoLat(pos.coords.latitude); setNovoLng(pos.coords.longitude); toast.success("Localização capturada"); },
-      () => toast.error("Não foi possível obter localização"),
-    );
-  }
-
-  async function cadastrarLocal() {
-    if (!novoNome.trim()) return toast.error("Informe o nome do local");
-    if (novoLat == null || novoLng == null) return toast.error("Capture a localização atual");
-    if (novoRaio < 20) return toast.error("Raio mínimo é 20m");
-    setSavingLocal(true);
-    const { data, error } = await supabase.from("locais_validacao").insert({
-      nome: novoNome.trim(),
-      latitude: novoLat,
-      longitude: novoLng,
-      raio_geofence_metros: novoRaio,
-      criado_por: user.id,
-    }).select("id, nome").single();
-    setSavingLocal(false);
-    if (error) return toast.error(error.message);
-    setLocalId(data.id);
-    setLocalNome(data.nome);
-    toast.success("Local cadastrado");
-    setValStep("metodo");
-  }
-
-  function selecionarLocal(l: { id: string; nome: string }) {
-    setLocalId(l.id);
-    setLocalNome(l.nome);
-    setValStep("metodo");
-  }
 
   function proximoStep() {
-    if (step === 3) {
-      if (tipoValidacao !== "foto_arbitro" && !localId) {
-        return toast.error("Selecione ou cadastre um local");
-      }
+    if (step === 3 && tipoValidacao !== "foto_arbitro" && !localId) {
+      return toast.error("Selecione ou cadastre um local");
     }
     setStep(step + 1);
   }
+
 
   async function salvar() {
     if (!titulo || !categoria) return toast.error("Preencha título e categoria");
