@@ -27,12 +27,6 @@ const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
   { id: "habitos", label: "Hábitos", icon: CheckCircle2 },
 ];
 
-const DESTAQUES = [
-  { user: "@abrielrocha", cat: "Treino", time: "2h", frase: "Disciplina hoje, resultado amanhã.", likes: "1.2K", comments: 86, img: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=600&q=60" },
-  { user: "@marianacosta", cat: "Corrida", time: "4h", frase: "A mente desiste antes do corpo.", likes: "982", comments: 64, img: "https://images.unsplash.com/photo-1502904550040-7534597429ae?auto=format&fit=crop&w=600&q=60" },
-  { user: "@lucasmmz", cat: "Estudos", time: "6h", frase: "Pequenas ações constroem grandes sonhos.", likes: "875", comments: 51, img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=60" },
-];
-
 const CATEGORIAS = [
   { label: "Treino", pubs: "12.4K", icon: Dumbbell, color: "#A855F7" },
   { label: "Alimentação", pubs: "8.7K", icon: Leaf, color: "#22D3A1" },
@@ -76,6 +70,63 @@ function DescobrirPage() {
         .not("id", "in", `(${excluir.join(",")})`)
         .limit(5);
       return data ?? [];
+    },
+  });
+
+  const { data: destaques } = useQuery({
+    queryKey: ["descobrir-destaques"],
+    queryFn: async () => {
+      const [posts, desafios, metasC, duelos] = await Promise.all([
+        supabase.from("posts").select("user_id").not("auto_gerado", "eq", true),
+        supabase.from("desafio_equipe_participantes").select("user_id"),
+        supabase.from("metas").select("user_id").eq("status", "concluida"),
+        supabase.from("duelos").select("winner_id").not("winner_id", "is", null),
+      ]);
+      const score = new Map<string, number>();
+      (posts.data ?? []).forEach((r: any) => score.set(r.user_id, (score.get(r.user_id) ?? 0) + 3));
+      (desafios.data ?? []).forEach((r: any) => score.set(r.user_id, (score.get(r.user_id) ?? 0) + 4));
+      (metasC.data ?? []).forEach((r: any) => score.set(r.user_id, (score.get(r.user_id) ?? 0) + 2));
+      (duelos.data ?? []).forEach((r: any) => r.winner_id && score.set(r.winner_id, (score.get(r.winner_id) ?? 0) + 5));
+      const top = [...score.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (!top.length) return [];
+      const ids = top.map(([id]) => id);
+      const [{ data: profs }, { data: lastPosts }] = await Promise.all([
+        supabase.from("profiles").select("id, nome, username, avatar_url").in("id", ids),
+        supabase.from("posts").select("user_id, media_url, created_at").in("user_id", ids).not("media_url", "is", null).order("created_at", { ascending: false }),
+      ]);
+      const lastByUser = new Map<string, string>();
+      (lastPosts ?? []).forEach((p: any) => { if (!lastByUser.has(p.user_id) && p.media_url) lastByUser.set(p.user_id, p.media_url); });
+      return top.map(([id, pts]) => {
+        const prof = (profs ?? []).find((p: any) => p.id === id);
+        return { id, pts, nome: prof?.nome ?? "—", username: prof?.username ?? "—", avatar_url: prof?.avatar_url, media_url: lastByUser.get(id) };
+      });
+    },
+  });
+
+  const { data: comunidades } = useQuery({
+    queryKey: ["descobrir-comunidades"],
+    queryFn: async () => {
+      const { data: eqs } = await supabase.from("equipes").select("id, nome, avatar_url, categoria");
+      const list = eqs ?? [];
+      if (!list.length) return [];
+      const ids = list.map((e: any) => e.id);
+      const [{ data: mem }, { data: des }] = await Promise.all([
+        supabase.from("equipe_membros").select("equipe_id").in("equipe_id", ids),
+        supabase.from("desafios_equipe").select("equipe_id, status").in("equipe_id", ids).neq("status", "finalizado"),
+      ]);
+      const mcount = new Map<string, number>();
+      const dcount = new Map<string, number>();
+      (mem ?? []).forEach((m: any) => mcount.set(m.equipe_id, (mcount.get(m.equipe_id) ?? 0) + 1));
+      (des ?? []).forEach((d: any) => dcount.set(d.equipe_id, (dcount.get(d.equipe_id) ?? 0) + 1));
+      return list
+        .map((e: any) => ({
+          ...e,
+          membros: mcount.get(e.id) ?? 0,
+          desafios: dcount.get(e.id) ?? 0,
+          score: (mcount.get(e.id) ?? 0) * 2 + (dcount.get(e.id) ?? 0) * 5,
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
     },
   });
 
@@ -199,28 +250,60 @@ function DescobrirPage() {
           <button onClick={() => toast("Em breve")} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todos <ArrowRight size={12} /></button>
         </div>
         <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2">
-          {DESTAQUES.map((d) => (
-            <div key={d.user} className="w-56 shrink-0 overflow-hidden rounded-2xl border border-border bg-card">
-              <div className="relative h-40 w-full">
-                <img src={d.img} className="h-full w-full object-cover" />
+          {(destaques ?? []).length === 0 && (
+            <div className="w-full rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Ainda sem destaques.</div>
+          )}
+          {(destaques ?? []).map((d: any) => (
+            <Link to="/u/$username" params={{ username: d.username }} key={d.id} className="w-56 shrink-0 overflow-hidden rounded-2xl border border-border bg-card">
+              <div className="relative h-40 w-full bg-gradient-to-br from-primary/30 to-background">
+                {d.media_url && <img src={d.media_url} className="h-full w-full object-cover" />}
                 <div className="absolute inset-x-2 top-2 flex items-center gap-2 rounded-full bg-black/60 px-2 py-1 backdrop-blur">
-                  <div className="h-5 w-5 rounded-full bg-primary" />
-                  <span className="text-[11px] font-semibold">{d.user}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">{d.time}</span>
+                  {d.avatar_url ? (
+                    <img src={d.avatar_url} className="h-5 w-5 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-5 w-5 rounded-full bg-primary" />
+                  )}
+                  <span className="text-[11px] font-semibold truncate">@{d.username}</span>
+                  <span className="ml-auto text-[10px] font-bold text-primary-light">{d.pts} pts</span>
                 </div>
-                <span className="absolute top-10 left-2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold">{d.cat}</span>
               </div>
               <div className="p-3">
-                <p className="text-sm font-semibold leading-snug">{d.frase}</p>
-                <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1 text-primary-light"><Heart size={13} /> {d.likes}</span>
-                  <span className="inline-flex items-center gap-1"><MessageCircle size={13} /> {d.comments}</span>
-                  <Bookmark size={13} className="ml-auto" />
-                </div>
+                <p className="text-sm font-semibold leading-snug truncate">{d.nome}</p>
+                <div className="mt-1 text-xs text-muted-foreground">@{d.username}</div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
+
+        <div className="mt-6 mb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold">Comunidades em alta</h3>
+          <Link to="/equipes" className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todas <ArrowRight size={12} /></Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2">
+          {(comunidades ?? []).length === 0 && (
+            <div className="w-full rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Sem comunidades ainda.</div>
+          )}
+          {(comunidades ?? []).map((c: any) => (
+            <Link to="/equipes/$id" params={{ id: c.id }} key={c.id} className="w-56 shrink-0 rounded-2xl border border-border bg-card p-3">
+              <div className="flex items-center gap-3">
+                {c.avatar_url ? (
+                  <img src={c.avatar_url} className="h-12 w-12 rounded-2xl object-cover border border-primary/40" />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary-light"><Shield size={22} /></div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold truncate">{c.nome}</div>
+                  {c.categoria && <span className="mt-0.5 inline-block rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[9px] font-bold capitalize text-primary-light">{c.categoria}</span>}
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1"><Users size={12} /> {c.membros} membros</span>
+                <span>{c.desafios} desafios</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
 
         <h3 className="mt-6 mb-3 text-base font-bold">Explorar por categorias</h3>
         <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2">

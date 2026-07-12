@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar } from "lucide-react";
+import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/desafio/novo")({
   component: NovoDesafio,
@@ -12,7 +13,8 @@ const STEPS = [
   { id: 1, label: "Desafio" },
   { id: 2, label: "Detalhes" },
   { id: 3, label: "Regras" },
-  { id: 4, label: "Resumo" },
+  { id: 4, label: "Validação" },
+  { id: 5, label: "Resumo" },
 ];
 
 const CATEGORIAS = ["foco", "estudos", "saude", "esportes", "outro"];
@@ -34,6 +36,8 @@ function NovoDesafio() {
   const [regras, setRegras] = useState({ foco_total: true, comprovacao: true, etica: true, conclusao: true });
   const [consequencias, setConsequencias] = useState("");
   const [aceito, setAceito] = useState(false);
+  const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("foto_arbitro");
+  const [localId, setLocalId] = useState<string | null>(null);
 
   const inicio = new Date();
   const fim = new Date(); fim.setDate(fim.getDate() + duracao);
@@ -41,7 +45,8 @@ function NovoDesafio() {
 
   function next() {
     if (step === 1 && (!titulo.trim() || !descricao.trim())) return toast.error("Preencha título e descrição");
-    setStep((s) => Math.min(4, s + 1));
+    if (step === 4 && tipoValidacao !== "foto_arbitro" && !localId) return toast.error("Selecione ou cadastre um local");
+    setStep((s) => Math.min(5, s + 1));
   }
 
   async function publicar() {
@@ -60,12 +65,15 @@ function NovoDesafio() {
       premiacao: premiacao.trim() || null,
       regras: { ...regras, consequencias, personalizadas: [] },
       criador_id: user.id,
+      tipo_validacao: tipoValidacao,
+      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
     }).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Desafio publicado!");
     navigate({ to: "/equipes/$id", params: { id: equipeId } });
   }
+
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-12">
@@ -177,6 +185,19 @@ function NovoDesafio() {
 
         {step === 4 && (
           <>
+            <HeroCard icon={<Shield size={26}/>} title="Validação dos check-ins" desc="Escolha como cada participante irá comprovar o cumprimento do desafio." color="primary" />
+            <ValidacaoStep
+              tipoValidacao={tipoValidacao}
+              onChangeTipo={setTipoValidacao}
+              localId={localId}
+              onChangeLocalId={setLocalId}
+              userId={user.id}
+            />
+          </>
+        )}
+
+        {step === 5 && (
+          <>
             <HeroCard icon={<Flag size={26}/>} title="Resumo do desafio" desc="Revise todas as informações antes de publicar seu desafio." color="primary" />
             <div className="rounded-2xl border border-border bg-card divide-y divide-border">
               <SummaryRow icon={<FileText size={18}/>} label="Título" value={titulo || "—"} />
@@ -187,6 +208,7 @@ function NovoDesafio() {
               <SummaryRow icon={<Trophy size={18}/>} label="Premiação" value={premiacao || "A definir"} sub={premiacao ? undefined : "Premiação em aberto"} />
               <SummaryRow icon={<Users size={18}/>} label="Participação" value="Aberta" sub="Qualquer membro pode entrar" />
               <SummaryRow icon={<Shield size={18}/>} label="Regras" value={`${Object.values(regras).filter(Boolean).length} regras definidas`} sub="Toque para ver" />
+              <SummaryRow icon={<Shield size={18}/>} label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
             </div>
             <button onClick={() => setAceito(!aceito)} className={`w-full rounded-2xl border-2 p-4 flex items-start gap-3 text-left transition ${aceito ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
               <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${aceito ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>{aceito && "✓"}</div>
@@ -198,7 +220,7 @@ function NovoDesafio() {
           </>
         )}
 
-        {step < 4 ? (
+        {step < 5 ? (
           <button onClick={next} className="mt-2 w-full rounded-2xl bg-gradient-primary py-4 text-base font-bold text-primary-foreground shadow-glow">Continuar →</button>
         ) : (
           <>
@@ -208,6 +230,7 @@ function NovoDesafio() {
             <button onClick={() => setStep(1)} className="w-full py-2 text-sm font-semibold text-primary-light">Voltar e editar</button>
           </>
         )}
+
 
         <div className="pt-2 pb-4 text-center text-[11px] text-muted-foreground inline-flex items-center justify-center gap-1 w-full"><Lock size={11}/> Pagamento seguro via VRENN Wallet</div>
       </div>

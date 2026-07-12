@@ -5,8 +5,9 @@ import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { PublishProofModal } from "@/components/PublishProofModal";
 import { CommentsModal } from "@/components/CommentsModal";
+import { shareToInstagram } from "@/lib/shareToInstagram";
 
-import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink } from "lucide-react";
+import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -42,7 +43,7 @@ function Feed() {
     queryFn: async () => {
       let query = supabase
         .from("posts")
-        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
         .order("created_at", { ascending: false })
         .limit(30);
 
@@ -149,11 +150,20 @@ function Feed() {
 function PostCard({ post, userId, onChange }: { post: any; userId: string; onChange: () => void }) {
   const [showComments, setShowComments] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
   const p = post.profiles;
   const m = post.metas;
   const initial = (p?.nome || p?.username || "?")[0].toUpperCase();
+  const isOwner = post.user_id === userId;
+  const isConquistaMeta = post.tipo === "conquista_meta" && post.auto_gerado;
+  const isConquistaDuelo = post.tipo === "conquista_duelo" && post.auto_gerado;
+  const isConquista = isConquistaMeta || isConquistaDuelo;
 
   const { data: stats, refetch } = useQuery({
     queryKey: ["post-stats", post.id, userId],
@@ -186,17 +196,46 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
     refetch();
     onChange();
   }
-  function share() {
-    const url = `${window.location.origin}/meta/${post.meta_id ?? ""}`;
+  function copyLink() {
+    const url = `${window.location.origin}/post/${post.id}`;
     if (navigator.share) navigator.share({ title: post.legenda ?? "VRENN", url }).catch(() => {});
     else { navigator.clipboard.writeText(url); toast.success("Link copiado"); }
+    setShowShare(false);
+  }
+  async function excluir() {
+    setBusy(true);
+    const { error } = await supabase.from("posts").delete().eq("id", post.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Post excluído");
+    setShowDelete(false);
+    onChange();
+  }
+  async function salvarLegenda(nova: string) {
+    setBusy(true);
+    const { error } = await supabase.from("posts").update({ legenda: nova }).eq("id", post.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Legenda atualizada");
+    setShowEdit(false);
+    onChange();
   }
 
   const isVideo = post.tipo === "video";
   const cumprido = m?.status === "concluida";
 
+  const cardBorder = isConquista
+    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-[1.5px]"
+    : "border-border bg-card";
+
   return (
-    <article className="rounded-2xl border border-border bg-card p-4">
+    <article className={`rounded-2xl ${isConquista ? "" : "border"} ${cardBorder}`}>
+      <div className={`rounded-2xl bg-card p-4 ${isConquista ? "" : ""}`}>
+      {isConquista && (
+        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
+          {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
+        </div>
+      )}
       <div className="flex items-center gap-3">
         {p?.username ? (
           <Link to="/u/$username" params={{ username: p.username }} className="shrink-0">
@@ -225,7 +264,20 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
             {stats?.following ? "Seguindo" : "Seguir"}
           </button>
         )}
-        <button className="text-muted-foreground"><MoreHorizontal size={18} /></button>
+        <div className="relative">
+          <button onClick={() => setShowMenu((v) => !v)} className="text-muted-foreground"><MoreHorizontal size={18} /></button>
+          {showMenu && isOwner && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setShowMenu(false)} />
+              <div className="absolute right-0 top-6 z-40 w-48 rounded-2xl border border-border bg-card p-1 shadow-glow">
+                {!post.auto_gerado && (
+                  <button onClick={() => { setShowMenu(false); setShowEdit(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm hover:bg-secondary"><Pencil size={14} /> Editar legenda</button>
+                )}
+                <button onClick={() => { setShowMenu(false); setShowDelete(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-rose-400 hover:bg-secondary"><Trash2 size={14} /> Excluir post</button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {m && (
@@ -238,7 +290,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </Link>
       )}
 
-      {post.media_url && (
+      {post.media_url ? (
         <button type="button" onClick={() => setShowMedia(true)} className="relative mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-black block">
           {isVideo ? (
             <video src={post.media_url} playsInline className="h-full w-full object-cover object-center pointer-events-none" />
@@ -249,8 +301,21 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
             <span className="absolute top-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-bold text-white">{m.progresso}%</span>
           )}
         </button>
-      )}
+      ) : isConquista ? (
+        <button type="button" onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl block relative bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+            <Trophy size={72} className="text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]" />
+            <div className="mt-4 text-lg font-black text-white">{m?.titulo ?? post.legenda ?? "Conquista"}</div>
+            <div className="mt-2 text-xs text-white/70">{isConquistaMeta ? "Meta concluída" : "Duelo vencido"}</div>
+          </div>
+        </button>
+      ) : null}
 
+      {isConquista && (
+        <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 w-full rounded-xl bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 py-2.5 text-xs font-bold text-yellow-200">
+          Ver conquista completa
+        </button>
+      )}
 
       {post.legenda && (
         <div className="mt-3">
@@ -276,14 +341,31 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           <MessageCircle size={20} />
           <span className="font-semibold">{stats?.comments ?? 0}</span>
         </button>
-        <button onClick={share} className="flex items-center gap-1.5 text-sm text-foreground">
+        <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 text-sm text-foreground">
           <Send size={20} />
         </button>
         <button onClick={toggleSave} className="ml-auto">
           <Bookmark size={20} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
         </button>
       </div>
+      </div>
       {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
+      {showShare && (
+        <ShareSheet
+          onClose={() => setShowShare(false)}
+          onCopyLink={copyLink}
+          onInstagram={async () => {
+            setShowShare(false);
+            await shareToInstagram({ mediaUrl: post.media_url, userName: p?.nome ?? p?.username ?? "Usuário", legenda: post.legenda, metaTitulo: m?.titulo });
+          }}
+        />
+      )}
+      {showEdit && (
+        <EditLegendaModal initial={post.legenda ?? ""} busy={busy} onClose={() => setShowEdit(false)} onSave={salvarLegenda} />
+      )}
+      {showDelete && (
+        <ConfirmDialog title="Excluir post" message="Esta ação não pode ser desfeita." confirmLabel="Excluir" busy={busy} onClose={() => setShowDelete(false)} onConfirm={excluir} />
+      )}
       {showMedia && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-black" onClick={() => setShowMedia(false)}>
           <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
@@ -320,6 +402,71 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
     </article>
   );
 }
+
+export function ShareSheet({ onClose, onCopyLink, onInstagram }: { onClose: () => void; onCopyLink: () => void; onInstagram: () => void | Promise<void> }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70" onClick={onClose}>
+      <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 space-y-2" onClick={(e) => e.stopPropagation()}>
+        <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-border" />
+        <h3 className="text-sm font-bold mb-2">Compartilhar</h3>
+        <button onClick={onInstagram} className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-3 text-left">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 text-white"><Instagram size={18} /></div>
+          <div className="flex-1">
+            <div className="text-sm font-bold">Compartilhar no Instagram</div>
+            <div className="text-[11px] text-muted-foreground">Gera um card 1080×1920 pronto pros Stories.</div>
+          </div>
+        </button>
+        <button onClick={onCopyLink} className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-3 text-left">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary-light"><Link2 size={18} /></div>
+          <div className="flex-1">
+            <div className="text-sm font-bold">Copiar link</div>
+            <div className="text-[11px] text-muted-foreground">Compartilhe o link direto do post.</div>
+          </div>
+        </button>
+        <button onClick={onClose} className="w-full py-2 text-sm font-semibold text-muted-foreground">Fechar</button>
+      </div>
+    </div>
+  );
+}
+
+export function EditLegendaModal({ initial, busy, onClose, onSave }: { initial: string; busy: boolean; onClose: () => void; onSave: (v: string) => void }) {
+  const [v, setV] = useState(initial);
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Editar legenda</h3>
+          <button onClick={onClose} className="text-muted-foreground"><X size={18} /></button>
+        </div>
+        <textarea value={v} onChange={(e) => setV(e.target.value)} rows={5} className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold">Cancelar</button>
+          <button onClick={() => onSave(v)} disabled={busy} className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 inline-flex items-center justify-center gap-2">
+            {busy && <Loader2 size={14} className="animate-spin" />} Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ConfirmDialog({ title, message, confirmLabel, busy, onClose, onConfirm }: { title: string; message: string; confirmLabel: string; busy: boolean; onClose: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{message}</p>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold">Cancelar</button>
+          <button onClick={onConfirm} disabled={busy} className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-bold text-white disabled:opacity-60 inline-flex items-center justify-center gap-2">
+            {busy && <Loader2 size={14} className="animate-spin" />} {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 
 function formatWhen(iso: string) {

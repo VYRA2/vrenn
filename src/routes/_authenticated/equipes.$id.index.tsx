@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
+  Pencil, Trash2, LogOut, X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
@@ -40,6 +41,11 @@ function EquipeProfile() {
   const { id } = Route.useParams();
   const [tab, setTab] = useState<Tab>("resumo");
   const [entrando, setEntrando] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [showLeave, setShowLeave] = useState(false);
+  const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
@@ -183,14 +189,65 @@ function EquipeProfile() {
     }
   }
 
+  const souCriador = equipe.criador_id === user.id;
+  const souMembro = (membros ?? []).some((m: any) => m.user_id === user.id);
+
+  async function salvarEdicao(patch: { nome?: string; descricao?: string; avatar_url?: string; categoria?: string }) {
+    setBusy(true);
+    const { error } = await (supabase as any).from("equipes").update(patch).eq("id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Equipe atualizada");
+    setShowEdit(false);
+    qc.invalidateQueries({ queryKey: ["equipe", id] });
+  }
+
+  async function excluirEquipe() {
+    setBusy(true);
+    const { error } = await (supabase as any).from("equipes").delete().eq("id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Equipe excluída");
+    navigate({ to: "/equipes" });
+  }
+
+  async function sairDaEquipe() {
+    setBusy(true);
+    const { error } = await (supabase as any).from("equipe_membros").delete().eq("user_id", user.id).eq("equipe_id", id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Você saiu da equipe");
+    navigate({ to: "/equipes" });
+  }
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
+      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2 relative">
         <button onClick={() => navigate({ to: "/equipes" })} className="flex h-9 w-9 items-center justify-center rounded-full text-primary-light">
           <ArrowLeft size={20} />
         </button>
-        <button className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><MoreHorizontal size={16} /></button>
+        <div className="relative">
+          <button onClick={() => setMenuOpen((v) => !v)} className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><MoreHorizontal size={16} /></button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-11 z-40 w-52 rounded-2xl border border-border bg-card p-1 shadow-glow">
+                {souCriador ? (
+                  <>
+                    <button onClick={() => { setMenuOpen(false); setShowEdit(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm hover:bg-secondary"><Pencil size={14} /> Editar equipe</button>
+                    <button onClick={() => { setMenuOpen(false); setShowDelete(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-rose-400 hover:bg-secondary"><Trash2 size={14} /> Excluir equipe</button>
+                  </>
+                ) : souMembro ? (
+                  <button onClick={() => { setMenuOpen(false); setShowLeave(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-rose-400 hover:bg-secondary"><LogOut size={14} /> Sair da equipe</button>
+                ) : (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">Nenhuma ação disponível</div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </header>
+
 
       <div className="mx-auto max-w-md px-5">
         {/* Hero */}
@@ -401,10 +458,97 @@ function EquipeProfile() {
         </div>
       </div>
 
+      {showEdit && (
+        <EditEquipeModal equipe={equipe} busy={busy} onClose={() => setShowEdit(false)} onSave={salvarEdicao} />
+      )}
+      {showDelete && (
+        <ConfirmModal
+          title="Excluir equipe"
+          message="Esta ação não pode ser desfeita. Todos os membros serão removidos."
+          confirmLabel="Excluir"
+          destructive
+          busy={busy}
+          onClose={() => setShowDelete(false)}
+          onConfirm={excluirEquipe}
+        />
+      )}
+      {showLeave && (
+        <ConfirmModal
+          title="Sair da equipe"
+          message="Tem certeza que quer sair desta equipe? Você perderá acesso aos desafios internos."
+          confirmLabel="Sair"
+          destructive
+          busy={busy}
+          onClose={() => setShowLeave(false)}
+          onConfirm={sairDaEquipe}
+        />
+      )}
+
       <BottomNav />
     </main>
   );
 }
+
+function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy: boolean; onClose: () => void; onSave: (p: any) => void }) {
+  const [nome, setNome] = useState(equipe.nome ?? "");
+  const [descricao, setDescricao] = useState(equipe.descricao ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(equipe.avatar_url ?? "");
+  const [categoria, setCategoria] = useState(equipe.categoria ?? "");
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Editar equipe</h3>
+          <button onClick={onClose} className="text-muted-foreground"><X size={18} /></button>
+        </div>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">Nome</span>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">Descrição</span>
+          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="mt-1 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">URL do avatar</span>
+          <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">Categoria</span>
+          <input value={categoria} onChange={(e) => setCategoria(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <div className="flex gap-2 pt-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold">Cancelar</button>
+          <button
+            onClick={() => onSave({ nome: nome.trim(), descricao: descricao.trim() || null, avatar_url: avatarUrl.trim() || null, categoria: categoria.trim() || null })}
+            disabled={busy || !nome.trim()}
+            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          >
+            {busy && <Loader2 size={14} className="animate-spin" />} Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({ title, message, confirmLabel, destructive, busy, onClose, onConfirm }: { title: string; message: string; confirmLabel: string; destructive?: boolean; busy: boolean; onClose: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{message}</p>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold">Cancelar</button>
+          <button onClick={onConfirm} disabled={busy} className={`flex-1 rounded-xl py-2.5 text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60 ${destructive ? "bg-rose-500 text-white" : "bg-primary text-primary-foreground"}`}>
+            {busy && <Loader2 size={14} className="animate-spin" />} {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function QuickStat({ icon, value, label, small }: { icon: React.ReactNode; value: string; label: string; small?: boolean }) {
   return (

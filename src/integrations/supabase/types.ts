@@ -226,10 +226,12 @@ export type Database = {
           duracao_dias: number
           equipe_id: string
           id: string
+          local_id: string | null
           premiacao: string | null
           premio_acumulado: number
           regras: Json
           status: string
+          tipo_validacao: string
           titulo: string
           valor_entrada: number
         }
@@ -243,10 +245,12 @@ export type Database = {
           duracao_dias?: number
           equipe_id: string
           id?: string
+          local_id?: string | null
           premiacao?: string | null
           premio_acumulado?: number
           regras?: Json
           status?: string
+          tipo_validacao?: string
           titulo: string
           valor_entrada?: number
         }
@@ -260,10 +264,12 @@ export type Database = {
           duracao_dias?: number
           equipe_id?: string
           id?: string
+          local_id?: string | null
           premiacao?: string | null
           premio_acumulado?: number
           regras?: Json
           status?: string
+          tipo_validacao?: string
           titulo?: string
           valor_entrada?: number
         }
@@ -273,6 +279,13 @@ export type Database = {
             columns: ["equipe_id"]
             isOneToOne: false
             referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desafios_equipe_local_id_fkey"
+            columns: ["local_id"]
+            isOneToOne: false
+            referencedRelation: "locais_validacao"
             referencedColumns: ["id"]
           },
         ]
@@ -690,8 +703,10 @@ export type Database = {
       }
       posts: {
         Row: {
+          auto_gerado: boolean
           contador: string | null
           created_at: string
+          desafio_id: string | null
           hashtags: string[] | null
           id: string
           legenda: string | null
@@ -702,8 +717,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_gerado?: boolean
           contador?: string | null
           created_at?: string
+          desafio_id?: string | null
           hashtags?: string[] | null
           id?: string
           legenda?: string | null
@@ -714,8 +731,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_gerado?: boolean
           contador?: string | null
           created_at?: string
+          desafio_id?: string | null
           hashtags?: string[] | null
           id?: string
           legenda?: string | null
@@ -726,6 +745,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafios_equipe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_meta_id_fkey"
             columns: ["meta_id"]
