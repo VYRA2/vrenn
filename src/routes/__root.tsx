@@ -86,8 +86,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "VRENN — Não diga que vai fazer. Mostre." },
       { name: "twitter:description", content: "Não diga que vai fazer. Mostre." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QWad3OSuxuRvmtZS8i15B93mvo12/social-images/social-1782684194532-ChatGPT_Image_28_de_jun._de_2026,_18_32_21.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QWad3OSuxuRvmtZS8i15B93mvo12/social-images/social-1782684194532-ChatGPT_Image_28_de_jun._de_2026,_18_32_21.webp" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QWad3OSuxuRvmtZS8i15B93mvo12/social-images/social-1783820032133-ChatGPT_Image_11_de_jul._de_2026,_22_32_16.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/QWad3OSuxuRvmtZS8i15B93mvo12/social-images/social-1783820032133-ChatGPT_Image_11_de_jul._de_2026,_22_32_16.webp" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
