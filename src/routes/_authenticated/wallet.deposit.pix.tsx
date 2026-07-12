@@ -19,8 +19,8 @@ function DepositPix() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("profiles").select("cpf").eq("id", user.id).maybeSingle();
-      if (data?.cpf) { setCpf(data.cpf); setCpfSalvo(true); }
+      const { data } = await supabase.rpc("get_my_cpf");
+      if (data) { setCpf(data); setCpfSalvo(true); }
     })();
   }, [user.id]);
 
