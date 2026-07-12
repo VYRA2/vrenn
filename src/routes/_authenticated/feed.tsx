@@ -92,6 +92,9 @@ function Feed() {
           <div className="justify-self-start"><VyraLogo size={28} showWordmark={false} /></div>
           <div className="justify-self-center"><VyraLogo size={22} showWordmark={true} className="[&>img]:hidden" /></div>
           <div className="justify-self-end flex items-center gap-1">
+            <Link to="/mensagens" className="rounded-full p-2 text-foreground/90" aria-label="Mensagens">
+              <MessageCircle size={22} />
+            </Link>
             <Link to="/notificacoes" className="relative rounded-full p-2 text-foreground/90">
               <Bell size={22} />
               {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}

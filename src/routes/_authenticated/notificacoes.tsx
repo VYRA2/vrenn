@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { toast } from "sonner";
-import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target, Swords } from "lucide-react";
+import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target, Swords, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: Notificacoes,
@@ -21,6 +21,8 @@ const TYPE_STYLES: Record<string, { icon: any; color: string; bg: string }> = {
   arbitro_aceitou:       { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
   arbitro_recusou:       { icon: AlertCircle,   color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
   convite_duelo:         { icon: Swords,        color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  novo_desafio_equipe:   { icon: Swords,        color: "#7B2EFF", bg: "rgba(123,46,255,0.15)" },
+  equipe_atualizada:     { icon: Users,         color: "#38BDF8", bg: "rgba(56,189,248,0.15)" },
 };
 
 function Notificacoes() {
@@ -93,6 +95,7 @@ function Notificacoes() {
                 const Icon = style.icon;
                 const isConvite = n.tipo === "convite_arbitro" && !n.lida;
                 const isDueloConvite = n.tipo === "convite_duelo";
+                const isEquipeNav = n.tipo === "novo_desafio_equipe" || n.tipo === "equipe_atualizada";
 
                 const card = (
                   <div className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
@@ -117,6 +120,10 @@ function Notificacoes() {
 
                 return isDueloConvite ? (
                   <Link key={n.id} to="/duelo-convite/$id" params={{ id: n.link_id }} className="block">
+                    {card}
+                  </Link>
+                ) : isEquipeNav ? (
+                  <Link key={n.id} to="/equipes" className="block">
                     {card}
                   </Link>
                 ) : (

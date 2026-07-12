@@ -17,6 +17,7 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedNovaMetaRouteImport } from './routes/_authenticated/nova-meta'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
+import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDuelosRouteImport } from './routes/_authenticated/duelos'
 import { Route as AuthenticatedDescobrirRouteImport } from './routes/_authenticated/descobrir'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedPerfilSeguidoresRouteImport } from './routes/_aut
 import { Route as AuthenticatedPerfilPublicacoesRouteImport } from './routes/_authenticated/perfil_.publicacoes'
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil_.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
+import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
@@ -79,6 +81,11 @@ const AuthenticatedNotificacoesRoute =
 const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
   id: '/metas',
   path: '/metas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
@@ -164,6 +171,12 @@ const AuthenticatedMetaIdRoute = AuthenticatedMetaIdRouteImport.update({
   path: '/meta/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMensagensIdRoute =
+  AuthenticatedMensagensIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedMensagensRoute,
+  } as any)
 const AuthenticatedEquipesNovaRoute =
   AuthenticatedEquipesNovaRouteImport.update({
     id: '/equipes/nova',
@@ -222,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/mensagens': typeof AuthenticatedMensagensRouteWithChildren
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
@@ -229,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/ranking': typeof AuthenticatedRankingRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
+  '/mensagens/$id': typeof AuthenticatedMensagensIdRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
@@ -254,6 +269,7 @@ export interface FileRoutesByTo {
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/mensagens': typeof AuthenticatedMensagensRouteWithChildren
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
@@ -261,6 +277,7 @@ export interface FileRoutesByTo {
   '/ranking': typeof AuthenticatedRankingRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
+  '/mensagens/$id': typeof AuthenticatedMensagensIdRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
   '/perfil/editar': typeof AuthenticatedPerfilEditarRoute
   '/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
@@ -288,6 +305,7 @@ export interface FileRoutesById {
   '/_authenticated/descobrir': typeof AuthenticatedDescobrirRoute
   '/_authenticated/duelos': typeof AuthenticatedDuelosRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/mensagens': typeof AuthenticatedMensagensRouteWithChildren
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
@@ -295,6 +313,7 @@ export interface FileRoutesById {
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
+  '/_authenticated/mensagens/$id': typeof AuthenticatedMensagensIdRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
   '/_authenticated/perfil_/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/perfil_/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
@@ -322,6 +341,7 @@ export interface FileRouteTypes {
     | '/descobrir'
     | '/duelos'
     | '/feed'
+    | '/mensagens'
     | '/metas'
     | '/notificacoes'
     | '/nova-meta'
@@ -329,6 +349,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/duelo-convite/$id'
     | '/equipes/nova'
+    | '/mensagens/$id'
     | '/meta/$id'
     | '/perfil/editar'
     | '/perfil/publicacoes'
@@ -354,6 +375,7 @@ export interface FileRouteTypes {
     | '/descobrir'
     | '/duelos'
     | '/feed'
+    | '/mensagens'
     | '/metas'
     | '/notificacoes'
     | '/nova-meta'
@@ -361,6 +383,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/duelo-convite/$id'
     | '/equipes/nova'
+    | '/mensagens/$id'
     | '/meta/$id'
     | '/perfil/editar'
     | '/perfil/publicacoes'
@@ -387,6 +410,7 @@ export interface FileRouteTypes {
     | '/_authenticated/descobrir'
     | '/_authenticated/duelos'
     | '/_authenticated/feed'
+    | '/_authenticated/mensagens'
     | '/_authenticated/metas'
     | '/_authenticated/notificacoes'
     | '/_authenticated/nova-meta'
@@ -394,6 +418,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ranking'
     | '/_authenticated/duelo-convite/$id'
     | '/_authenticated/equipes/nova'
+    | '/_authenticated/mensagens/$id'
     | '/_authenticated/meta/$id'
     | '/_authenticated/perfil_/editar'
     | '/_authenticated/perfil_/publicacoes'
@@ -473,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/metas'
       fullPath: '/metas'
       preLoaderRoute: typeof AuthenticatedMetasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mensagens': {
+      id: '/_authenticated/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof AuthenticatedMensagensRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/feed': {
@@ -580,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMetaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mensagens/$id': {
+      id: '/_authenticated/mensagens/$id'
+      path: '/$id'
+      fullPath: '/mensagens/$id'
+      preLoaderRoute: typeof AuthenticatedMensagensIdRouteImport
+      parentRoute: typeof AuthenticatedMensagensRoute
+    }
     '/_authenticated/equipes/nova': {
       id: '/_authenticated/equipes/nova'
       path: '/equipes/nova'
@@ -639,6 +678,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedMensagensRouteChildren {
+  AuthenticatedMensagensIdRoute: typeof AuthenticatedMensagensIdRoute
+}
+
+const AuthenticatedMensagensRouteChildren: AuthenticatedMensagensRouteChildren =
+  {
+    AuthenticatedMensagensIdRoute: AuthenticatedMensagensIdRoute,
+  }
+
+const AuthenticatedMensagensRouteWithChildren =
+  AuthenticatedMensagensRoute._addFileChildren(
+    AuthenticatedMensagensRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -646,6 +699,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDescobrirRoute: typeof AuthenticatedDescobrirRoute
   AuthenticatedDuelosRoute: typeof AuthenticatedDuelosRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRouteWithChildren
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
@@ -677,6 +731,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDescobrirRoute: AuthenticatedDescobrirRoute,
   AuthenticatedDuelosRoute: AuthenticatedDuelosRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedMensagensRoute: AuthenticatedMensagensRouteWithChildren,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
