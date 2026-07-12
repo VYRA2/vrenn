@@ -458,10 +458,97 @@ function EquipeProfile() {
         </div>
       </div>
 
+      {showEdit && (
+        <EditEquipeModal equipe={equipe} busy={busy} onClose={() => setShowEdit(false)} onSave={salvarEdicao} />
+      )}
+      {showDelete && (
+        <ConfirmModal
+          title="Excluir equipe"
+          message="Esta ação não pode ser desfeita. Todos os membros serão removidos."
+          confirmLabel="Excluir"
+          destructive
+          busy={busy}
+          onClose={() => setShowDelete(false)}
+          onConfirm={excluirEquipe}
+        />
+      )}
+      {showLeave && (
+        <ConfirmModal
+          title="Sair da equipe"
+          message="Tem certeza que quer sair desta equipe? Você perderá acesso aos desafios internos."
+          confirmLabel="Sair"
+          destructive
+          busy={busy}
+          onClose={() => setShowLeave(false)}
+          onConfirm={sairDaEquipe}
+        />
+      )}
+
       <BottomNav />
     </main>
   );
 }
+
+function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy: boolean; onClose: () => void; onSave: (p: any) => void }) {
+  const [nome, setNome] = useState(equipe.nome ?? "");
+  const [descricao, setDescricao] = useState(equipe.descricao ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(equipe.avatar_url ?? "");
+  const [categoria, setCategoria] = useState(equipe.categoria ?? "");
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Editar equipe</h3>
+          <button onClick={onClose} className="text-muted-foreground"><X size={18} /></button>
+        </div>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">Nome</span>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">Descrição</span>
+          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="mt-1 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">URL do avatar</span>
+          <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <label className="block text-xs">
+          <span className="text-muted-foreground">Categoria</span>
+          <input value={categoria} onChange={(e) => setCategoria(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+        </label>
+        <div className="flex gap-2 pt-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold">Cancelar</button>
+          <button
+            onClick={() => onSave({ nome: nome.trim(), descricao: descricao.trim() || null, avatar_url: avatarUrl.trim() || null, categoria: categoria.trim() || null })}
+            disabled={busy || !nome.trim()}
+            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          >
+            {busy && <Loader2 size={14} className="animate-spin" />} Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({ title, message, confirmLabel, destructive, busy, onClose, onConfirm }: { title: string; message: string; confirmLabel: string; destructive?: boolean; busy: boolean; onClose: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{message}</p>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold">Cancelar</button>
+          <button onClick={onConfirm} disabled={busy} className={`flex-1 rounded-xl py-2.5 text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60 ${destructive ? "bg-rose-500 text-white" : "bg-primary text-primary-foreground"}`}>
+            {busy && <Loader2 size={14} className="animate-spin" />} {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function QuickStat({ icon, value, label, small }: { icon: React.ReactNode; value: string; label: string; small?: boolean }) {
   return (
