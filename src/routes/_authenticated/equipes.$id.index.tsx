@@ -41,6 +41,11 @@ function EquipeProfile() {
   const { id } = Route.useParams();
   const [tab, setTab] = useState<Tab>("resumo");
   const [entrando, setEntrando] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [showLeave, setShowLeave] = useState(false);
+  const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
