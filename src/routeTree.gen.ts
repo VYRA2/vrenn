@@ -722,8 +722,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
   AuthenticatedWalletWithdrawIndexRoute: typeof AuthenticatedWalletWithdrawIndexRoute
   AuthenticatedEquipesIdDesafioNovoRoute: typeof AuthenticatedEquipesIdDesafioNovoRoute
-  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
-  AuthenticatedMensagensIdRoute: typeof AuthenticatedMensagensIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
