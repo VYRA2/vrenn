@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X, Trash2, QrCode, MapPin, ScanLine, Crosshair } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/meta/$id")({
   component: MetaDetail,
@@ -24,11 +24,24 @@ function MetaDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("metas")
-        .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, profiles:user_id (nome, username, avatar_url)")
+        .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, profiles:user_id (nome, username, avatar_url)")
         .eq("id", id).maybeSingle();
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: local } = useQuery({
+    queryKey: ["meta-local", meta?.local_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("locais_validacao")
+        .select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token")
+        .eq("id", meta!.local_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!meta?.local_id,
   });
 
   const { data: valorCustodia } = useQuery({
@@ -187,6 +200,8 @@ function MetaDetail() {
           metaId={id}
           userId={user.id}
           acceptedArbitros={acceptedArbitros}
+          tipoValidacao={meta.tipo_validacao}
+          local={local}
           onClose={() => setShowCheckinModal(false)}
           onCreated={() => {
             qc.invalidateQueries({ queryKey: ["checkins", id] });
@@ -363,7 +378,50 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${m.c}`}>{m.l}</span>;
 }
 
-function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: any) {
+// Distância entre dois pontos (fórmula de Haversine), em metros
+function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371000;
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function registrarCheckinAutomatico(metaId: string, userId: string, mensagem: string) {
+  const { error } = await supabase.from("checkins").insert({
+    meta_id: metaId, user_id: userId, mensagem, foto_url: null, validado: true,
+  } as any);
+  if (error) throw error;
+}
+
+function CheckinModal({ metaId, userId, acceptedArbitros, tipoValidacao, local, onClose, onCreated }: any) {
+  if (tipoValidacao === "qrcode") {
+    return <CheckinQrCode metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />;
+  }
+  if (tipoValidacao === "geolocalizacao") {
+    return <CheckinGeolocalizacao metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />;
+  }
+  return <CheckinFotoArbitro metaId={metaId} userId={userId} acceptedArbitros={acceptedArbitros} onClose={onClose} onCreated={onCreated} />;
+}
+
+function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">{title}</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18}/></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreated }: any) {
   const [msg, setMsg] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -410,31 +468,178 @@ function CheckinModal({ metaId, userId, acceptedArbitros, onClose, onCreated }: 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold">Publicar atualização</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18}/></button>
+    <ModalShell title="Publicar atualização" onClose={onClose}>
+      <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} placeholder="O que você fez hoje? Conte sua evolução…"
+        className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+      {preview && (
+        <div className="relative">
+          <img src={preview} alt="" className="w-full h-48 rounded-xl object-cover" />
+          <button onClick={() => pickFile(null)} className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"><X size={14}/></button>
         </div>
-        <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} placeholder="O que você fez hoje? Conte sua evolução…"
-          className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
-        {preview && (
-          <div className="relative">
-            <img src={preview} alt="" className="w-full h-48 rounded-xl object-cover" />
-            <button onClick={() => pickFile(null)} className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"><X size={14}/></button>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
-            <Camera size={16} /> {file ? "Trocar foto" : "Adicionar foto"}
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
-          </label>
-        </div>
-        <button onClick={submit} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
-          {loading && <Loader2 size={14} className="animate-spin"/>} Publicar check-in
-        </button>
+      )}
+      <div className="flex items-center gap-2">
+        <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
+          <Camera size={16} /> {file ? "Trocar foto" : "Adicionar foto"}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
+        </label>
       </div>
-    </div>
+      <button onClick={submit} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
+        {loading && <Loader2 size={14} className="animate-spin"/>} Publicar check-in
+      </button>
+    </ModalShell>
+  );
+}
+
+function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const suportado = typeof window !== "undefined" && "BarcodeDetector" in window;
+
+  useEffect(() => {
+    if (!scanning || !suportado) return;
+    let stream: MediaStream | null = null;
+    let raf: number;
+    let ativo = true;
+
+    async function start() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        // @ts-ignore - BarcodeDetector é uma API nativa do navegador, sem tipos do TS por padrão
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        const loop = async () => {
+          if (!ativo || !videoRef.current) return;
+          try {
+            const codes = await detector.detect(videoRef.current);
+            if (codes.length > 0) {
+              await onCodigoLido(codes[0].rawValue);
+              return;
+            }
+          } catch { /* frame inválido, tenta o próximo */ }
+          raf = requestAnimationFrame(loop);
+        };
+        loop();
+      } catch (e: any) {
+        setErro("Não foi possível acessar a câmera. Verifique as permissões.");
+        setScanning(false);
+      }
+    }
+    start();
+    return () => {
+      ativo = false;
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+  }, [scanning]);
+
+  async function onCodigoLido(valor: string) {
+    if (!local?.qrcode_token) return;
+    if (valor !== local.qrcode_token) {
+      setErro("Esse QR Code não corresponde ao local desta meta.");
+      return;
+    }
+    setScanning(false);
+    setLoading(true);
+    try {
+      await registrarCheckinAutomatico(metaId, userId, `Check-in validado por QR Code em ${local.nome}.`);
+      toast.success("Check-in validado por QR Code!");
+      onCreated();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <ModalShell title="Check-in por QR Code" onClose={onClose}>
+      {!local ? (
+        <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+          Nenhum local vinculado a esta meta.
+        </div>
+      ) : !suportado ? (
+        <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+          Seu navegador não suporta leitura de QR Code pela câmera. Tente pelo Chrome no Android.
+        </div>
+      ) : scanning ? (
+        <div className="space-y-3">
+          <div className="relative overflow-hidden rounded-2xl bg-black aspect-square">
+            <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+            <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-primary" />
+          </div>
+          {erro && <p className="text-xs text-destructive text-center">{erro}</p>}
+          <button onClick={() => setScanning(false)} className="w-full rounded-xl border border-border bg-card py-2.5 text-xs font-semibold text-muted-foreground">Cancelar</button>
+        </div>
+      ) : (
+        <div className="space-y-3 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+            <QrCode size={28} className="text-primary-light" />
+          </div>
+          <p className="text-sm text-muted-foreground">Escaneie o QR Code fixado em <span className="font-semibold text-foreground">{local.nome}</span> para registrar seu check-in de hoje.</p>
+          <button onClick={() => { setErro(null); setScanning(true); }} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
+            {loading ? <Loader2 size={14} className="animate-spin"/> : <ScanLine size={16} />} Abrir câmera e escanear
+          </button>
+        </div>
+      )}
+    </ModalShell>
+  );
+}
+
+function CheckinGeolocalizacao({ metaId, userId, local, onClose, onCreated }: any) {
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  function confirmar() {
+    if (!local) return;
+    if (!navigator.geolocation) return setErro("Geolocalização não suportada neste navegador.");
+    setLoading(true);
+    setErro(null);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const dist = distanciaMetros(pos.coords.latitude, pos.coords.longitude, local.latitude, local.longitude);
+        if (dist > local.raio_geofence_metros) {
+          setLoading(false);
+          setErro(`Você está a ${Math.round(dist)}m de ${local.nome} — fora do raio de ${local.raio_geofence_metros}m permitido.`);
+          return;
+        }
+        try {
+          await registrarCheckinAutomatico(metaId, userId, `Check-in validado por geolocalização em ${local.nome}.`);
+          toast.success("Check-in validado!");
+          onCreated();
+        } catch (e: any) {
+          toast.error(e.message);
+        } finally {
+          setLoading(false);
+        }
+      },
+      () => { setLoading(false); setErro("Não foi possível obter sua localização."); },
+    );
+  }
+
+  return (
+    <ModalShell title="Check-in por localização" onClose={onClose}>
+      {!local ? (
+        <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+          Nenhum local vinculado a esta meta.
+        </div>
+      ) : (
+        <div className="space-y-3 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+            <MapPin size={28} className="text-emerald-400" />
+          </div>
+          <p className="text-sm text-muted-foreground">Confirme que você está em <span className="font-semibold text-foreground">{local.nome}</span> (raio de {local.raio_geofence_metros}m) para registrar seu check-in de hoje.</p>
+          {erro && <p className="text-xs text-destructive">{erro}</p>}
+          <button onClick={confirmar} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
+            {loading ? <Loader2 size={14} className="animate-spin"/> : <Crosshair size={16} />} Confirmar minha localização
+          </button>
+        </div>
+      )}
+    </ModalShell>
   );
 }
 
