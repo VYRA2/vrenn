@@ -208,7 +208,26 @@ function PerfilPublico() {
               {seguindoNow ? "Seguindo" : "Seguir"}
             </button>
             <button
-              onClick={() => toast("Mensagens chegando em breve")}
+              onClick={async () => {
+                if (!targetId) return;
+                const [a, b] = [user.id, targetId].sort();
+                const { data: existente } = await supabase
+                  .from("conversas")
+                  .select("id")
+                  .or(`and(user1_id.eq.${a},user2_id.eq.${b}),and(user1_id.eq.${b},user2_id.eq.${a})`)
+                  .maybeSingle();
+                if (existente?.id) {
+                  navigate({ to: "/mensagens/$id", params: { id: existente.id } });
+                  return;
+                }
+                const { data: nova, error } = await supabase
+                  .from("conversas")
+                  .insert({ user1_id: user.id, user2_id: targetId } as any)
+                  .select("id")
+                  .single();
+                if (error || !nova) return toast.error(error?.message ?? "Erro ao iniciar conversa");
+                navigate({ to: "/mensagens/$id", params: { id: nova.id } });
+              }}
               className="h-11 flex-1 rounded-2xl border border-border bg-card text-sm font-bold"
             >
               Mensagem
