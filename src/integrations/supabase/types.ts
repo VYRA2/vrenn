@@ -1048,6 +1048,7 @@ export type Database = {
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
       get_meta_valor_destino: { Args: { _meta_id: string }; Returns: string }
       get_meus_creditos: { Args: never; Returns: number }
+      get_my_cpf: { Args: never; Returns: string }
       get_my_profile_stats: {
         Args: never
         Returns: {
