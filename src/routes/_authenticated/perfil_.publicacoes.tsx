@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { ArrowLeft, Heart, MessageCircle, Video } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/perfil/publicacoes")({
+export const Route = createFileRoute("/_authenticated/perfil_/publicacoes")({
   component: MinhasPublicacoes,
 });
 

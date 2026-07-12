@@ -3,7 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
-import { ArrowLeft, Info, Users, ClipboardCheck, Shield, Flag, Trophy, ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowLeft, Info, Users, ClipboardCheck, Shield, Flag, Trophy, ArrowRight, ChevronRight, Pencil, X, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
+const ADMIN_ID = "52fd9ebb-5d88-4b33-acc3-97b70c62a426";
 
 export const Route = createFileRoute("/_authenticated/desafio-temporada")({
   component: DesafioTemporada,
@@ -28,13 +32,15 @@ function formatBRL(value: number) {
 
 function DesafioTemporada() {
   const navigate = useNavigate();
+  const { user } = Route.useRouteContext();
+  const isAdmin = user.id === ADMIN_ID;
 
-  const { data: fundo } = useQuery({
+  const { data: fundo, refetch } = useQuery({
     queryKey: ["fundo_temporada"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("fundo_temporada")
-        .select("valor_acumulado, meta_valor")
+        .select("id, valor_acumulado, meta_valor")
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -45,6 +51,11 @@ function DesafioTemporada() {
   const metaValor = fundo?.meta_valor ?? 300000;
   const progresso = metaValor > 0 ? Math.min(100, Math.round((valorAcumulado / metaValor) * 100)) : 0;
 
+  const [premios, setPremios] = useState({ p1: 40000, p2: 25000, p3: 15000, top10: 8000, top50: 3000 });
+  const [showRegulamento, setShowRegulamento] = useState(false);
+  const [showDetalhes, setShowDetalhes] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-32">
       <header className="relative mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
@@ -52,11 +63,17 @@ function DesafioTemporada() {
           <ArrowLeft size={20} />
         </button>
         <VyraLogo size={32} />
-        <button className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><Info size={16} /></button>
+        <div className="flex items-center gap-1">
+          {isAdmin && (
+            <button onClick={() => setShowEdit(true)} aria-label="Editar" className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light">
+              <Pencil size={14} />
+            </button>
+          )}
+          <button className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 text-primary-light"><Info size={16} /></button>
+        </div>
       </header>
 
       <div className="mx-auto max-w-md px-5">
-        {/* Hero */}
         <section className="relative overflow-hidden pt-4">
           <div className="relative z-10">
             <p className="text-xs font-bold uppercase tracking-widest text-primary-light">DESAFIO DA</p>
@@ -72,7 +89,6 @@ function DesafioTemporada() {
           </div>
         </section>
 
-        {/* Fundo acumulado */}
         <section className="mt-8 rounded-3xl border border-border bg-card p-5">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-primary-light">Fundo acumulado</span>
@@ -88,7 +104,6 @@ function DesafioTemporada() {
           <p className="mt-2 text-center text-[11px] text-muted-foreground">Meta da temporada</p>
         </section>
 
-        {/* Stats grid */}
         <section className="mt-4 grid grid-cols-4 gap-2">
           {STATS.map(({ icon: Icon, v, l }) => (
             <div key={l} className="rounded-2xl border border-border bg-card p-3 text-center">
@@ -99,7 +114,6 @@ function DesafioTemporada() {
           ))}
         </section>
 
-        {/* Como funciona */}
         <section className="mt-6 rounded-3xl border border-border bg-card p-5">
           <h2 className="text-base font-bold">Como funciona</h2>
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -117,39 +131,141 @@ function DesafioTemporada() {
           </div>
         </section>
 
-        {/* Premiação */}
         <section className="mt-4 rounded-3xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold">Premiação</h2>
-            <button className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver detalhes <ArrowRight size={12} /></button>
+            <button onClick={() => setShowDetalhes(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver detalhes <ArrowRight size={12} /></button>
           </div>
           <div className="mt-4 grid grid-cols-5 gap-2 items-end">
-            <Medal place="2º lugar" value="R$ 25.000,00" tone="silver" />
-            <Medal place="1º lugar" value="R$ 40.000,00" tone="gold" big />
-            <Medal place="3º lugar" value="R$ 15.000,00" tone="bronze" />
+            <Medal place="2º lugar" value={formatBRL(premios.p2)} tone="silver" />
+            <Medal place="1º lugar" value={formatBRL(premios.p1)} tone="gold" big />
+            <Medal place="3º lugar" value={formatBRL(premios.p3)} tone="bronze" />
             <div className="col-span-2 space-y-2">
               <div className="rounded-2xl border border-border bg-background p-2.5">
                 <div className="flex items-center gap-1.5"><Shield size={12} className="text-primary-light" /><span className="text-xs font-bold">Top 10</span></div>
-                <div className="text-sm font-bold">R$ 8.000,00</div>
+                <div className="text-sm font-bold">{formatBRL(premios.top10)}</div>
               </div>
               <div className="rounded-2xl border border-border bg-background p-2.5">
                 <div className="flex items-center gap-1.5"><Shield size={12} className="text-primary-light" /><span className="text-xs font-bold">Top 50</span></div>
-                <div className="text-sm font-bold">R$ 3.000,00</div>
+                <div className="text-sm font-bold">{formatBRL(premios.top50)}</div>
               </div>
             </div>
           </div>
         </section>
 
-        <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-3xl bg-primary py-4 text-sm font-bold text-primary-foreground shadow-glow">
+        <button
+          onClick={() => navigate({ to: "/nova-meta", search: { desafio_master: true } as any })}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-3xl bg-primary py-4 text-sm font-bold text-primary-foreground shadow-glow"
+        >
           Quero participar do desafio <ArrowRight size={16} />
         </button>
-        <button className="mt-3 block w-full text-center text-sm font-semibold text-primary-light">Ver regulamento</button>
+        <button onClick={() => setShowRegulamento(true)} className="mt-3 block w-full text-center text-sm font-semibold text-primary-light">Ver regulamento</button>
 
         <Link to="/descobrir" className="mt-6 block text-center text-xs text-muted-foreground">← Voltar para Descobrir</Link>
       </div>
 
+      {showRegulamento && (
+        <Modal onClose={() => setShowRegulamento(false)} title="Regulamento">
+          <p className="text-sm text-muted-foreground">Regulamento em breve.</p>
+        </Modal>
+      )}
+
+      {showDetalhes && (
+        <Modal onClose={() => setShowDetalhes(false)} title="Detalhes da premiação">
+          <ul className="space-y-2 text-sm">
+            <PrizeRow label="1º lugar" value={formatBRL(premios.p1)} />
+            <PrizeRow label="2º lugar" value={formatBRL(premios.p2)} />
+            <PrizeRow label="3º lugar" value={formatBRL(premios.p3)} />
+            <PrizeRow label="Top 10" value={formatBRL(premios.top10)} />
+            <PrizeRow label="Top 50" value={formatBRL(premios.top50)} />
+          </ul>
+        </Modal>
+      )}
+
+      {showEdit && isAdmin && (
+        <AdminEditModal
+          fundoId={fundo?.id}
+          metaValor={metaValor}
+          premios={premios}
+          onClose={() => setShowEdit(false)}
+          onSaved={(np) => { setPremios(np); refetch(); }}
+        />
+      )}
+
       <BottomNav />
     </main>
+  );
+}
+
+function Modal({ onClose, title, children }: { onClose: () => void; title: string; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-bold">{title}</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18} /></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function PrizeRow({ label, value }: { label: string; value: string }) {
+  return (
+    <li className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5">
+      <span className="font-semibold">{label}</span>
+      <span className="text-primary-light font-bold">{value}</span>
+    </li>
+  );
+}
+
+function AdminEditModal({ fundoId, metaValor, premios, onClose, onSaved }: {
+  fundoId?: string;
+  metaValor: number;
+  premios: { p1: number; p2: number; p3: number; top10: number; top50: number };
+  onClose: () => void;
+  onSaved: (p: typeof premios) => void;
+}) {
+  const [meta, setMeta] = useState(metaValor);
+  const [p, setP] = useState(premios);
+  const [saving, setSaving] = useState(false);
+
+  async function salvar() {
+    setSaving(true);
+    if (fundoId) {
+      const { error } = await supabase.from("fundo_temporada").update({ meta_valor: meta }).eq("id", fundoId);
+      if (error) { setSaving(false); return toast.error(error.message); }
+    }
+    setSaving(false);
+    onSaved(p);
+    toast.success("Atualizado");
+    onClose();
+  }
+
+  return (
+    <Modal onClose={onClose} title="Editar desafio">
+      <div className="space-y-3">
+        <NumField label="Meta da temporada (R$)" value={meta} onChange={setMeta} />
+        <NumField label="1º lugar (R$)" value={p.p1} onChange={(v) => setP({ ...p, p1: v })} />
+        <NumField label="2º lugar (R$)" value={p.p2} onChange={(v) => setP({ ...p, p2: v })} />
+        <NumField label="3º lugar (R$)" value={p.p3} onChange={(v) => setP({ ...p, p3: v })} />
+        <NumField label="Top 10 (R$)" value={p.top10} onChange={(v) => setP({ ...p, top10: v })} />
+        <NumField label="Top 50 (R$)" value={p.top50} onChange={(v) => setP({ ...p, top50: v })} />
+        <button onClick={salvar} disabled={saving} className="w-full inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-primary py-3 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60">
+          {saving && <Loader2 size={16} className="animate-spin" />} Salvar
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function NumField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
+      <input type="number" value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+    </label>
   );
 }
 

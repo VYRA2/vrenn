@@ -6,7 +6,7 @@ import { VyraLogo } from "@/components/VyraLogo";
 import { PublishProofModal } from "@/components/PublishProofModal";
 import { CommentsModal } from "@/components/CommentsModal";
 
-import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock } from "lucide-react";
+import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -148,6 +148,8 @@ function Feed() {
 
 function PostCard({ post, userId, onChange }: { post: any; userId: string; onChange: () => void }) {
   const [showComments, setShowComments] = useState(false);
+  const [showMedia, setShowMedia] = useState(false);
+  const navigate = useNavigate();
 
   const p = post.profiles;
   const m = post.metas;
@@ -237,17 +239,18 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
       )}
 
       {post.media_url && (
-        <div className="relative mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-black">
+        <button type="button" onClick={() => setShowMedia(true)} className="relative mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-black block">
           {isVideo ? (
-            <video src={post.media_url} controls playsInline className="h-full w-full object-cover object-center" />
+            <video src={post.media_url} playsInline className="h-full w-full object-cover object-center pointer-events-none" />
           ) : (
             <img src={post.media_url} className="h-full w-full object-cover object-center" alt="" />
           )}
           {m?.progresso != null && (
             <span className="absolute top-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-bold text-white">{m.progresso}%</span>
           )}
-        </div>
+        </button>
       )}
+
 
       {post.legenda && (
         <div className="mt-3">
@@ -281,6 +284,39 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </button>
       </div>
       {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
+      {showMedia && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black" onClick={() => setShowMedia(false)}>
+          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+              <ExternalLink size={14} /> Ver post
+            </button>
+            <button onClick={() => setShowMedia(false)} className="rounded-full bg-white/10 p-2"><X size={20} /></button>
+          </div>
+          <div className="flex-1 flex items-center justify-center px-2" onClick={(e) => e.stopPropagation()}>
+            {isVideo ? (
+              <video src={post.media_url} controls autoPlay playsInline className="max-h-full max-w-full object-contain" />
+            ) : (
+              <img src={post.media_url} className="max-h-full max-w-full object-contain" alt="" />
+            )}
+          </div>
+          <div className="px-4 py-4 text-white text-sm space-y-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              {p?.avatar_url ? (
+                <img src={p.avatar_url} className="h-8 w-8 rounded-full object-cover" alt="" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold">{initial}</div>
+              )}
+              <span className="font-bold">{p?.nome ?? "Usuário"}</span>
+              <span className="text-white/60 text-xs">@{p?.username ?? "—"}</span>
+            </div>
+            {post.legenda && <p className="text-sm leading-snug whitespace-pre-line">{post.legenda}</p>}
+            <div className="flex items-center gap-4 text-xs text-white/80 pt-1">
+              <span className="inline-flex items-center gap-1"><Heart size={14} /> {stats?.likes ?? 0}</span>
+              <span className="inline-flex items-center gap-1"><MessageCircle size={14} /> {stats?.comments ?? 0}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

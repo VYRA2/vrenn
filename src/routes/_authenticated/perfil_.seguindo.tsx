@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { ArrowLeft, Search, UserCheck } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/perfil/seguindo")({
+export const Route = createFileRoute("/_authenticated/perfil_/seguindo")({
   component: Seguindo,
 });
 
