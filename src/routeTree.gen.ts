@@ -225,16 +225,6 @@ const AuthenticatedEquipesIdDesafioNovoRoute =
     path: '/equipes/$id/desafio/novo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
-  id: '/mensagens',
-  path: '/mensagens',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMensagensIdRoute = AuthenticatedMensagensIdRouteImport.update({
-  id: '/mensagens/$id',
-  path: '/mensagens/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -732,6 +722,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquipesIdIndexRoute: typeof AuthenticatedEquipesIdIndexRoute
   AuthenticatedWalletWithdrawIndexRoute: typeof AuthenticatedWalletWithdrawIndexRoute
   AuthenticatedEquipesIdDesafioNovoRoute: typeof AuthenticatedEquipesIdDesafioNovoRoute
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedMensagensIdRoute: typeof AuthenticatedMensagensIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
