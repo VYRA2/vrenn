@@ -147,24 +147,23 @@ function NovaMeta() {
             <ReviewRow label="Categoria" value={CATEGORIAS.find(c => c.id === categoria)?.label ?? "—"} />
             <ReviewRow label="Descrição" value={descricao || "—"} />
             <ReviewRow label="Em jogo" value={valorCustodia ? `R$ ${valorCustodia}` : "—"} />
-            <ReviewRow label="Validação" value={tipoValidacao === "qrcode" ? `QR Code · ${localNome || "—"}` : tipoValidacao === "geolocalizacao" ? `Geolocalização · ${localNome || "—"}` : "CT VRENN"} />
+            <ReviewRow label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
             <ReviewRow label="Prazo" value={prazo || "Sem prazo"} />
           </div>
         )}
 
-        {!(step === 3 && valStep !== "metodo") && (
-          <div className="mt-8 flex gap-3">
-            {step > 1 && <button onClick={() => setStep(step - 1)} className="flex-1 rounded-3xl border border-border bg-card py-3.5 text-sm font-semibold">Voltar</button>}
-            {step < 5 ? (
-              <button onClick={proximoStep} className="flex-1 rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow">Continuar</button>
-            ) : (
-              <button onClick={salvar} disabled={loading} className="flex-1 inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60">
-                {loading && <Loader2 size={16} className="animate-spin" />}
-                Publicar meta
-              </button>
-            )}
-          </div>
-        )}
+        <div className="mt-8 flex gap-3">
+          {step > 1 && <button onClick={() => setStep(step - 1)} className="flex-1 rounded-3xl border border-border bg-card py-3.5 text-sm font-semibold">Voltar</button>}
+          {step < 5 ? (
+            <button onClick={proximoStep} className="flex-1 rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow">Continuar</button>
+          ) : (
+            <button onClick={salvar} disabled={loading} className="flex-1 inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60">
+              {loading && <Loader2 size={16} className="animate-spin" />}
+              Publicar meta
+            </button>
+          )}
+        </div>
+
       </div>
     </main>
   );
