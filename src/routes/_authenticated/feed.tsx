@@ -284,6 +284,39 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </button>
       </div>
       {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
+      {showMedia && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black" onClick={() => setShowMedia(false)}>
+          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+              <ExternalLink size={14} /> Ver post
+            </button>
+            <button onClick={() => setShowMedia(false)} className="rounded-full bg-white/10 p-2"><X size={20} /></button>
+          </div>
+          <div className="flex-1 flex items-center justify-center px-2" onClick={(e) => e.stopPropagation()}>
+            {isVideo ? (
+              <video src={post.media_url} controls autoPlay playsInline className="max-h-full max-w-full object-contain" />
+            ) : (
+              <img src={post.media_url} className="max-h-full max-w-full object-contain" alt="" />
+            )}
+          </div>
+          <div className="px-4 py-4 text-white text-sm space-y-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              {p?.avatar_url ? (
+                <img src={p.avatar_url} className="h-8 w-8 rounded-full object-cover" alt="" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold">{initial}</div>
+              )}
+              <span className="font-bold">{p?.nome ?? "Usuário"}</span>
+              <span className="text-white/60 text-xs">@{p?.username ?? "—"}</span>
+            </div>
+            {post.legenda && <p className="text-sm leading-snug whitespace-pre-line">{post.legenda}</p>}
+            <div className="flex items-center gap-4 text-xs text-white/80 pt-1">
+              <span className="inline-flex items-center gap-1"><Heart size={14} /> {stats?.likes ?? 0}</span>
+              <span className="inline-flex items-center gap-1"><MessageCircle size={14} /> {stats?.comments ?? 0}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
