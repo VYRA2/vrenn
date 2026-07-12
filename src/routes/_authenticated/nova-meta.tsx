@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock, QrCode, MapPin, Shield, Search, Plus, Crosshair, Minus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock } from "lucide-react";
+import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 
 export const Route = createFileRoute("/_authenticated/nova-meta")({
   component: NovaMeta,
