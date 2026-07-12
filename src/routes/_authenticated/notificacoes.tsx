@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { toast } from "sonner";
-import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target, Swords } from "lucide-react";
+import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Trophy, Shield, CheckCircle2, AlertCircle, Target, Swords, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   component: Notificacoes,
