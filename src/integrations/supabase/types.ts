@@ -177,6 +177,48 @@ export type Database = {
           },
         ]
       }
+      conversas: {
+        Row: {
+          created_at: string
+          id: string
+          ultima_mensagem: string | null
+          ultima_mensagem_at: string | null
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ultima_mensagem?: string | null
+          ultima_mensagem_at?: string | null
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ultima_mensagem?: string | null
+          ultima_mensagem_at?: string | null
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversas_user1_id_fkey"
+            columns: ["user1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversas_user2_id_fkey"
+            columns: ["user2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       desafio_equipe_participantes: {
         Row: {
           created_at: string
@@ -501,6 +543,48 @@ export type Database = {
           raio_geofence_metros?: number
         }
         Relationships: []
+      }
+      mensagens: {
+        Row: {
+          conversa_id: string
+          created_at: string
+          id: string
+          lida: boolean
+          sender_id: string
+          texto: string
+        }
+        Insert: {
+          conversa_id: string
+          created_at?: string
+          id?: string
+          lida?: boolean
+          sender_id: string
+          texto: string
+        }
+        Update: {
+          conversa_id?: string
+          created_at?: string
+          id?: string
+          lida?: boolean
+          sender_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       metas: {
         Row: {
