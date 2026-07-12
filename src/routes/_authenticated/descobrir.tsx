@@ -73,6 +73,63 @@ function DescobrirPage() {
     },
   });
 
+  const { data: destaques } = useQuery({
+    queryKey: ["descobrir-destaques"],
+    queryFn: async () => {
+      const [posts, desafios, metasC, duelos] = await Promise.all([
+        supabase.from("posts").select("user_id").not("auto_gerado", "eq", true),
+        supabase.from("desafio_equipe_participantes").select("user_id"),
+        supabase.from("metas").select("user_id").eq("status", "concluida"),
+        supabase.from("duelos").select("winner_id").not("winner_id", "is", null),
+      ]);
+      const score = new Map<string, number>();
+      (posts.data ?? []).forEach((r: any) => score.set(r.user_id, (score.get(r.user_id) ?? 0) + 3));
+      (desafios.data ?? []).forEach((r: any) => score.set(r.user_id, (score.get(r.user_id) ?? 0) + 4));
+      (metasC.data ?? []).forEach((r: any) => score.set(r.user_id, (score.get(r.user_id) ?? 0) + 2));
+      (duelos.data ?? []).forEach((r: any) => r.winner_id && score.set(r.winner_id, (score.get(r.winner_id) ?? 0) + 5));
+      const top = [...score.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+      if (!top.length) return [];
+      const ids = top.map(([id]) => id);
+      const [{ data: profs }, { data: lastPosts }] = await Promise.all([
+        supabase.from("profiles").select("id, nome, username, avatar_url").in("id", ids),
+        supabase.from("posts").select("user_id, media_url, created_at").in("user_id", ids).not("media_url", "is", null).order("created_at", { ascending: false }),
+      ]);
+      const lastByUser = new Map<string, string>();
+      (lastPosts ?? []).forEach((p: any) => { if (!lastByUser.has(p.user_id) && p.media_url) lastByUser.set(p.user_id, p.media_url); });
+      return top.map(([id, pts]) => {
+        const prof = (profs ?? []).find((p: any) => p.id === id);
+        return { id, pts, nome: prof?.nome ?? "—", username: prof?.username ?? "—", avatar_url: prof?.avatar_url, media_url: lastByUser.get(id) };
+      });
+    },
+  });
+
+  const { data: comunidades } = useQuery({
+    queryKey: ["descobrir-comunidades"],
+    queryFn: async () => {
+      const { data: eqs } = await supabase.from("equipes").select("id, nome, avatar_url, categoria");
+      const list = eqs ?? [];
+      if (!list.length) return [];
+      const ids = list.map((e: any) => e.id);
+      const [{ data: mem }, { data: des }] = await Promise.all([
+        supabase.from("equipe_membros").select("equipe_id").in("equipe_id", ids),
+        supabase.from("desafios_equipe").select("equipe_id, status").in("equipe_id", ids).neq("status", "finalizado"),
+      ]);
+      const mcount = new Map<string, number>();
+      const dcount = new Map<string, number>();
+      (mem ?? []).forEach((m: any) => mcount.set(m.equipe_id, (mcount.get(m.equipe_id) ?? 0) + 1));
+      (des ?? []).forEach((d: any) => dcount.set(d.equipe_id, (dcount.get(d.equipe_id) ?? 0) + 1));
+      return list
+        .map((e: any) => ({
+          ...e,
+          membros: mcount.get(e.id) ?? 0,
+          desafios: dcount.get(e.id) ?? 0,
+          score: (mcount.get(e.id) ?? 0) * 2 + (dcount.get(e.id) ?? 0) * 5,
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
+    },
+  });
+
   useEffect(() => {
     const t = setInterval(() => {
       setCountdown((c) => {
