@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar } from "lucide-react";
+import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/desafio/novo")({
   component: NovoDesafio,
@@ -12,7 +13,8 @@ const STEPS = [
   { id: 1, label: "Desafio" },
   { id: 2, label: "Detalhes" },
   { id: 3, label: "Regras" },
-  { id: 4, label: "Resumo" },
+  { id: 4, label: "Validação" },
+  { id: 5, label: "Resumo" },
 ];
 
 const CATEGORIAS = ["foco", "estudos", "saude", "esportes", "outro"];
