@@ -95,6 +95,7 @@ function Notificacoes() {
                 const Icon = style.icon;
                 const isConvite = n.tipo === "convite_arbitro" && !n.lida;
                 const isDueloConvite = n.tipo === "convite_duelo";
+                const isEquipeNav = n.tipo === "novo_desafio_equipe" || n.tipo === "equipe_atualizada";
 
                 const card = (
                   <div className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
