@@ -118,105 +118,18 @@ function NovaMeta() {
           </div>
         )}
 
-        {step === 3 && valStep === "metodo" && (
-          <div className="space-y-4 mt-4">
-            <div>
-              <h2 className="text-lg font-bold text-center">Como será validado seu check-in diário?</h2>
-              <p className="mt-1 text-xs text-center text-muted-foreground">Escolha o método usado para comprovar presença.</p>
-            </div>
-            <MetodoCard
-              active={tipoValidacao === "qrcode"}
-              onClick={() => { setTipoValidacao("qrcode"); setLocalId(null); setLocalNome(""); }}
-              icon={<QrCode size={22} className="text-primary-light" />}
-              title="QR Code"
-              desc="Escaneie o mesmo QR Code todos os dias no local físico da meta."
+        {step === 3 && (
+          <div className="mt-4">
+            <ValidacaoStep
+              tipoValidacao={tipoValidacao}
+              onChangeTipo={setTipoValidacao}
+              localId={localId}
+              onChangeLocalId={setLocalId}
+              userId={user.id}
             />
-            <MetodoCard
-              active={tipoValidacao === "geolocalizacao"}
-              onClick={() => { setTipoValidacao("geolocalizacao"); setLocalId(null); setLocalNome(""); }}
-              icon={<MapPin size={22} className="text-emerald-400" />}
-              title="Geolocalização"
-              desc="Check-in automático em um raio de localização definido."
-            />
-            <MetodoCard
-              active={false}
-              disabled
-              onClick={() => toast.info("Em breve")}
-              icon={<Shield size={22} className="text-emerald-400" />}
-              title="CT VRENN"
-              desc="Check-in dentro do ecossistema VRENN. (em breve)"
-            />
-
-            {tipoValidacao !== "foto_arbitro" && (
-              <button onClick={() => setValStep("buscar")} className="w-full rounded-xl border border-border bg-card p-3 text-left text-sm">
-                <div className="text-xs text-muted-foreground">Local selecionado</div>
-                <div className="mt-1 font-semibold truncate">{localNome || "Nenhum — toque para escolher"}</div>
-              </button>
-            )}
           </div>
         )}
 
-        {step === 3 && valStep === "buscar" && (
-          <div className="space-y-3 mt-4">
-            <h2 className="text-lg font-bold">Este local já está cadastrado?</h2>
-            <p className="text-xs text-muted-foreground">Busque por um local existente para reutilizar {tipoValidacao === "qrcode" ? "o QR Code e as coordenadas" : "as coordenadas"}.</p>
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar local cadastrado..." className="w-full rounded-xl border border-primary/40 bg-card pl-9 pr-3 py-3 text-sm outline-none focus:border-primary" />
-            </div>
-            <div className="text-xs text-muted-foreground">Locais encontrados</div>
-            <div className="space-y-2">
-              {(locais ?? []).map((l: any) => (
-                <button key={l.id} onClick={() => selecionarLocal(l)} className="w-full rounded-xl border border-border bg-card p-3 text-left flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15"><MapPin size={18} className="text-primary-light" /></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm truncate">{l.nome}</div>
-                    <div className="text-[11px] text-emerald-400 font-semibold">
-                      {tipoValidacao === "qrcode" ? "QR Code disponível" : `Raio: ${l.raio_geofence_metros}m`}
-                    </div>
-                  </div>
-                </button>
-              ))}
-              {(locais ?? []).length === 0 && (
-                <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">Nenhum local encontrado</div>
-              )}
-            </div>
-            <button onClick={() => setValStep("cadastrar")} className="w-full rounded-xl border border-primary/60 bg-transparent p-3 text-sm font-semibold text-primary-light inline-flex items-center justify-center gap-2">
-              <Plus size={16} /> Cadastrar novo local
-            </button>
-            <button onClick={() => setValStep("metodo")} className="w-full text-center text-xs text-muted-foreground py-2">Voltar</button>
-          </div>
-        )}
-
-        {step === 3 && valStep === "cadastrar" && (
-          <div className="space-y-4 mt-4">
-            <h2 className="text-lg font-bold">Cadastrar novo local</h2>
-            <p className="text-xs text-muted-foreground">Este local será usado para validar o check-in diário via {tipoValidacao === "qrcode" ? "QR Code" : "geolocalização"}.</p>
-            <Field label="Nome do local" value={novoNome} onChange={setNovoNome} placeholder="Ex.: Academia Alpha" />
-            <Field label="Endereço (opcional)" value={novoEndereco} onChange={setNovoEndereco} placeholder="Ex.: R. das Flores, 123" />
-            <div>
-              <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Localização</span>
-              <button onClick={usarLocalizacaoAtual} className="w-full rounded-xl border border-primary/40 bg-card p-3 text-sm font-semibold text-primary-light inline-flex items-center justify-center gap-2">
-                <Crosshair size={16} /> Usar minha localização atual
-              </button>
-              {novoLat != null && novoLng != null && (
-                <div className="mt-2 text-[11px] text-muted-foreground">Lat: {novoLat.toFixed(5)}, Lng: {novoLng.toFixed(5)}</div>
-              )}
-            </div>
-            <div>
-              <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Raio de validação (geofence)</span>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setNovoRaio(Math.max(20, novoRaio - 10))} className="h-11 w-11 rounded-xl bg-card border border-border inline-flex items-center justify-center text-primary-light"><Minus size={16} /></button>
-                <div className="flex-1 text-center rounded-xl bg-card border border-border py-3 font-bold">{novoRaio} m</div>
-                <button onClick={() => setNovoRaio(novoRaio + 10)} className="h-11 w-11 rounded-xl bg-card border border-border inline-flex items-center justify-center text-primary-light"><Plus size={16} /></button>
-              </div>
-            </div>
-            <button onClick={cadastrarLocal} disabled={savingLocal} className="w-full rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow inline-flex items-center justify-center gap-2 disabled:opacity-60">
-              {savingLocal && <Loader2 size={16} className="animate-spin" />} Cadastrar local
-            </button>
-            <button onClick={() => setValStep("buscar")} className="w-full text-center text-xs text-muted-foreground py-2">Voltar</button>
-          </div>
-        )}
 
         {step === 4 && (
           <div className="space-y-4 mt-4">
