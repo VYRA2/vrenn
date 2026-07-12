@@ -99,7 +99,7 @@ function PostDetail() {
 
         {post.legenda && <p className="text-sm leading-snug whitespace-pre-line">{post.legenda}</p>}
 
-        {post.hashtags?.length > 0 && (
+        {post.hashtags && post.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-x-2 gap-y-1 text-sm font-medium text-primary-light">
             {post.hashtags.map((h: string, i: number) => <span key={i}>{h}</span>)}
           </div>

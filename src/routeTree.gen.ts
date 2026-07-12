@@ -26,6 +26,7 @@ import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedWalletIndexRouteImport } from './routes/_authenticated/wallet.index'
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
+import { Route as AuthenticatedPostIdRouteImport } from './routes/_authenticated/post.$id'
 import { Route as AuthenticatedPerfilSeguindoRouteImport } from './routes/_authenticated/perfil_.seguindo'
 import { Route as AuthenticatedPerfilSeguidoresRouteImport } from './routes/_authenticated/perfil_.seguidores'
 import { Route as AuthenticatedPerfilPublicacoesRouteImport } from './routes/_authenticated/perfil_.publicacoes'
@@ -129,6 +130,11 @@ const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   path: '/u/$username',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPostIdRoute = AuthenticatedPostIdRouteImport.update({
+  id: '/post/$id',
+  path: '/post/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPerfilSeguindoRoute =
   AuthenticatedPerfilSeguindoRouteImport.update({
     id: '/perfil_/seguindo',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
   '/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
   '/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
+  '/post/$id': typeof AuthenticatedPostIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/wallet/': typeof AuthenticatedWalletIndexRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/perfil/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
   '/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
   '/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
+  '/post/$id': typeof AuthenticatedPostIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
   '/wallet': typeof AuthenticatedWalletIndexRoute
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/_authenticated/perfil_/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
   '/_authenticated/perfil_/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
   '/_authenticated/perfil_/seguindo': typeof AuthenticatedPerfilSeguindoRoute
+  '/_authenticated/post/$id': typeof AuthenticatedPostIdRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/_authenticated/wallet/': typeof AuthenticatedWalletIndexRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/perfil/publicacoes'
     | '/perfil/seguidores'
     | '/perfil/seguindo'
+    | '/post/$id'
     | '/u/$username'
     | '/equipes/'
     | '/wallet/'
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/perfil/publicacoes'
     | '/perfil/seguidores'
     | '/perfil/seguindo'
+    | '/post/$id'
     | '/u/$username'
     | '/equipes'
     | '/wallet'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil_/publicacoes'
     | '/_authenticated/perfil_/seguidores'
     | '/_authenticated/perfil_/seguindo'
+    | '/_authenticated/post/$id'
     | '/_authenticated/u/$username'
     | '/_authenticated/equipes/'
     | '/_authenticated/wallet/'
@@ -526,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUUsernameRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/post/$id': {
+      id: '/_authenticated/post/$id'
+      path: '/post/$id'
+      fullPath: '/post/$id'
+      preLoaderRoute: typeof AuthenticatedPostIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil_/seguindo': {
       id: '/_authenticated/perfil_/seguindo'
       path: '/perfil/seguindo'
@@ -639,6 +658,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerfilPublicacoesRoute: typeof AuthenticatedPerfilPublicacoesRoute
   AuthenticatedPerfilSeguidoresRoute: typeof AuthenticatedPerfilSeguidoresRoute
   AuthenticatedPerfilSeguindoRoute: typeof AuthenticatedPerfilSeguindoRoute
+  AuthenticatedPostIdRoute: typeof AuthenticatedPostIdRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
   AuthenticatedWalletIndexRoute: typeof AuthenticatedWalletIndexRoute
@@ -669,6 +689,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilPublicacoesRoute: AuthenticatedPerfilPublicacoesRoute,
   AuthenticatedPerfilSeguidoresRoute: AuthenticatedPerfilSeguidoresRoute,
   AuthenticatedPerfilSeguindoRoute: AuthenticatedPerfilSeguindoRoute,
+  AuthenticatedPostIdRoute: AuthenticatedPostIdRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
   AuthenticatedWalletIndexRoute: AuthenticatedWalletIndexRoute,
