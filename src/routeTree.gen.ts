@@ -42,8 +42,6 @@ import { Route as AuthenticatedWalletWithdrawSuccessRouteImport } from './routes
 import { Route as AuthenticatedWalletDepositPixRouteImport } from './routes/_authenticated/wallet.deposit.pix'
 import { Route as AuthenticatedWalletDepositCardRouteImport } from './routes/_authenticated/wallet.deposit.card'
 import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
-import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
-import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -227,6 +225,16 @@ const AuthenticatedEquipesIdDesafioNovoRoute =
     path: '/equipes/$id/desafio/novo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMensagensIdRoute = AuthenticatedMensagensIdRouteImport.update({
+  id: '/mensagens/$id',
+  path: '/mensagens/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
