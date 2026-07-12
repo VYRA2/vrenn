@@ -21,6 +21,8 @@ const TYPE_STYLES: Record<string, { icon: any; color: string; bg: string }> = {
   arbitro_aceitou:       { icon: CheckCircle2,  color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
   arbitro_recusou:       { icon: AlertCircle,   color: "#F43F5E", bg: "rgba(244,63,94,0.15)" },
   convite_duelo:         { icon: Swords,        color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  novo_desafio_equipe:   { icon: Swords,        color: "#7B2EFF", bg: "rgba(123,46,255,0.15)" },
+  equipe_atualizada:     { icon: Users,         color: "#38BDF8", bg: "rgba(56,189,248,0.15)" },
 };
 
 function Notificacoes() {
