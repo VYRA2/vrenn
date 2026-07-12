@@ -27,12 +27,6 @@ const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
   { id: "habitos", label: "Hábitos", icon: CheckCircle2 },
 ];
 
-const DESTAQUES = [
-  { user: "@abrielrocha", cat: "Treino", time: "2h", frase: "Disciplina hoje, resultado amanhã.", likes: "1.2K", comments: 86, img: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=600&q=60" },
-  { user: "@marianacosta", cat: "Corrida", time: "4h", frase: "A mente desiste antes do corpo.", likes: "982", comments: 64, img: "https://images.unsplash.com/photo-1502904550040-7534597429ae?auto=format&fit=crop&w=600&q=60" },
-  { user: "@lucasmmz", cat: "Estudos", time: "6h", frase: "Pequenas ações constroem grandes sonhos.", likes: "875", comments: 51, img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=60" },
-];
-
 const CATEGORIAS = [
   { label: "Treino", pubs: "12.4K", icon: Dumbbell, color: "#A855F7" },
   { label: "Alimentação", pubs: "8.7K", icon: Leaf, color: "#22D3A1" },
