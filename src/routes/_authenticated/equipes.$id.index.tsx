@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
+  Pencil, Trash2, LogOut, X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
