@@ -36,6 +36,8 @@ function NovoDesafio() {
   const [regras, setRegras] = useState({ foco_total: true, comprovacao: true, etica: true, conclusao: true });
   const [consequencias, setConsequencias] = useState("");
   const [aceito, setAceito] = useState(false);
+  const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("foto_arbitro");
+  const [localId, setLocalId] = useState<string | null>(null);
 
   const inicio = new Date();
   const fim = new Date(); fim.setDate(fim.getDate() + duracao);
@@ -43,7 +45,8 @@ function NovoDesafio() {
 
   function next() {
     if (step === 1 && (!titulo.trim() || !descricao.trim())) return toast.error("Preencha título e descrição");
-    setStep((s) => Math.min(4, s + 1));
+    if (step === 4 && tipoValidacao !== "foto_arbitro" && !localId) return toast.error("Selecione ou cadastre um local");
+    setStep((s) => Math.min(5, s + 1));
   }
 
   async function publicar() {
@@ -62,12 +65,15 @@ function NovoDesafio() {
       premiacao: premiacao.trim() || null,
       regras: { ...regras, consequencias, personalizadas: [] },
       criador_id: user.id,
+      tipo_validacao: tipoValidacao,
+      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
     }).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Desafio publicado!");
     navigate({ to: "/equipes/$id", params: { id: equipeId } });
   }
+
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-12">
