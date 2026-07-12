@@ -43,7 +43,7 @@ function Feed() {
     queryFn: async () => {
       let query = supabase
         .from("posts")
-        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
         .order("created_at", { ascending: false })
         .limit(30);
 
