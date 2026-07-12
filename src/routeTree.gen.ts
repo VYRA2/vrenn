@@ -42,6 +42,8 @@ import { Route as AuthenticatedWalletWithdrawSuccessRouteImport } from './routes
 import { Route as AuthenticatedWalletDepositPixRouteImport } from './routes/_authenticated/wallet.deposit.pix'
 import { Route as AuthenticatedWalletDepositCardRouteImport } from './routes/_authenticated/wallet.deposit.card'
 import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
+import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
