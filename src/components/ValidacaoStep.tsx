@@ -18,6 +18,7 @@ interface ValidacaoStepProps {
 export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLocalId, userId }: ValidacaoStepProps) {
   const [valStep, setValStep] = useState<ValStep>("metodo");
   const [localNome, setLocalNome] = useState("");
+  const [localQrToken, setLocalQrToken] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [novoNome, setNovoNome] = useState("");
   const [novoEndereco, setNovoEndereco] = useState("");
@@ -29,7 +30,7 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
   const { data: locais } = useQuery({
     queryKey: ["locais-validacao", busca],
     queryFn: async () => {
-      let q = supabase.from("locais_validacao").select("id, nome, latitude, longitude, raio_geofence_metros").limit(20);
+      let q = supabase.from("locais_validacao").select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token").limit(20);
       if (busca.trim()) q = q.ilike("nome", `%${busca.trim()}%`);
       const { data } = await q;
       return data ?? [];
@@ -56,18 +57,20 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
       longitude: novoLng,
       raio_geofence_metros: novoRaio,
       criado_por: userId,
-    } as any).select("id, nome").single();
+    } as any).select("id, nome, qrcode_token").single();
     setSaving(false);
     if (error) return toast.error(error.message);
     onChangeLocalId(data.id);
     setLocalNome(data.nome);
+    setLocalQrToken((data as any).qrcode_token ?? null);
     toast.success("Local cadastrado");
     setValStep("metodo");
   }
 
-  function selecionar(l: { id: string; nome: string }) {
+  function selecionar(l: { id: string; nome: string; qrcode_token?: string }) {
     onChangeLocalId(l.id);
     setLocalNome(l.nome);
+    setLocalQrToken(l.qrcode_token ?? null);
     setValStep("metodo");
   }
 
@@ -174,6 +177,19 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
           <div className="text-xs text-muted-foreground">Local selecionado</div>
           <div className="mt-1 font-semibold truncate">{localNome || (localId ? "Local escolhido" : "Nenhum — toque para escolher")}</div>
         </button>
+      )}
+
+      {tipoValidacao === "qrcode" && localId && localQrToken && (
+        <div className="rounded-2xl border border-border bg-card p-4 text-center space-y-2">
+          <p className="text-xs text-muted-foreground">Imprima este QR Code e cole em <span className="font-semibold text-foreground">{localNome}</span>. Ele será escaneado a cada check-in.</p>
+          <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-xl bg-white p-2">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(localQrToken)}`}
+              alt={`QR Code de ${localNome}`}
+              className="h-full w-full"
+            />
+          </div>
+        </div>
       )}
       {tipoValidacao === "foto_arbitro" && (
         <div className="rounded-2xl border border-border bg-card p-4 text-xs text-muted-foreground">
