@@ -5,11 +5,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X, Trash2, QrCode, MapPin, ScanLine, Crosshair } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X, Trash2, QrCode, MapPin, ScanLine, Crosshair, Pencil, Dumbbell, Heart, BookOpen, DollarSign, Sparkles, Lock } from "lucide-react";
+import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
+import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 
 export const Route = createFileRoute("/_authenticated/meta/$id")({
   component: MetaDetail,
 });
+
+const CATEGORIAS = [
+  { id: "fitness", label: "Fitness", icon: Dumbbell },
+  { id: "saude", label: "Saúde", icon: Heart },
+  { id: "estudos", label: "Estudos", icon: BookOpen },
+  { id: "financas", label: "Finanças", icon: DollarSign },
+  { id: "habitos", label: "Hábitos", icon: Calendar },
+  { id: "outro", label: "Outro", icon: Sparkles },
+];
 
 function MetaDetail() {
   const { id } = Route.useParams();
@@ -18,13 +29,14 @@ function MetaDetail() {
   const navigate = useNavigate();
   const [showCheckinModal, setShowCheckinModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditSheet, setShowEditSheet] = useState(false);
 
   const { data: meta, isLoading } = useQuery({
     queryKey: ["meta", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("metas")
-        .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, profiles:user_id (nome, username, avatar_url)")
+        .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, motivacao, profiles:user_id (nome, username, avatar_url)")
         .eq("id", id).maybeSingle();
       if (error) throw error;
       return data;
@@ -42,6 +54,7 @@ function MetaDetail() {
       return data;
     },
     enabled: !!meta?.local_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: valorCustodia } = useQuery({
@@ -91,17 +104,28 @@ function MetaDetail() {
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
           <Link to="/feed" className="rounded-full p-2 hover:bg-card"><ArrowLeft size={20} /></Link>
           <h1 className="flex-1 text-base font-bold truncate text-center">Minha Meta</h1>
-          {meta && meta.user_id === user.id && meta.status === "em_andamento" ? (
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="rounded-full p-2 text-muted-foreground hover:text-destructive hover:bg-card"
-              aria-label="Excluir meta"
-            >
-              <Trash2 size={18} />
-            </button>
-          ) : (
-            <div className="w-8" />
-          )}
+          <div className="flex items-center gap-1">
+            {isOwner && (
+              <button
+                onClick={() => setShowEditSheet(true)}
+                className="rounded-full p-2 text-muted-foreground hover:text-primary-light hover:bg-card"
+                aria-label="Editar meta"
+              >
+                <Pencil size={18} />
+              </button>
+            )}
+            {isOwner && meta.status === "em_andamento" ? (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="rounded-full p-2 text-muted-foreground hover:text-destructive hover:bg-card"
+                aria-label="Excluir meta"
+              >
+                <Trash2 size={18} />
+              </button>
+            ) : (
+              <div className="w-8" />
+            )}
+          </div>
         </div>
       </header>
 
@@ -152,6 +176,23 @@ function MetaDetail() {
         </section>
 
         {isOwner && <EmJogoPrivado metaId={id} />}
+
+        {/* QR Code permanente — visível apenas para o dono quando a meta usa QR Code */}
+        {isOwner && meta.tipo_validacao === "qrcode" && meta.local_id && (
+          <section className="space-y-2">
+            <h3 className="text-sm font-bold inline-flex items-center gap-2">
+              <QrCode size={16} className="text-primary-light" /> Seu QR Code de check-in
+            </h3>
+            <p className="text-xs text-muted-foreground">Imprima e fixe no local. Se perder, baixe aqui novamente.</p>
+            {local?.qrcode_token ? (
+              <QrCodeExportCard nome={local.nome} token={local.qrcode_token} />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card p-4 text-center text-xs text-muted-foreground">
+                Carregando QR Code…
+              </div>
+            )}
+          </section>
+        )}
 
         <ArbitrosSection metaId={id} isOwner={isOwner} arbitros={arbitros ?? []} onChange={() => qc.invalidateQueries({ queryKey: ["arbitros", id] })} ownerId={meta.user_id} />
 
@@ -225,9 +266,194 @@ function MetaDetail() {
           }}
         />
       )}
+
+      {showEditSheet && (
+        <EditMetaSheet
+          meta={meta}
+          onClose={() => setShowEditSheet(false)}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["meta", id] });
+            setShowEditSheet(false);
+          }}
+        />
+      )}
     </main>
   );
 }
+
+// ─── Edit Sheet ────────────────────────────────────────────────────────────────
+
+function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => void; onSaved: () => void }) {
+  const [titulo, setTitulo] = useState(meta.titulo ?? "");
+  const [categoria, setCategoria] = useState(meta.categoria ?? "");
+  const [descricao, setDescricao] = useState(meta.descricao ?? "");
+  const [motivacao, setMotivacao] = useState(meta.motivacao ?? "");
+  const [prazo, setPrazo] = useState(meta.prazo ? meta.prazo.slice(0, 10) : "");
+  const [valorCustodia, setValorCustodia] = useState(meta.valor_custodia ? String(meta.valor_custodia).replace(".", ",") : "");
+  const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>(meta.tipo_validacao ?? "foto_arbitro");
+  const [localId, setLocalId] = useState<string | null>(meta.local_id ?? null);
+  const [saving, setSaving] = useState(false);
+
+  async function salvar() {
+    if (!titulo.trim() || !categoria) return toast.error("Preencha título e categoria");
+    setSaving(true);
+    const valor = parseFloat(valorCustodia.replace(",", ".")) || 0;
+    const { error } = await supabase.from("metas").update({
+      titulo: titulo.trim(),
+      categoria,
+      descricao: descricao.trim(),
+      motivacao: motivacao.trim(),
+      prazo: prazo ? new Date(prazo).toISOString() : null,
+      valor_custodia: valor,
+      tipo_validacao: tipoValidacao,
+      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+    } as any).eq("id", meta.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Meta atualizada!");
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl border border-border bg-card animate-in slide-in-from-bottom overflow-y-auto"
+        style={{ maxHeight: "92dvh" }}
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4">
+          <h2 className="text-base font-bold">Editar meta</h2>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-5 px-5 py-5 pb-8">
+          {/* Título */}
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Título da meta</span>
+            <input
+              type="text"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              placeholder="Ex: Correr 5km em 30 dias"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-primary"
+            />
+          </label>
+
+          {/* Categoria */}
+          <div>
+            <span className="mb-2 block text-xs font-medium text-muted-foreground">Categoria</span>
+            <div className="grid grid-cols-3 gap-2">
+              {CATEGORIAS.map(({ id, label, icon: Icon }) => {
+                const active = categoria === id;
+                return (
+                  <button
+                    type="button"
+                    key={id}
+                    onClick={() => setCategoria(id)}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-background text-muted-foreground"}`}
+                  >
+                    <Icon size={20} />
+                    <span className="text-xs font-medium">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Descrição */}
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Descrição</span>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="O que você vai fazer?"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
+            />
+          </label>
+
+          {/* Motivação */}
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">O que está em jogo? (privado, só você vê)</span>
+            <textarea
+              value={motivacao}
+              onChange={(e) => setMotivacao(e.target.value)}
+              placeholder="Ex: Perco R$200, faço 100 flexões em público, raspo o cabelo…"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
+            />
+          </label>
+
+          {/* Valor em custódia */}
+          <div className="rounded-2xl border border-border bg-background p-4">
+            <h3 className="text-sm font-bold inline-flex items-center gap-2">
+              <Lock size={14} className="text-primary-light" /> Em jogo (custódia)
+            </h3>
+            <div className="mt-3 relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary-light">R$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={valorCustodia}
+                onChange={(e) => setValorCustodia(e.target.value.replace(/[^0-9.,]/g, ""))}
+                placeholder="0,00"
+                className="w-full rounded-xl border border-border bg-card pl-10 pr-4 py-3.5 text-base font-bold outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+
+          {/* Validação */}
+          <div>
+            <span className="mb-2 block text-xs font-medium text-muted-foreground">Método de validação</span>
+            <ValidacaoStep
+              tipoValidacao={tipoValidacao}
+              onChangeTipo={setTipoValidacao}
+              localId={localId}
+              onChangeLocalId={setLocalId}
+              userId={meta.user_id}
+            />
+          </div>
+
+          {/* Prazo */}
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Prazo final</span>
+            <input
+              type="date"
+              value={prazo}
+              onChange={(e) => setPrazo(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-primary"
+            />
+          </label>
+
+          {/* Botões */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-3xl border border-border bg-background py-3.5 text-sm font-semibold text-muted-foreground"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={salvar}
+              disabled={saving}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60"
+            >
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              Salvar alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Modal ───────────────────────────────────────────────────────────────
 
 function DeleteMetaModal({ metaId, createdAt, valorCustodia, onClose, onDeleted }: {
   metaId: string; createdAt: string; valorCustodia: number; onClose: () => void; onDeleted: () => void;
@@ -286,6 +512,8 @@ function DeleteMetaModal({ metaId, createdAt, valorCustodia, onClose, onDeleted 
     </div>
   );
 }
+
+// ─── Helpers ────────────────────────────────────────────────────────────────────
 
 function InfoBox({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
@@ -378,7 +606,6 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${m.c}`}>{m.l}</span>;
 }
 
-// Distância entre dois pontos (fórmula de Haversine), em metros
 function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371000;
   const toRad = (v: number) => (v * Math.PI) / 180;
@@ -510,7 +737,7 @@ function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         }
-        // @ts-ignore - BarcodeDetector é uma API nativa do navegador, sem tipos do TS por padrão
+        // @ts-ignore
         const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
         const loop = async () => {
           if (!ativo || !videoRef.current) return;
@@ -520,7 +747,7 @@ function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
               await onCodigoLido(codes[0].rawValue);
               return;
             }
-          } catch { /* frame inválido, tenta o próximo */ }
+          } catch { /* frame inválido */ }
           raf = requestAnimationFrame(loop);
         };
         loop();
