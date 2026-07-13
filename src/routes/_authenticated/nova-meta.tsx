@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock, Download, Share2 } from "lucide-react";
+import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
+import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 
 export const Route = createFileRoute("/_authenticated/nova-meta")({
   component: NovaMeta,
@@ -35,6 +36,7 @@ function NovaMeta() {
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("qrcode");
   const [localId, setLocalId] = useState<string | null>(null);
 
+  // FIX: staleTime garante que o dado não seja re-fetchado enquanto o usuário navega entre steps
   const { data: localSelecionado } = useQuery({
     queryKey: ["novo-meta-local", localId],
     queryFn: async () => {
@@ -46,6 +48,8 @@ function NovaMeta() {
       return data;
     },
     enabled: !!localId && tipoValidacao === "qrcode",
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   function proximoStep() {
@@ -164,8 +168,15 @@ function NovaMeta() {
             <ReviewRow label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
             <ReviewRow label="Prazo" value={prazo || "Sem prazo"} />
 
-            {tipoValidacao === "qrcode" && localSelecionado?.qrcode_token && (
-              <QrCodeExportCard nome={localSelecionado.nome} token={localSelecionado.qrcode_token} />
+            {/* FIX: mostra loading enquanto o dado não chega, em vez de não renderizar nada */}
+            {tipoValidacao === "qrcode" && (
+              localSelecionado?.qrcode_token ? (
+                <QrCodeExportCard nome={localSelecionado.nome} token={localSelecionado.qrcode_token} />
+              ) : localId ? (
+                <div className="rounded-2xl border border-border bg-card p-4 text-center text-xs text-muted-foreground">
+                  Carregando QR Code…
+                </div>
+              ) : null
             )}
           </div>
         )}
@@ -184,19 +195,6 @@ function NovaMeta() {
 
       </div>
     </main>
-  );
-}
-
-function MetodoCard({ active, disabled, onClick, icon, title, desc }: { active: boolean; disabled?: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} className={`w-full flex items-start gap-3 rounded-2xl border p-4 text-left transition-colors ${active ? "border-primary bg-primary/10" : "border-border bg-card"} ${disabled ? "opacity-60" : ""}`}>
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-bold">{title}</div>
-        <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
-      </div>
-      <div className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${active ? "border-primary bg-primary" : "border-border"}`} />
-    </button>
   );
 }
 
@@ -241,70 +239,6 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm">{value}</div>
-    </div>
-  );
-}
-
-function QrCodeExportCard({ nome, token }: { nome: string; token: string }) {
-  const [busy, setBusy] = useState<"baixar" | "compartilhar" | null>(null);
-  const url = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(token)}`;
-  const arquivo = `qrcode-${nome.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
-
-  async function baixarImagem(): Promise<Blob> {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error("Não foi possível gerar a imagem do QR Code.");
-    return resp.blob();
-  }
-
-  async function baixar() {
-    setBusy("baixar");
-    try {
-      const blob = await baixarImagem();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = arquivo;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } catch {
-      window.open(url, "_blank");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function compartilhar() {
-    setBusy("compartilhar");
-    try {
-      const blob = await baixarImagem();
-      const file = new File([blob], arquivo, { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: `QR Code — ${nome}`, text: `QR Code de check-in para ${nome}` });
-      } else if (navigator.share) {
-        await navigator.share({ title: `QR Code — ${nome}`, url });
-      } else {
-        window.open(url, "_blank");
-      }
-    } catch (e: any) {
-      if (e?.name !== "AbortError") window.open(url, "_blank");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4 text-center space-y-3">
-      <p className="text-xs text-muted-foreground">Imprima este QR Code e cole em <span className="font-semibold text-foreground">{nome}</span>. Ele será escaneado a cada check-in.</p>
-      <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-xl bg-white p-2">
-        <img src={url.replace("512x512", "200x200")} alt={`QR Code de ${nome}`} className="h-full w-full" />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={baixar} disabled={busy !== null} className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-background py-2.5 text-xs font-semibold text-primary-light disabled:opacity-60">
-          {busy === "baixar" ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Baixar
-        </button>
-        <button type="button" onClick={compartilhar} disabled={busy !== null} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-60">
-          {busy === "compartilhar" ? <Loader2 size={14} className="animate-spin" /> : <Share2 size={14} />} Compartilhar
-        </button>
-      </div>
     </div>
   );
 }
