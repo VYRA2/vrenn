@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/mensagens/$id")({
+export const Route = createFileRoute("/_authenticated/mensagens_/$id")({
   component: Chat,
 });
 

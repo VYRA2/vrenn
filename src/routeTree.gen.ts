@@ -33,7 +33,7 @@ import { Route as AuthenticatedPerfilSeguidoresRouteImport } from './routes/_aut
 import { Route as AuthenticatedPerfilPublicacoesRouteImport } from './routes/_authenticated/perfil_.publicacoes'
 import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authenticated/perfil_.editar'
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
-import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens.$id'
+import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens_.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
@@ -173,9 +173,9 @@ const AuthenticatedMetaIdRoute = AuthenticatedMetaIdRouteImport.update({
 } as any)
 const AuthenticatedMensagensIdRoute =
   AuthenticatedMensagensIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedMensagensRoute,
+    id: '/mensagens_/$id',
+    path: '/mensagens/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEquipesNovaRoute =
   AuthenticatedEquipesNovaRouteImport.update({
@@ -235,7 +235,7 @@ export interface FileRoutesByFullPath {
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
-  '/mensagens': typeof AuthenticatedMensagensRouteWithChildren
+  '/mensagens': typeof AuthenticatedMensagensRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
@@ -269,7 +269,7 @@ export interface FileRoutesByTo {
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
-  '/mensagens': typeof AuthenticatedMensagensRouteWithChildren
+  '/mensagens': typeof AuthenticatedMensagensRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-meta': typeof AuthenticatedNovaMetaRoute
@@ -305,7 +305,7 @@ export interface FileRoutesById {
   '/_authenticated/descobrir': typeof AuthenticatedDescobrirRoute
   '/_authenticated/duelos': typeof AuthenticatedDuelosRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
-  '/_authenticated/mensagens': typeof AuthenticatedMensagensRouteWithChildren
+  '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-meta': typeof AuthenticatedNovaMetaRoute
@@ -313,7 +313,7 @@ export interface FileRoutesById {
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
-  '/_authenticated/mensagens/$id': typeof AuthenticatedMensagensIdRoute
+  '/_authenticated/mensagens_/$id': typeof AuthenticatedMensagensIdRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
   '/_authenticated/perfil_/editar': typeof AuthenticatedPerfilEditarRoute
   '/_authenticated/perfil_/publicacoes': typeof AuthenticatedPerfilPublicacoesRoute
@@ -418,7 +418,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ranking'
     | '/_authenticated/duelo-convite/$id'
     | '/_authenticated/equipes/nova'
-    | '/_authenticated/mensagens/$id'
+    | '/_authenticated/mensagens_/$id'
     | '/_authenticated/meta/$id'
     | '/_authenticated/perfil_/editar'
     | '/_authenticated/perfil_/publicacoes'
@@ -612,12 +612,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMetaIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/mensagens/$id': {
-      id: '/_authenticated/mensagens/$id'
-      path: '/$id'
+    '/_authenticated/mensagens_/$id': {
+      id: '/_authenticated/mensagens_/$id'
+      path: '/mensagens/$id'
       fullPath: '/mensagens/$id'
       preLoaderRoute: typeof AuthenticatedMensagensIdRouteImport
-      parentRoute: typeof AuthenticatedMensagensRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/equipes/nova': {
       id: '/_authenticated/equipes/nova'
@@ -678,20 +678,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedMensagensRouteChildren {
-  AuthenticatedMensagensIdRoute: typeof AuthenticatedMensagensIdRoute
-}
-
-const AuthenticatedMensagensRouteChildren: AuthenticatedMensagensRouteChildren =
-  {
-    AuthenticatedMensagensIdRoute: AuthenticatedMensagensIdRoute,
-  }
-
-const AuthenticatedMensagensRouteWithChildren =
-  AuthenticatedMensagensRoute._addFileChildren(
-    AuthenticatedMensagensRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -699,7 +685,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDescobrirRoute: typeof AuthenticatedDescobrirRoute
   AuthenticatedDuelosRoute: typeof AuthenticatedDuelosRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
-  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRouteWithChildren
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaMetaRoute: typeof AuthenticatedNovaMetaRoute
@@ -707,6 +693,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedDueloConviteIdRoute: typeof AuthenticatedDueloConviteIdRoute
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
+  AuthenticatedMensagensIdRoute: typeof AuthenticatedMensagensIdRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
   AuthenticatedPerfilEditarRoute: typeof AuthenticatedPerfilEditarRoute
   AuthenticatedPerfilPublicacoesRoute: typeof AuthenticatedPerfilPublicacoesRoute
@@ -731,7 +718,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDescobrirRoute: AuthenticatedDescobrirRoute,
   AuthenticatedDuelosRoute: AuthenticatedDuelosRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
-  AuthenticatedMensagensRoute: AuthenticatedMensagensRouteWithChildren,
+  AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaMetaRoute: AuthenticatedNovaMetaRoute,
@@ -739,6 +726,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedDueloConviteIdRoute: AuthenticatedDueloConviteIdRoute,
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
+  AuthenticatedMensagensIdRoute: AuthenticatedMensagensIdRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
   AuthenticatedPerfilEditarRoute: AuthenticatedPerfilEditarRoute,
   AuthenticatedPerfilPublicacoesRoute: AuthenticatedPerfilPublicacoesRoute,
@@ -769,13 +757,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

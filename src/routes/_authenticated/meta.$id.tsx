@@ -5,7 +5,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, AlertCircle, Image as ImageIcon, Calendar, Target, UserPlus, Loader2, Camera, Shield, X, Trash2, QrCode, MapPin, ScanLine, Crosshair, Pencil, Dumbbell, Heart, BookOpen, DollarSign, Sparkles, Lock } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  Image as ImageIcon,
+  Calendar,
+  Target,
+  UserPlus,
+  Loader2,
+  Camera,
+  Shield,
+  X,
+  Trash2,
+  QrCode,
+  MapPin,
+  ScanLine,
+  Crosshair,
+  Pencil,
+  Dumbbell,
+  Heart,
+  BookOpen,
+  DollarSign,
+  Sparkles,
+  Lock,
+} from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 
@@ -36,8 +60,11 @@ function MetaDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("metas")
-        .select("id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, motivacao, profiles:user_id (nome, username, avatar_url)")
-        .eq("id", id).maybeSingle();
+        .select(
+          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, motivacao, profiles:user_id (nome, username, avatar_url)",
+        )
+        .eq("id", id)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -68,7 +95,11 @@ function MetaDetail() {
   const { data: checkins } = useQuery({
     queryKey: ["checkins", id],
     queryFn: async () => {
-      const { data } = await supabase.from("checkins").select("*").eq("meta_id", id).order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("checkins")
+        .select("*")
+        .eq("meta_id", id)
+        .order("created_at", { ascending: false });
       return data ?? [];
     },
   });
@@ -76,7 +107,10 @@ function MetaDetail() {
   const { data: arbitros } = useQuery({
     queryKey: ["arbitros", id],
     queryFn: async () => {
-      const { data } = await supabase.from("arbitros").select("*, profiles:arbitro_id (nome, username, avatar_url)").eq("meta_id", id);
+      const { data } = await supabase
+        .from("arbitros")
+        .select("*, profiles:arbitro_id (nome, username, avatar_url)")
+        .eq("meta_id", id);
       return data ?? [];
     },
   });
@@ -85,7 +119,13 @@ function MetaDetail() {
     queryKey: ["validacoes", id],
     queryFn: async () => {
       if (!checkins?.length) return [];
-      const { data } = await supabase.from("checkin_validacoes").select("*").in("checkin_id", checkins.map(c => c.id));
+      const { data } = await supabase
+        .from("checkin_validacoes")
+        .select("*")
+        .in(
+          "checkin_id",
+          checkins.map((c) => c.id),
+        );
       return data ?? [];
     },
     enabled: !!checkins,
@@ -95,14 +135,16 @@ function MetaDetail() {
   if (!meta) return <div className="min-h-screen bg-background p-8 text-muted-foreground">Meta não encontrada.</div>;
 
   const isOwner = meta.user_id === user.id;
-  const myArbitro = arbitros?.find(a => a.arbitro_id === user.id && a.status === "aceito");
-  const acceptedArbitros = arbitros?.filter(a => a.status === "aceito") ?? [];
+  const myArbitro = arbitros?.find((a) => a.arbitro_id === user.id && a.status === "aceito");
+  const acceptedArbitros = arbitros?.filter((a) => a.status === "aceito") ?? [];
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-lg">
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
-          <Link to="/feed" className="rounded-full p-2 hover:bg-card"><ArrowLeft size={20} /></Link>
+          <Link to="/feed" className="rounded-full p-2 hover:bg-card">
+            <ArrowLeft size={20} />
+          </Link>
           <h1 className="flex-1 text-base font-bold truncate text-center">Minha Meta</h1>
           <div className="flex items-center gap-1">
             {isOwner && (
@@ -140,17 +182,25 @@ function MetaDetail() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <InfoBox icon={Calendar} label="Prazo" value={meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "Aberto"} />
+          <InfoBox
+            icon={Calendar}
+            label="Prazo"
+            value={meta.prazo ? new Date(meta.prazo).toLocaleDateString("pt-BR") : "Aberto"}
+          />
           <InfoBox icon={Target} label="Categoria" value={meta.categoria} />
           <InfoBox icon={CheckCircle2} label="Check-ins" value={String(checkins?.length ?? 0)} />
         </div>
 
         {isOwner && Number(valorCustodia ?? 0) > 0 && (
           <section className="rounded-2xl border border-primary/40 bg-primary/5 p-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light">🔒</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light">
+              🔒
+            </div>
             <div className="flex-1">
               <div className="text-xs text-muted-foreground">Em custódia</div>
-              <div className="text-lg font-bold text-primary-light">R$ {Number(valorCustodia).toLocaleString("pt-BR")}</div>
+              <div className="text-lg font-bold text-primary-light">
+                R$ {Number(valorCustodia).toLocaleString("pt-BR")}
+              </div>
             </div>
             <span className="text-[10px] uppercase font-bold tracking-wider text-primary-light/80">Em jogo</span>
           </section>
@@ -194,7 +244,13 @@ function MetaDetail() {
           </section>
         )}
 
-        <ArbitrosSection metaId={id} isOwner={isOwner} arbitros={arbitros ?? []} onChange={() => qc.invalidateQueries({ queryKey: ["arbitros", id] })} ownerId={meta.user_id} />
+        <ArbitrosSection
+          metaId={id}
+          isOwner={isOwner}
+          arbitros={arbitros ?? []}
+          onChange={() => qc.invalidateQueries({ queryKey: ["arbitros", id] })}
+          ownerId={meta.user_id}
+        />
 
         <section>
           <h3 className="mb-3 text-sm font-bold">Últimas publicações</h3>
@@ -208,7 +264,7 @@ function MetaDetail() {
               <CheckinItem
                 key={c.id}
                 checkin={c}
-                validacoes={(validacoes ?? []).filter(v => v.checkin_id === c.id)}
+                validacoes={(validacoes ?? []).filter((v) => v.checkin_id === c.id)}
                 canValidate={!!myArbitro}
                 userId={user.id}
                 ownerId={meta.user_id}
@@ -227,7 +283,10 @@ function MetaDetail() {
               <Camera size={16} /> Publicar atualização
             </button>
             <button
-              onClick={() => { navigator.clipboard?.writeText(window.location.href); toast.success("Link copiado — convide apoiadores!"); }}
+              onClick={() => {
+                navigator.clipboard?.writeText(window.location.href);
+                toast.success("Link copiado — convide apoiadores!");
+              }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-bold"
             >
               <UserPlus size={16} /> Apoiadores
@@ -289,7 +348,9 @@ function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => v
   const [descricao, setDescricao] = useState(meta.descricao ?? "");
   const [motivacao, setMotivacao] = useState(meta.motivacao ?? "");
   const [prazo, setPrazo] = useState(meta.prazo ? meta.prazo.slice(0, 10) : "");
-  const [valorCustodia, setValorCustodia] = useState(meta.valor_custodia ? String(meta.valor_custodia).replace(".", ",") : "");
+  const [valorCustodia, setValorCustodia] = useState(
+    meta.valor_custodia ? String(meta.valor_custodia).replace(".", ",") : "",
+  );
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>(meta.tipo_validacao ?? "foto_arbitro");
   const [localId, setLocalId] = useState<string | null>(meta.local_id ?? null);
   const [saving, setSaving] = useState(false);
@@ -298,16 +359,19 @@ function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => v
     if (!titulo.trim() || !categoria) return toast.error("Preencha título e categoria");
     setSaving(true);
     const valor = parseFloat(valorCustodia.replace(",", ".")) || 0;
-    const { error } = await supabase.from("metas").update({
-      titulo: titulo.trim(),
-      categoria,
-      descricao: descricao.trim(),
-      motivacao: motivacao.trim(),
-      prazo: prazo ? new Date(prazo).toISOString() : null,
-      valor_custodia: valor,
-      tipo_validacao: tipoValidacao,
-      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
-    } as any).eq("id", meta.id);
+    const { error } = await supabase
+      .from("metas")
+      .update({
+        titulo: titulo.trim(),
+        categoria,
+        descricao: descricao.trim(),
+        motivacao: motivacao.trim(),
+        prazo: prazo ? new Date(prazo).toISOString() : null,
+        valor_custodia: valor,
+        tipo_validacao: tipoValidacao,
+        local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+      } as any)
+      .eq("id", meta.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Meta atualizada!");
@@ -377,7 +441,9 @@ function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => v
 
           {/* Motivação */}
           <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">O que está em jogo? (privado, só você vê)</span>
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              O que está em jogo? (privado, só você vê)
+            </span>
             <textarea
               value={motivacao}
               onChange={(e) => setMotivacao(e.target.value)}
@@ -455,8 +521,18 @@ function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => v
 
 // ─── Delete Modal ───────────────────────────────────────────────────────────────
 
-function DeleteMetaModal({ metaId, createdAt, valorCustodia, onClose, onDeleted }: {
-  metaId: string; createdAt: string; valorCustodia: number; onClose: () => void; onDeleted: () => void;
+function DeleteMetaModal({
+  metaId,
+  createdAt,
+  valorCustodia,
+  onClose,
+  onDeleted,
+}: {
+  metaId: string;
+  createdAt: string;
+  valorCustodia: number;
+  onClose: () => void;
+  onDeleted: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const dias = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000);
@@ -485,10 +561,18 @@ function DeleteMetaModal({ metaId, createdAt, valorCustodia, onClose, onDeleted 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl border border-border bg-card p-5 space-y-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-3xl border border-border bg-card p-5 space-y-4"
+      >
         <div className="flex items-start gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${critico ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary-light"}`}>
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${critico ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary-light"}`}
+          >
             {critico ? <AlertCircle size={20} /> : <Trash2 size={18} />}
           </div>
           <div className="flex-1">
@@ -497,7 +581,11 @@ function DeleteMetaModal({ metaId, createdAt, valorCustodia, onClose, onDeleted 
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={onClose} disabled={loading} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-muted-foreground disabled:opacity-60">
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-muted-foreground disabled:opacity-60"
+          >
             Cancelar
           </button>
           <button
@@ -537,9 +625,15 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
     try {
       const target: any = await findUser({ data: { identifier: ident } });
       if (target.id === ownerId) throw new Error("Você não pode ser árbitro da própria meta");
-      const { data: arb, error } = await supabase.from("arbitros").insert({
-        meta_id: metaId, arbitro_id: target.id, convidado_por: ownerId,
-      }).select().single();
+      const { data: arb, error } = await supabase
+        .from("arbitros")
+        .insert({
+          meta_id: metaId,
+          arbitro_id: target.id,
+          convidado_por: ownerId,
+        })
+        .select()
+        .single();
       if (error) throw error;
       await supabase.rpc("notify", {
         _user_id: target.id,
@@ -548,18 +642,27 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
         _link_id: metaId,
       });
       toast.success(`Convite enviado para ${target.nome || target.username}`);
-      setIdent(""); setOpen(false); onChange();
+      setIdent("");
+      setOpen(false);
+      onChange();
     } catch (e: any) {
       toast.error(e.message);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold inline-flex items-center gap-2"><Shield size={16} className="text-primary-light"/> Árbitros</h3>
+        <h3 className="text-sm font-bold inline-flex items-center gap-2">
+          <Shield size={16} className="text-primary-light" /> Árbitros
+        </h3>
         {isOwner && (
-          <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary-light">
+          <button
+            onClick={() => setOpen(!open)}
+            className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary-light"
+          >
             <UserPlus size={14} /> Convidar
           </button>
         )}
@@ -567,10 +670,18 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
 
       {open && (
         <div className="mb-3 space-y-2">
-          <input value={ident} onChange={(e) => setIdent(e.target.value)} placeholder="@username ou email"
-            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
-          <button onClick={invite} disabled={loading} className="w-full rounded-xl bg-gradient-primary py-2.5 text-sm font-semibold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
-            {loading && <Loader2 size={14} className="animate-spin"/>} Enviar convite
+          <input
+            value={ident}
+            onChange={(e) => setIdent(e.target.value)}
+            placeholder="@username ou email"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+          />
+          <button
+            onClick={invite}
+            disabled={loading}
+            className="w-full rounded-xl bg-gradient-primary py-2.5 text-sm font-semibold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {loading && <Loader2 size={14} className="animate-spin" />} Enviar convite
           </button>
         </div>
       )}
@@ -578,7 +689,10 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
       {arbitros.length === 0 && <p className="text-xs text-muted-foreground">Nenhum árbitro ainda.</p>}
       <div className="space-y-2">
         {arbitros.map((a: any) => (
-          <div key={a.id} className="flex items-center justify-between rounded-xl border border-border bg-background p-2.5">
+          <div
+            key={a.id}
+            className="flex items-center justify-between rounded-xl border border-border bg-background p-2.5"
+          >
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground">
                 {(a.profiles?.nome || "?")[0].toUpperCase()}
@@ -611,15 +725,17 @@ function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number)
   const toRad = (v: number) => (v * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 async function registrarCheckinAutomatico(metaId: string, userId: string, mensagem: string) {
   const { error } = await supabase.from("checkins").insert({
-    meta_id: metaId, user_id: userId, mensagem, foto_url: null, validado: true,
+    meta_id: metaId,
+    user_id: userId,
+    mensagem,
+    foto_url: null,
+    validado: true,
   } as any);
   if (error) throw error;
 }
@@ -629,18 +745,36 @@ function CheckinModal({ metaId, userId, acceptedArbitros, tipoValidacao, local, 
     return <CheckinQrCode metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />;
   }
   if (tipoValidacao === "geolocalizacao") {
-    return <CheckinGeolocalizacao metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />;
+    return (
+      <CheckinGeolocalizacao metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />
+    );
   }
-  return <CheckinFotoArbitro metaId={metaId} userId={userId} acceptedArbitros={acceptedArbitros} onClose={onClose} onCreated={onCreated} />;
+  return (
+    <CheckinFotoArbitro
+      metaId={metaId}
+      userId={userId}
+      acceptedArbitros={acceptedArbitros}
+      onClose={onClose}
+      onCreated={onCreated}
+    />
+  );
 }
 
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom"
+      >
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold">{title}</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18}/></button>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background">
+            <X size={18} />
+          </button>
         </div>
         {children}
       </div>
@@ -665,7 +799,7 @@ function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreat
     try {
       let foto_url: string | null = null;
       if (file) {
-        const ok = ["image/jpeg","image/png","image/webp","video/mp4"].includes(file.type);
+        const ok = ["image/jpeg", "image/png", "image/webp", "video/mp4"].includes(file.type);
         if (!ok) throw new Error("Formato inválido. Use JPG, PNG, WebP ou MP4.");
         if (file.size > 50 * 1024 * 1024) throw new Error("Arquivo maior que 50MB.");
         const path = `${userId}/${metaId}/${Date.now()}-${file.name}`;
@@ -675,10 +809,20 @@ function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreat
         foto_url = data.publicUrl;
       }
       const { error } = await supabase.from("checkins").insert({
-        meta_id: metaId, user_id: userId, mensagem: msg, foto_url,
+        meta_id: metaId,
+        user_id: userId,
+        mensagem: msg,
+        foto_url,
       });
       if (error) throw error;
-      for (const c of (await supabase.from("checkins").select("id").eq("meta_id", metaId).order("created_at", { ascending: false }).limit(1)).data ?? []) {
+      for (const c of (
+        await supabase
+          .from("checkins")
+          .select("id")
+          .eq("meta_id", metaId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+      ).data ?? []) {
         for (const a of acceptedArbitros) {
           await supabase.rpc("notify", {
             _user_id: a.arbitro_id,
@@ -690,28 +834,50 @@ function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreat
       }
       toast.success("Check-in publicado!");
       onCreated();
-    } catch (e: any) { toast.error(e.message); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <ModalShell title="Publicar atualização" onClose={onClose}>
-      <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} placeholder="O que você fez hoje? Conte sua evolução…"
-        className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
+      <textarea
+        value={msg}
+        onChange={(e) => setMsg(e.target.value)}
+        rows={4}
+        placeholder="O que você fez hoje? Conte sua evolução…"
+        className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+      />
       {preview && (
         <div className="relative">
           <img src={preview} alt="" className="w-full h-48 rounded-xl object-cover" />
-          <button onClick={() => pickFile(null)} className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"><X size={14}/></button>
+          <button
+            onClick={() => pickFile(null)}
+            className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
       <div className="flex items-center gap-2">
         <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
           <Camera size={16} /> {file ? "Trocar foto" : "Adicionar foto"}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+          />
         </label>
       </div>
-      <button onClick={submit} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
-        {loading && <Loader2 size={14} className="animate-spin"/>} Publicar check-in
+      <button
+        onClick={submit}
+        disabled={loading}
+        className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60"
+      >
+        {loading && <Loader2 size={14} className="animate-spin" />} Publicar check-in
       </button>
     </ModalShell>
   );
@@ -747,7 +913,9 @@ function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
               await onCodigoLido(codes[0].rawValue);
               return;
             }
-          } catch { /* frame inválido */ }
+          } catch {
+            /* frame inválido */
+          }
           raf = requestAnimationFrame(loop);
         };
         loop();
@@ -800,16 +968,31 @@ function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
             <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-primary" />
           </div>
           {erro && <p className="text-xs text-destructive text-center">{erro}</p>}
-          <button onClick={() => setScanning(false)} className="w-full rounded-xl border border-border bg-card py-2.5 text-xs font-semibold text-muted-foreground">Cancelar</button>
+          <button
+            onClick={() => setScanning(false)}
+            className="w-full rounded-xl border border-border bg-card py-2.5 text-xs font-semibold text-muted-foreground"
+          >
+            Cancelar
+          </button>
         </div>
       ) : (
         <div className="space-y-3 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
             <QrCode size={28} className="text-primary-light" />
           </div>
-          <p className="text-sm text-muted-foreground">Escaneie o QR Code fixado em <span className="font-semibold text-foreground">{local.nome}</span> para registrar seu check-in de hoje.</p>
-          <button onClick={() => { setErro(null); setScanning(true); }} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
-            {loading ? <Loader2 size={14} className="animate-spin"/> : <ScanLine size={16} />} Abrir câmera e escanear
+          <p className="text-sm text-muted-foreground">
+            Escaneie o QR Code fixado em <span className="font-semibold text-foreground">{local.nome}</span> para
+            registrar seu check-in de hoje.
+          </p>
+          <button
+            onClick={() => {
+              setErro(null);
+              setScanning(true);
+            }}
+            disabled={loading}
+            className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={16} />} Abrir câmera e escanear
           </button>
         </div>
       )}
@@ -831,7 +1014,9 @@ function CheckinGeolocalizacao({ metaId, userId, local, onClose, onCreated }: an
         const dist = distanciaMetros(pos.coords.latitude, pos.coords.longitude, local.latitude, local.longitude);
         if (dist > local.raio_geofence_metros) {
           setLoading(false);
-          setErro(`Você está a ${Math.round(dist)}m de ${local.nome} — fora do raio de ${local.raio_geofence_metros}m permitido.`);
+          setErro(
+            `Você está a ${Math.round(dist)}m de ${local.nome} — fora do raio de ${local.raio_geofence_metros}m permitido.`,
+          );
           return;
         }
         try {
@@ -844,7 +1029,10 @@ function CheckinGeolocalizacao({ metaId, userId, local, onClose, onCreated }: an
           setLoading(false);
         }
       },
-      () => { setLoading(false); setErro("Não foi possível obter sua localização."); },
+      () => {
+        setLoading(false);
+        setErro("Não foi possível obter sua localização.");
+      },
     );
   }
 
@@ -859,10 +1047,18 @@ function CheckinGeolocalizacao({ metaId, userId, local, onClose, onCreated }: an
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
             <MapPin size={28} className="text-emerald-400" />
           </div>
-          <p className="text-sm text-muted-foreground">Confirme que você está em <span className="font-semibold text-foreground">{local.nome}</span> (raio de {local.raio_geofence_metros}m) para registrar seu check-in de hoje.</p>
+          <p className="text-sm text-muted-foreground">
+            Confirme que você está em <span className="font-semibold text-foreground">{local.nome}</span> (raio de{" "}
+            {local.raio_geofence_metros}m) para registrar seu check-in de hoje.
+          </p>
           {erro && <p className="text-xs text-destructive">{erro}</p>}
-          <button onClick={confirmar} disabled={loading} className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60">
-            {loading ? <Loader2 size={14} className="animate-spin"/> : <Crosshair size={16} />} Confirmar minha localização
+          <button
+            onClick={confirmar}
+            disabled={loading}
+            className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Crosshair size={16} />} Confirmar minha
+            localização
           </button>
         </div>
       )}
@@ -877,9 +1073,15 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
   const questionados = validacoes.filter((v: any) => v.status === "questionado").length;
 
   async function validar(status: "validado" | "questionado") {
-    const { error } = await supabase.from("checkin_validacoes").upsert({
-      checkin_id: checkin.id, arbitro_id: userId, status, comentario: comentario || null,
-    }, { onConflict: "checkin_id,arbitro_id" });
+    const { error } = await supabase.from("checkin_validacoes").upsert(
+      {
+        checkin_id: checkin.id,
+        arbitro_id: userId,
+        status,
+        comentario: comentario || null,
+      },
+      { onConflict: "checkin_id,arbitro_id" },
+    );
     if (error) return toast.error(error.message);
     if (status === "validado") {
       await supabase.from("checkins").update({ validado: true }).eq("id", checkin.id);
@@ -887,11 +1089,15 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
     await supabase.rpc("notify", {
       _user_id: checkin.user_id,
       _tipo: status === "validado" ? "apoio" : "cobranca",
-      _mensagem: status === "validado" ? "Um árbitro validou seu check-in." : `Um árbitro questionou: ${comentario || "sem comentário"}`,
+      _mensagem:
+        status === "validado"
+          ? "Um árbitro validou seu check-in."
+          : `Um árbitro questionou: ${comentario || "sem comentário"}`,
       _link_id: checkin.meta_id,
     });
     toast.success(status === "validado" ? "Check-in validado" : "Check-in questionado");
-    setComentario(""); onChange();
+    setComentario("");
+    onChange();
   }
 
   return (
@@ -900,14 +1106,28 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
         {checkin.foto_url ? (
           <img src={checkin.foto_url} alt="" className="h-20 w-20 rounded-xl object-cover" />
         ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-background text-muted-foreground"><ImageIcon size={20}/></div>
+          <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-background text-muted-foreground">
+            <ImageIcon size={20} />
+          </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] text-muted-foreground">{new Date(checkin.created_at).toLocaleString("pt-BR")}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {new Date(checkin.created_at).toLocaleString("pt-BR")}
+          </div>
           {checkin.mensagem && <p className="mt-1 text-sm">{checkin.mensagem}</p>}
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {validados > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent"><CheckCircle2 size={10}/>{validados} validado(s)</span>}
-            {questionados > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-bold text-yellow-300"><AlertCircle size={10}/>{questionados} questionado(s)</span>}
+            {validados > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
+                <CheckCircle2 size={10} />
+                {validados} validado(s)
+              </span>
+            )}
+            {questionados > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-bold text-yellow-300">
+                <AlertCircle size={10} />
+                {questionados} questionado(s)
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -915,14 +1135,30 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
       {canValidate && (
         <div className="mt-3 border-t border-border pt-3 space-y-2">
           {myValidacao ? (
-            <div className="text-xs text-muted-foreground">Você {myValidacao.status === "validado" ? "validou" : "questionou"} este check-in.</div>
+            <div className="text-xs text-muted-foreground">
+              Você {myValidacao.status === "validado" ? "validou" : "questionou"} este check-in.
+            </div>
           ) : (
             <>
-              <input value={comentario} onChange={(e) => setComentario(e.target.value)} placeholder="Comentário (opcional)"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary" />
+              <input
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder="Comentário (opcional)"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary"
+              />
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => validar("validado")} className="rounded-xl bg-accent/20 py-2 text-xs font-bold text-accent inline-flex items-center justify-center gap-1"><CheckCircle2 size={14}/> Validar</button>
-                <button onClick={() => validar("questionado")} className="rounded-xl bg-yellow-500/15 py-2 text-xs font-bold text-yellow-300 inline-flex items-center justify-center gap-1"><AlertCircle size={14}/> Questionar</button>
+                <button
+                  onClick={() => validar("validado")}
+                  className="rounded-xl bg-accent/20 py-2 text-xs font-bold text-accent inline-flex items-center justify-center gap-1"
+                >
+                  <CheckCircle2 size={14} /> Validar
+                </button>
+                <button
+                  onClick={() => validar("questionado")}
+                  className="rounded-xl bg-yellow-500/15 py-2 text-xs font-bold text-yellow-300 inline-flex items-center justify-center gap-1"
+                >
+                  <AlertCircle size={14} /> Questionar
+                </button>
               </div>
             </>
           )}
@@ -944,7 +1180,7 @@ function EmJogoPrivado({ metaId }: { metaId: string }) {
   return (
     <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
       <div className="flex items-center gap-2 text-xs font-bold text-primary-light">
-        <Shield size={14}/> O que está em jogo (só você vê)
+        <Shield size={14} /> O que está em jogo (só você vê)
       </div>
       <p className="mt-2 text-sm whitespace-pre-line">{data}</p>
     </section>
