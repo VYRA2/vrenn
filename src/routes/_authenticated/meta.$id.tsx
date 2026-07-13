@@ -76,7 +76,7 @@ function MetaDetail() {
       const { data } = await supabase
         .from("locais_validacao")
         .select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token")
-        .eq("id", meta!.local_id)
+        .eq("id", meta!.local_id!)
         .maybeSingle();
       return data;
     },
