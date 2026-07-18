@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pitgdiekkshtrvlkdnvg.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "vrenn-mcp",
+      "version": "0.1.0",
+      "title": "VRENN"
+    },
+    "tools": [
+      {
+        "name": "list_my_metas",
+        "title": "List my goals",
+        "description": "List the signed-in VRENN user's own goals (metas), optionally filtered by status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filter by goal status. Omit to return all statuses.",
+              "type": "string",
+              "enum": [
+                "ativa",
+                "concluida",
+                "abandonada",
+                "falhada"
+              ]
+            },
+            "limit": {
+              "description": "Max rows (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_meta",
+        "title": "Create goal",
+        "description": "Create a new goal (meta) for the signed-in VRENN user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "titulo": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Goal title."
+            },
+            "categoria": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Category slug, e.g. fitness, estudo, financeiro."
+            },
+            "descricao": {
+              "description": "Optional description.",
+              "type": "string"
+            },
+            "prazo": {
+              "description": "Optional deadline as ISO date (YYYY-MM-DD).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "titulo",
+            "categoria"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_wallet",
+        "title": "Get my wallet",
+        "description": "Return the signed-in VRENN user's wallet balance and locked balance (BRL).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_notifications",
+        "title": "List my notifications",
+        "description": "List the signed-in VRENN user's recent notifications.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "only_unread": {
+              "description": "If true, return only unread notifications.",
+              "type": "boolean"
+            },
+            "limit": {
+              "description": "Max rows (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
