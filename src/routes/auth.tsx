@@ -7,6 +7,9 @@ import { toast } from "sonner";
 import { ArrowLeft, AtSign, Eye, EyeOff, Lock, Mail, ShieldCheck, User, Loader2, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   component: AuthPage,
 });
 
@@ -15,6 +18,8 @@ type Mode = "login" | "signup";
 function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const dest = next ?? "/feed";
   const [loading, setLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showPwd2, setShowPwd2] = useState(false);

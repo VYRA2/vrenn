@@ -24,7 +24,7 @@ export default defineTool({
     const { data, error } = await sb
       .from("metas")
       .insert({
-        user_id: ctx.getUserId(),
+        user_id: ctx.getUserId()!,
         titulo,
         categoria,
         descricao: descricao ?? null,

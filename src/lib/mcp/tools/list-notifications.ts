@@ -19,7 +19,7 @@ export default defineTool({
     let q = sb
       .from("notificacoes")
       .select("id, tipo, mensagem, lida, link_id, created_at")
-      .eq("user_id", ctx.getUserId())
+      .eq("user_id", ctx.getUserId()!)
       .order("created_at", { ascending: false })
       .limit(limit ?? 20);
     if (only_unread) q = q.eq("lida", false);

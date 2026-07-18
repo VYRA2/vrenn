@@ -15,7 +15,7 @@ export default defineTool({
     const { data, error } = await sb
       .from("wallets")
       .select("balance, locked_balance, updated_at")
-      .eq("user_id", ctx.getUserId())
+      .eq("user_id", ctx.getUserId()!)
       .maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const wallet = data ?? { balance: 0, locked_balance: 0, updated_at: null };
