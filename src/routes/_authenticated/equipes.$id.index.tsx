@@ -5,10 +5,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
+import { QrCodeExportCard } from "@/components/QrCodeExportCard";
+import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
-  Pencil, Trash2, LogOut, X,
+  Pencil, Trash2, LogOut, X, QrCode, Lock, Heart, DollarSign,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
@@ -46,6 +48,7 @@ function EquipeProfile() {
   const [showDelete, setShowDelete] = useState(false);
   const [showLeave, setShowLeave] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [desafioEditando, setDesafioEditando] = useState<any>(null);
   const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
@@ -318,23 +321,31 @@ function EquipeProfile() {
                   const Icon = CATEGORIA_ICON[d.categoria] ?? Zap;
                   const ok = d.status === "concluido";
                   return (
-                    <div key={d.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary-light">
-                        <Icon size={18} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold truncate">{d.titulo}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">
-                          {d.data_fim ? `Até ${fmtData(d.data_fim)}` : `${d.duracao_dias} dias`} · {d.duracao_dias} dias
+                    <div key={d.id} className="rounded-2xl border border-border bg-card p-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary-light">
+                          <Icon size={18} />
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold">{fmtMoeda(Number(d.valor_entrada ?? 0))}</div>
-                        <div className={`inline-flex items-center gap-1 text-[10px] font-semibold capitalize ${ok ? "text-accent" : "text-primary-light"}`}>
-                          {d.status}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold truncate">{d.titulo}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {d.data_fim ? `Até ${fmtData(d.data_fim)}` : `${d.duracao_dias} dias`} · {d.duracao_dias} dias
+                          </div>
                         </div>
+                        <div className="text-right">
+                          <div className="text-sm font-bold">{fmtMoeda(Number(d.valor_entrada ?? 0))}</div>
+                          <div className={`inline-flex items-center gap-1 text-[10px] font-semibold capitalize ${ok ? "text-accent" : "text-primary-light"}`}>{d.status}</div>
+                        </div>
+                        {souAdmin && (
+                          <button onClick={() => setDesafioEditando(d)} className="rounded-full p-1.5 text-muted-foreground hover:text-primary-light hover:bg-secondary shrink-0">
+                            <Pencil size={15} />
+                          </button>
+                        )}
                       </div>
-                      <ChevronRight size={14} className="text-muted-foreground" />
+                      {/* QR Code para admin quando tipo_validacao === qrcode */}
+                      {souAdmin && d.tipo_validacao === "qrcode" && d.local_id && (
+                        <DesafioQrCode localId={d.local_id} />
+                      )}
                     </div>
                   );
                 })}
@@ -484,6 +495,17 @@ function EquipeProfile() {
         />
       )}
 
+      {desafioEditando && (
+        <EditDesafioSheet
+          desafio={desafioEditando}
+          onClose={() => setDesafioEditando(null)}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["equipe-desafios", id] });
+            setDesafioEditando(null);
+          }}
+        />
+      )}
+
       <BottomNav />
     </main>
   );
@@ -556,6 +578,131 @@ function QuickStat({ icon, value, label, small }: { icon: React.ReactNode; value
       <div className="mx-auto flex h-8 items-center justify-center text-primary-light">{icon}</div>
       <div className={`mt-1 font-bold ${small ? "text-[13px]" : "text-lg"}`}>{value}</div>
       <div className="text-[9px] text-muted-foreground leading-tight">{label}</div>
+    </div>
+  );
+}
+
+// ─── Edit Desafio Sheet ──────────────────────────────────────────────────────
+
+const CATEGORIAS_DESAFIO = [
+  { id: "fitness", label: "Fitness", icon: Dumbbell },
+  { id: "saude", label: "Saúde", icon: Heart },
+  { id: "estudos", label: "Estudos", icon: BookOpen },
+  { id: "financas", label: "Finanças", icon: DollarSign },
+  { id: "habitos", label: "Hábitos", icon: Calendar },
+  { id: "outro", label: "Outro", icon: Sparkles },
+];
+
+function EditDesafioSheet({ desafio, onClose, onSaved }: { desafio: any; onClose: () => void; onSaved: () => void }) {
+  const [titulo, setTitulo] = useState(desafio.titulo ?? "");
+  const [descricao, setDescricao] = useState(desafio.descricao ?? "");
+  const [categoria, setCategoria] = useState(desafio.categoria ?? "");
+  const [valorEntrada, setValorEntrada] = useState(desafio.valor_entrada ? String(desafio.valor_entrada).replace(".", ",") : "");
+  const [duracaoDias, setDuracaoDias] = useState(String(desafio.duracao_dias ?? ""));
+  const [premiacao, setPremiacao] = useState(desafio.premiacao ?? "");
+  const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>(desafio.tipo_validacao ?? "foto_arbitro");
+  const [localId, setLocalId] = useState<string | null>(desafio.local_id ?? null);
+  const [saving, setSaving] = useState(false);
+
+  async function salvar() {
+    if (!titulo.trim()) return toast.error("Preencha o título");
+    setSaving(true);
+    const valor = parseFloat(valorEntrada.replace(",", ".")) || 0;
+    const { error } = await (supabase as any).from("desafios_equipe").update({
+      titulo: titulo.trim(),
+      descricao: descricao.trim() || null,
+      categoria,
+      valor_entrada: valor,
+      duracao_dias: parseInt(duracaoDias) || desafio.duracao_dias,
+      premiacao: premiacao.trim() || null,
+      tipo_validacao: tipoValidacao,
+      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+    }).eq("id", desafio.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Desafio atualizado!");
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border border-border bg-card animate-in slide-in-from-bottom overflow-y-auto" style={{ maxHeight: "92dvh" }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4">
+          <h2 className="text-base font-bold">Editar desafio</h2>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18} /></button>
+        </div>
+        <div className="space-y-5 px-5 py-5 pb-8">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Título</span>
+            <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-primary" />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Descrição</span>
+            <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary" />
+          </label>
+          <div>
+            <span className="mb-2 block text-xs font-medium text-muted-foreground">Categoria</span>
+            <div className="grid grid-cols-3 gap-2">
+              {CATEGORIAS_DESAFIO.map(({ id, label, icon: Icon }) => (
+                <button type="button" key={id} onClick={() => setCategoria(id)} className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-colors ${categoria === id ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-background text-muted-foreground"}`}>
+                  <Icon size={20} /><span className="text-xs font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Duração (dias)</span>
+              <input type="number" value={duracaoDias} onChange={(e) => setDuracaoDias(e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Valor de entrada</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary-light">R$</span>
+                <input type="text" inputMode="decimal" value={valorEntrada} onChange={(e) => setValorEntrada(e.target.value.replace(/[^0-9.,]/g, ""))} placeholder="0,00" className="w-full rounded-xl border border-border bg-background pl-9 pr-4 py-3.5 text-sm font-bold outline-none focus:border-primary" />
+              </div>
+            </label>
+          </div>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Premiação (opcional)</span>
+            <input type="text" value={premiacao} onChange={(e) => setPremiacao(e.target.value)} placeholder="Ex: Top 3 dividem o fundo" className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-sm outline-none focus:border-primary" />
+          </label>
+          <div>
+            <span className="mb-2 block text-xs font-medium text-muted-foreground">Método de validação</span>
+            <ValidacaoStep tipoValidacao={tipoValidacao} onChangeTipo={setTipoValidacao} localId={localId} onChangeLocalId={setLocalId} userId={desafio.criador_id} />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 rounded-3xl border border-border bg-background py-3.5 text-sm font-semibold text-muted-foreground">Cancelar</button>
+            <button type="button" onClick={salvar} disabled={saving} className="flex-1 inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60">
+              {saving && <Loader2 size={16} className="animate-spin" />} Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── QR Code inline para desafio ─────────────────────────────────────────────
+
+function DesafioQrCode({ localId }: { localId: string }) {
+  const { data: local } = useQuery({
+    queryKey: ["desafio-local", localId],
+    queryFn: async () => {
+      const { data } = await supabase.from("locais_validacao").select("id, nome, qrcode_token").eq("id", localId).maybeSingle();
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (!local?.qrcode_token) return null;
+
+  return (
+    <div className="pt-1">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary-light mb-2">
+        <QrCode size={13} /> QR Code de check-in
+      </div>
+      <QrCodeExportCard nome={local.nome} token={local.qrcode_token} />
     </div>
   );
 }
