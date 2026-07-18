@@ -114,7 +114,7 @@ function DueloAtivoCard({ duelo, userId }: { duelo: any; userId: string }) {
   const dias = duelo.prazo ? Math.max(0, Math.ceil((new Date(duelo.prazo).getTime() - Date.now())/86400000)) : null;
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-4">
+    <Link to="/duelo/$id" params={{ id: duelo.id }} className="block rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
       <div className="flex items-center justify-between">
         <Avatar profile={me} ring />
         <div className="flex-1 text-center">
@@ -137,7 +137,7 @@ function DueloAtivoCard({ duelo, userId }: { duelo: any; userId: string }) {
           <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary to-primary-light" style={{ width: `${meuProgresso}%` }}/>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -146,7 +146,7 @@ function DueloHistoricoItem({ duelo, userId }: { duelo: any; userId: string }) {
   const isChallenger = duelo.challenger_id === userId;
   const rival = isChallenger ? duelo.opponent : duelo.challenger;
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+    <Link to="/duelo/$id" params={{ id: duelo.id }} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover:border-primary/40 transition-colors">
       <Avatar profile={rival} />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-bold truncate">Você vs {rival?.nome ?? "—"}</div>
@@ -154,7 +154,7 @@ function DueloHistoricoItem({ duelo, userId }: { duelo: any; userId: string }) {
         <div className="text-[10px] text-muted-foreground">Concluído em {new Date(duelo.created_at).toLocaleDateString("pt-BR")}</div>
       </div>
       <div className={`text-xs font-bold ${isWinner ? "text-accent" : "text-destructive"}`}>{isWinner?"Você venceu":"Você perdeu"}</div>
-    </div>
+    </Link>
   );
 }
 
