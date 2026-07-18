@@ -36,7 +36,7 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return toast.error(error.message);
-    navigate({ to: "/feed" });
+    if (dest !== "/feed") window.location.href = dest; else navigate({ to: "/feed" });
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -48,20 +48,21 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/feed`,
+        emailRedirectTo: `${window.location.origin}${dest}`,
         data: { nome, username },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada! Bem-vindo ao VRENN.");
-    navigate({ to: "/feed" });
+    if (dest !== "/feed") window.location.href = dest; else navigate({ to: "/feed" });
   }
 
   async function handleGoogle() {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const redirect_uri = `${window.location.origin}${dest}`;
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
     if (r.error) return toast.error("Erro no login com Google");
-    if (!r.redirected) navigate({ to: "/feed" });
+    if (!r.redirected) window.location.href = dest;
   }
 
   return (
