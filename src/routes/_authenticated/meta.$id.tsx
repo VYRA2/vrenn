@@ -54,6 +54,7 @@ function MetaDetail() {
   const [showCheckinModal, setShowCheckinModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
+  const [showConcluirModal, setShowConcluirModal] = useState(false);
 
   const { data: meta, isLoading } = useQuery({
     queryKey: ["meta", id],
@@ -274,22 +275,25 @@ function MetaDetail() {
           </div>
         </section>
 
-        {isOwner && (
+        {isOwner && meta.status === "em_andamento" && (
           <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto flex max-w-md gap-2 px-4">
             <button
               onClick={() => setShowCheckinModal(true)}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
             >
-              <Camera size={16} /> Publicar atualização
+              <Camera size={16} /> Check-in
             </button>
             <button
-              onClick={() => {
-                navigator.clipboard?.writeText(window.location.href);
-                toast.success("Link copiado — convide apoiadores!");
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-bold"
+              onClick={() => setShowConcluirModal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-accent/60 bg-accent/10 px-4 py-3.5 text-sm font-bold text-accent"
             >
-              <UserPlus size={16} /> Apoiadores
+              <CheckCircle2 size={16} /> Concluir
+            </button>
+            <button
+              onClick={() => { navigator.clipboard?.writeText(window.location.href); toast.success("Link copiado!"); }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 py-3.5 text-sm font-bold"
+            >
+              <UserPlus size={16} />
             </button>
           </div>
         )}
@@ -333,6 +337,21 @@ function MetaDetail() {
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["meta", id] });
             setShowEditSheet(false);
+          }}
+        />
+      )}
+
+      {showConcluirModal && (
+        <ConcluirMetaModal
+          metaId={id}
+          titulo={meta.titulo}
+          valorCustodia={Number(valorCustodia ?? 0)}
+          onClose={() => setShowConcluirModal(false)}
+          onConcluida={() => {
+            qc.invalidateQueries({ queryKey: ["meta", id] });
+            qc.invalidateQueries({ queryKey: ["my-metas-list"] });
+            qc.invalidateQueries({ queryKey: ["wallet"] });
+            setShowConcluirModal(false);
           }}
         />
       )}
@@ -1164,6 +1183,58 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function ConcluirMetaModal({ metaId, titulo, valorCustodia, onClose, onConcluida }: {
+  metaId: string; titulo: string; valorCustodia: number; onClose: () => void; onConcluida: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  async function confirmar() {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("metas")
+        .update({ status: "concluida", progresso: 100 } as any)
+        .eq("id", metaId);
+      if (error) throw error;
+      toast.success("🎉 Meta concluída! Parabéns!");
+      onConcluida();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao concluir meta");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold">Concluir meta</h3>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              Tem certeza que concluiu <span className="font-semibold text-foreground">"{titulo}"</span>?
+              {valorCustodia > 0 && (
+                <> O valor de <span className="font-bold text-accent">R$ {valorCustodia.toLocaleString("pt-BR")}</span> em custódia será devolvido à sua carteira.</>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-muted-foreground disabled:opacity-60">
+            Cancelar
+          </button>
+          <button onClick={confirmar} disabled={loading} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-bold text-white disabled:opacity-60">
+            {loading && <Loader2 size={14} className="animate-spin" />} Confirmar conclusão
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
