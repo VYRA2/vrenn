@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import {
-  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target,
+  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
   Pencil, Trash2, LogOut, X, QrCode, Lock, Heart, DollarSign,
 } from "lucide-react";
@@ -49,6 +49,7 @@ function EquipeProfile() {
   const [showLeave, setShowLeave] = useState(false);
   const [busy, setBusy] = useState(false);
   const [desafioEditando, setDesafioEditando] = useState<any>(null);
+  const [desafioCheckin, setDesafioCheckin] = useState<any>(null);
   const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
@@ -436,8 +437,16 @@ function EquipeProfile() {
                   {d.status === "ativo" && (
                     <div className="mt-3">
                       {participa ? (
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
-                          <CheckCircle2 size={14} /> Você já está participando
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
+                            <CheckCircle2 size={14} /> Participando
+                          </div>
+                          <button
+                            onClick={() => setDesafioCheckin(d)}
+                            className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
+                          >
+                            <Camera size={13} /> Check-in
+                          </button>
                         </div>
                       ) : (
                         <button
@@ -492,6 +501,18 @@ function EquipeProfile() {
           busy={busy}
           onClose={() => setShowLeave(false)}
           onConfirm={sairDaEquipe}
+        />
+      )}
+
+      {desafioCheckin && (
+        <CheckinDesafioModal
+          desafio={desafioCheckin}
+          userId={user.id}
+          onClose={() => setDesafioCheckin(null)}
+          onCreated={() => {
+            qc.invalidateQueries({ queryKey: ["equipe-desafios", id] });
+            setDesafioCheckin(null);
+          }}
         />
       )}
 
@@ -703,6 +724,101 @@ function DesafioQrCode({ localId }: { localId: string }) {
         <QrCode size={13} /> QR Code de check-in
       </div>
       <QrCodeExportCard nome={local.nome} token={local.qrcode_token} />
+    </div>
+  );
+}
+
+// ─── Checkin Desafio Modal ────────────────────────────────────────────────────
+
+function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
+  desafio: any; userId: string; onClose: () => void; onCreated: () => void;
+}) {
+  const [msg, setMsg] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  function pickFile(f: File | null) {
+    setFile(f);
+    setPreview(f ? URL.createObjectURL(f) : null);
+  }
+
+  async function submit() {
+    if (!msg.trim() && !file) return toast.error("Adicione uma mensagem ou foto");
+    setLoading(true);
+    try {
+      let foto_url: string | null = null;
+      if (file) {
+        const path = `${userId}/${desafio.id}/${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage.from("checkins").upload(path, file);
+        if (upErr) throw upErr;
+        const { data } = supabase.storage.from("checkins").getPublicUrl(path);
+        foto_url = data.publicUrl;
+      }
+      // Insert checkin_desafio record
+      const { error } = await (supabase as any).from("checkins_desafio_equipe").insert({
+        desafio_id: desafio.id,
+        user_id: userId,
+        mensagem: msg.trim() || null,
+        foto_url,
+      });
+      // Fallback: se a tabela for checkins genérica com campo desafio_id
+      if (error) {
+        const { error: err2 } = await (supabase as any).from("checkins").insert({
+          meta_id: null,
+          desafio_id: desafio.id,
+          user_id: userId,
+          mensagem: msg.trim() || null,
+          foto_url,
+        });
+        if (err2) throw err2;
+      }
+      // Atualizar progresso do participante
+      await (supabase as any).from("desafio_equipe_participantes")
+        .update({ ultimo_checkin: new Date().toISOString() } as any)
+        .eq("desafio_id", desafio.id)
+        .eq("user_id", userId);
+      toast.success("Check-in registrado!");
+      onCreated();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao registrar check-in");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Check-in — {desafio.titulo}</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18} /></button>
+        </div>
+        <textarea
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          rows={4}
+          placeholder="O que você fez hoje? Conte sua evolução…"
+          className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+        />
+        {preview && (
+          <div className="relative">
+            <img src={preview} alt="" className="w-full h-48 rounded-xl object-cover" />
+            <button onClick={() => pickFile(null)} className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"><X size={14} /></button>
+          </div>
+        )}
+        <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
+          <Camera size={16} /> {file ? "Trocar foto" : "Adicionar foto"}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
+        </label>
+        <button
+          onClick={submit}
+          disabled={loading}
+          className="w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          {loading && <Loader2 size={14} className="animate-spin" />} Publicar check-in
+        </button>
+      </div>
     </div>
   );
 }
