@@ -39,6 +39,7 @@ import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens_.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
+import { Route as AuthenticatedDueloIdRouteImport } from './routes/_authenticated/duelo.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
@@ -211,6 +212,11 @@ const AuthenticatedDueloConviteIdRoute =
     path: '/duelo-convite/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDueloIdRoute = AuthenticatedDueloIdRouteImport.update({
+  id: '/duelo/$id',
+  path: '/duelo/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -280,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
+  '/duelo/$id': typeof AuthenticatedDueloIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/mensagens/$id': typeof AuthenticatedMensagensIdRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
@@ -319,6 +326,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
+  '/duelo/$id': typeof AuthenticatedDueloIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/mensagens/$id': typeof AuthenticatedMensagensIdRoute
   '/meta/$id': typeof AuthenticatedMetaIdRoute
@@ -360,6 +368,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
+  '/_authenticated/duelo/$id': typeof AuthenticatedDueloIdRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
   '/_authenticated/mensagens_/$id': typeof AuthenticatedMensagensIdRoute
   '/_authenticated/meta/$id': typeof AuthenticatedMetaIdRoute
@@ -401,6 +410,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/duelo-convite/$id'
+    | '/duelo/$id'
     | '/equipes/nova'
     | '/mensagens/$id'
     | '/meta/$id'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/duelo-convite/$id'
+    | '/duelo/$id'
     | '/equipes/nova'
     | '/mensagens/$id'
     | '/meta/$id'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/duelo-convite/$id'
+    | '/_authenticated/duelo/$id'
     | '/_authenticated/equipes/nova'
     | '/_authenticated/mensagens_/$id'
     | '/_authenticated/meta/$id'
@@ -715,6 +727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesNovaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/duelo/$id': {
+      id: '/_authenticated/duelo/$id'
+      path: '/duelo/$id'
+      fullPath: '/duelo/$id'
+      preLoaderRoute: typeof AuthenticatedDueloIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/duelo-convite/$id': {
       id: '/_authenticated/duelo-convite/$id'
       path: '/duelo-convite/$id'
@@ -795,6 +814,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedDueloConviteIdRoute: typeof AuthenticatedDueloConviteIdRoute
+  AuthenticatedDueloIdRoute: typeof AuthenticatedDueloIdRoute
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
   AuthenticatedMensagensIdRoute: typeof AuthenticatedMensagensIdRoute
   AuthenticatedMetaIdRoute: typeof AuthenticatedMetaIdRoute
@@ -828,6 +848,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedDueloConviteIdRoute: AuthenticatedDueloConviteIdRoute,
+  AuthenticatedDueloIdRoute: AuthenticatedDueloIdRoute,
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
   AuthenticatedMensagensIdRoute: AuthenticatedMensagensIdRoute,
   AuthenticatedMetaIdRoute: AuthenticatedMetaIdRoute,
