@@ -28,7 +28,7 @@ function PerfilPublico() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, nome, username, avatar_url, bio, missao, created_at")
+        .select("id, nome, username, avatar_url, bio, missao, nivel, created_at")
         .eq("username", username)
         .maybeSingle();
       return data;
@@ -176,7 +176,7 @@ function PerfilPublico() {
             <div className="min-w-0 flex-1 pt-1">
               <div className="flex items-center gap-1.5">
                 <h1 className="truncate text-2xl font-bold">{profile.nome ?? "—"}</h1>
-                <BadgeCheck size={18} className="shrink-0 text-primary-light" />
+                <NivelBadge nivel={nivelDoUsuario(profile.username, (profile as any).nivel)} size="sm" />
               </div>
               <p className="text-sm text-muted-foreground">@{profile.username}</p>
               {habitoTop && (

@@ -43,7 +43,7 @@ function Feed() {
     queryFn: async () => {
       let query = supabase
         .from("posts")
-        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url, nivel), metas:meta_id (titulo, status, progresso)")
         .order("created_at", { ascending: false })
         .limit(30);
 
@@ -258,7 +258,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
             ) : (
               <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
             )}
-            <BadgeCheck size={14} className="text-primary-light" />
+            <NivelBadge nivel={nivelDoUsuario(p?.username, (p as any)?.nivel)} size="sm" />
           </div>
           <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
         </div>
