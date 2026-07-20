@@ -8,7 +8,6 @@ import { CommentsModal } from "@/components/CommentsModal";
 import { shareToInstagram } from "@/lib/shareToInstagram";
 
 import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
-import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -44,7 +43,7 @@ function Feed() {
     queryFn: async () => {
       let query = supabase
         .from("posts")
-        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url, nivel), metas:meta_id (titulo, status, progresso)")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
         .order("created_at", { ascending: false })
         .limit(30);
 
@@ -259,7 +258,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
             ) : (
               <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
             )}
-            <NivelBadge nivel={nivelDoUsuario(p?.username, (p as any)?.nivel)} size="sm" />
+            <BadgeCheck size={14} className="text-primary-light" />
           </div>
           <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
         </div>
