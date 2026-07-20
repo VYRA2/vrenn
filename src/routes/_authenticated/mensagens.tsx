@@ -190,8 +190,9 @@ function Mensagens() {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <span className="text-sm font-bold truncate">{c.displayNome}</span>
+                  {!c.isGrupo && <NivelBadge nivel={nivelDoUsuario(c.other?.username, c.other?.nivel)} size="sm" />}
                 </div>
                 <span className="text-[10px] text-muted-foreground shrink-0">{tempoRel(c.ultima_mensagem_at ?? c.created_at)}</span>
               </div>
