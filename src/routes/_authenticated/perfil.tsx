@@ -6,7 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
+  Share, Settings, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
+} from "lucide-react";
+import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
+// _KEEP_MARKER_
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
 } from "lucide-react";
 

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
 import { BottomNav } from "@/components/BottomNav";
 import {
-  ArrowLeft, MoreHorizontal, BadgeCheck, CheckCircle2, Zap, Calendar,
+  ArrowLeft, MoreHorizontal, CheckCircle2, Zap, Calendar,
   Target, Flame, Trophy, Grid3x3, Video, MessageCircle, Layers, Heart,
 } from "lucide-react";
 import { toast } from "sonner";
