@@ -71,6 +71,7 @@ function EquipeProfile() {
   const [busy, setBusy] = useState(false);
   const [desafioEditando, setDesafioEditando] = useState<any>(null);
   const [desafioCheckin, setDesafioCheckin] = useState<any>(null);
+  const [desafioDetalhes, setDesafioDetalhes] = useState<any>(null);
   const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
@@ -444,7 +445,11 @@ function EquipeProfile() {
                 const participa = jaParticipa(d.id);
                 const carregando = entrando === d.id;
                 return (
-                <div key={d.id} className="rounded-2xl border border-border bg-card p-4">
+                <div
+                  key={d.id}
+                  onClick={() => setDesafioDetalhes(d)}
+                  className="rounded-2xl border border-border bg-card p-4 cursor-pointer hover:border-primary/50 transition-colors"
+                >
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold">{d.titulo}</h4>
                     <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary-light">{d.status}</span>
