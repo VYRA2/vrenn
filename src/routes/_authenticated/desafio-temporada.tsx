@@ -166,40 +166,12 @@ function DesafioTemporada() {
       </div>
 
       {showParticipar && (
-        <Modal onClose={() => setShowParticipar(false)} title="Como funciona o Desafio Master">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Flag size={16} className="text-primary-light" />
-                <span className="text-sm font-bold">O que é</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                O Desafio Master é o maior desafio de accountability do VRENN. Você cria uma meta pública, deposita um valor em custódia e comprova sua evolução com check-ins diários.
-              </p>
-            </div>
-            <div className="space-y-2">
-              {STEPS.map(({ n, icon: Icon, title, desc }) => (
-                <div key={n} className="flex gap-3 rounded-xl border border-border bg-card p-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground">{n}</div>
-                  <div>
-                    <div className="text-sm font-bold">{title}</div>
-                    <div className="text-xs text-muted-foreground">{desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
-              <div className="text-xs font-bold text-accent mb-1">🏆 Premiação</div>
-              <p className="text-xs text-muted-foreground">Os melhores ao final da temporada dividem o fundo acumulado. 1º lugar recebe {formatBRL(premios.p1)}, 2º recebe {formatBRL(premios.p2)}, 3º recebe {formatBRL(premios.p3)}.</p>
-            </div>
-            <button
-              onClick={() => { setShowParticipar(false); navigate({ to: "/nova-meta" }); }}
-              className="w-full rounded-3xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
-            >
-              Criar minha meta agora →
-            </button>
-          </div>
-        </Modal>
+        <ParticiparDesafioModal
+          onClose={() => setShowParticipar(false)}
+          userId={user.id}
+          premios={premios}
+          fundo={fundo}
+        />
       )}
 
       {showRegulamento && (
@@ -232,6 +204,148 @@ function DesafioTemporada() {
 
       <BottomNav />
     </main>
+  );
+}
+
+function ParticiparDesafioModal({ onClose, userId, premios, fundo }: {
+  onClose: () => void;
+  userId: string;
+  premios: any;
+  fundo: any;
+}) {
+  const [step, setStep] = useState<"info" | "confirmar" | "sucesso">("info");
+  const [loading, setLoading] = useState(false);
+  const [jaParticipa, setJaParticipa] = useState(false);
+
+  // Check if already participating
+  useEffect(() => {
+    supabase.from("metas").select("id").eq("user_id", userId).eq("valor_destino", "desafio_master").eq("status", "em_andamento").maybeSingle()
+      .then(({ data }) => { if (data) setJaParticipa(true); });
+  }, [userId]);
+
+  async function confirmarParticipacao() {
+    setLoading(true);
+    try {
+      // Inscrever: criar meta vinculada ao Desafio Master
+      const { error } = await supabase.from("metas").insert({
+        user_id: userId,
+        titulo: "Meu Desafio Master",
+        categoria: "habitos",
+        tipo_validacao: "foto_arbitro",
+        valor_destino: "desafio_master",
+        status: "em_andamento",
+        progresso: 0,
+      } as any);
+      if (error) throw error;
+      setStep("sucesso");
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao participar");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Modal onClose={onClose} title="Como funciona o Desafio Master">
+      <div className="space-y-4">
+        {step === "info" && (
+          <>
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Flag size={16} className="text-primary-light" />
+                <span className="text-sm font-bold">O que é</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                O Desafio Master é o maior desafio de accountability do VRENN. Você publica provas diárias, acumula pontos e concorre ao fundo de premiação da temporada.
+              </p>
+            </div>
+            <div className="space-y-2">
+              {STEPS.map(({ n, icon: Icon, title, desc }) => (
+                <div key={n} className="flex gap-3 rounded-xl border border-border bg-card p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground">{n}</div>
+                  <div>
+                    <div className="text-sm font-bold">{title}</div>
+                    <div className="text-xs text-muted-foreground">{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
+              <div className="text-xs font-bold text-accent mb-1">🏆 Premiação</div>
+              <p className="text-xs text-muted-foreground">
+                Os melhores ao final da temporada dividem o fundo acumulado. 1º lugar recebe {formatBRL(premios.p1)}, 2º recebe {formatBRL(premios.p2)}, 3º recebe {formatBRL(premios.p3)}.
+              </p>
+            </div>
+            {jaParticipa ? (
+              <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 text-center">
+                <div className="text-sm font-bold text-accent">✅ Você já está participando!</div>
+                <p className="mt-1 text-xs text-muted-foreground">Continue publicando provas no feed para acumular pontos.</p>
+              </div>
+            ) : (
+              <button
+                onClick={() => setStep("confirmar")}
+                className="w-full rounded-3xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
+              >
+                Participar do Desafio Master →
+              </button>
+            )}
+          </>
+        )}
+
+        {step === "confirmar" && (
+          <>
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 text-center space-y-2">
+              <div className="text-3xl">🏆</div>
+              <div className="text-base font-bold">Confirmar participação</div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Ao participar, você se compromete a publicar provas diárias no feed. Seu desempenho será avaliado ao final da temporada e os melhores receberão parte do fundo de <span className="font-bold text-foreground">{formatBRL(fundo?.valor_acumulado ?? 0)}</span>.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
+              ⚠️ Você pode sair do desafio a qualquer momento sem penalidade financeira, porém perderá os pontos acumulados.
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStep("info")}
+                className="flex-1 rounded-3xl border border-border bg-background py-3 text-sm font-semibold text-muted-foreground"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={confirmarParticipacao}
+                disabled={loading}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+              >
+                {loading && <Loader2 size={15} className="animate-spin" />}
+                Confirmar
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === "sucesso" && (
+          <div className="py-4 text-center space-y-4">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-accent/15 text-5xl">
+              🎉
+            </div>
+            <div>
+              <div className="text-lg font-bold">Você está dentro!</div>
+              <p className="mt-1 text-xs text-muted-foreground">Agora publique provas diárias no feed para acumular pontos e subir no ranking da temporada.</p>
+            </div>
+            <div className="rounded-2xl border border-accent/30 bg-accent/5 p-3">
+              <div className="text-xs font-bold text-accent">Fundo atual da temporada</div>
+              <div className="text-2xl font-bold mt-1">{formatBRL(fundo?.valor_acumulado ?? 0)}</div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-full rounded-3xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
+            >
+              Ir para o feed e publicar →
+            </button>
+          </div>
+        )}
+      </div>
+    </Modal>
   );
 }
 
