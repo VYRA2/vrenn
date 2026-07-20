@@ -2,15 +2,14 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { NivelBadge } from "@/components/NivelBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Share, Settings, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
+  Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
 } from "lucide-react";
-import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
-import { BadgeCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: Perfil,
@@ -25,11 +24,11 @@ function Perfil() {
     queryKey: ["profile", user.id],
     queryFn: async () => {
       const [{ data }, { data: statsRows }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, nivel, created_at").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at").eq("id", user.id).maybeSingle(),
         supabase.rpc("get_my_profile_stats"),
       ]);
       const stats = statsRows?.[0] ?? {};
-      // stats spread BEFORE data so profile fields (nome, avatar_url, etc) always win
+      // stats spread BEFORE data so profile fields (avatar_url, nome) always win
       return (data ? { ...stats, ...data } : null) as (typeof data & { nivel?: number; streak_dias?: number; reputacao_pts?: number; creditos?: number }) | null;
     },
   });
