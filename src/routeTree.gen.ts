@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -38,8 +39,8 @@ import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authent
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens_.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
-import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as AuthenticatedDueloIdRouteImport } from './routes/_authenticated/duelo.$id'
+import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
@@ -49,6 +50,11 @@ import { Route as AuthenticatedWalletDepositPixRouteImport } from './routes/_aut
 import { Route as AuthenticatedWalletDepositCardRouteImport } from './routes/_authenticated/wallet.deposit.card'
 import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
 
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
@@ -206,17 +212,17 @@ const AuthenticatedEquipesNovaRoute =
     path: '/equipes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDueloIdRoute = AuthenticatedDueloIdRouteImport.update({
+  id: '/duelo/$id',
+  path: '/duelo/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDueloConviteIdRoute =
   AuthenticatedDueloConviteIdRouteImport.update({
     id: '/duelo-convite/$id',
     path: '/duelo-convite/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDueloIdRoute = AuthenticatedDueloIdRouteImport.update({
-  id: '/duelo/$id',
-  path: '/duelo/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
+  '/onboarding': typeof OnboardingRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/busca': typeof AuthenticatedBuscaRoute
@@ -309,6 +316,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
+  '/onboarding': typeof OnboardingRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/busca': typeof AuthenticatedBuscaRoute
@@ -351,6 +359,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
+  '/onboarding': typeof OnboardingRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
@@ -393,6 +402,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/mcp'
+    | '/onboarding'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/busca'
@@ -433,6 +443,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/mcp'
+    | '/onboarding'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/busca'
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/mcp'
+    | '/onboarding'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/busca'
@@ -516,6 +528,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
+  OnboardingRoute: typeof OnboardingRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -524,6 +537,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
@@ -878,6 +898,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   McpRoute: McpRoute,
+  OnboardingRoute: OnboardingRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,

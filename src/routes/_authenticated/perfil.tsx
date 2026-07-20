@@ -6,9 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
+  Share, Settings, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
 } from "lucide-react";
+import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: Perfil,
@@ -23,7 +24,7 @@ function Perfil() {
     queryKey: ["profile", user.id],
     queryFn: async () => {
       const [{ data }, { data: statsRows }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, nivel, created_at").eq("id", user.id).maybeSingle(),
         supabase.rpc("get_my_profile_stats"),
       ]);
       const stats = statsRows?.[0] ?? {};
@@ -114,7 +115,7 @@ function Perfil() {
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
               <h1 className="text-2xl font-bold">{profile?.nome ?? "—"}</h1>
-              <BadgeCheck size={18} className="text-primary-light fill-primary/20" />
+              <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="sm" />
             </div>
             <p className="text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
             {profile?.bio && <p className="mt-1 text-xs text-foreground/80 whitespace-pre-line">{profile.bio}</p>}

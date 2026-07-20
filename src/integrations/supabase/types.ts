@@ -180,7 +180,10 @@ export type Database = {
       conversas: {
         Row: {
           created_at: string
+          equipe_id: string | null
           id: string
+          nome: string | null
+          tipo: string | null
           ultima_mensagem: string | null
           ultima_mensagem_at: string | null
           user1_id: string
@@ -188,7 +191,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          equipe_id?: string | null
           id?: string
+          nome?: string | null
+          tipo?: string | null
           ultima_mensagem?: string | null
           ultima_mensagem_at?: string | null
           user1_id: string
@@ -196,13 +202,23 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          equipe_id?: string | null
           id?: string
+          nome?: string | null
+          tipo?: string | null
           ultima_mensagem?: string | null
           ultima_mensagem_at?: string | null
           user1_id?: string
           user2_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversas_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversas_user1_id_fkey"
             columns: ["user1_id"]
@@ -857,6 +873,7 @@ export type Database = {
           asaas_customer_id: string | null
           avatar_url: string | null
           bio: string | null
+          categorias_interesse: string[] | null
           cpf: string | null
           created_at: string
           creditos: number
@@ -865,6 +882,7 @@ export type Database = {
           missao: string | null
           nivel: number
           nome: string
+          onboarding_done: boolean
           perfil_publico: boolean
           reputacao_pts: number
           streak_dias: number
@@ -875,6 +893,7 @@ export type Database = {
           asaas_customer_id?: string | null
           avatar_url?: string | null
           bio?: string | null
+          categorias_interesse?: string[] | null
           cpf?: string | null
           created_at?: string
           creditos?: number
@@ -883,6 +902,7 @@ export type Database = {
           missao?: string | null
           nivel?: number
           nome: string
+          onboarding_done?: boolean
           perfil_publico?: boolean
           reputacao_pts?: number
           streak_dias?: number
@@ -893,6 +913,7 @@ export type Database = {
           asaas_customer_id?: string | null
           avatar_url?: string | null
           bio?: string | null
+          categorias_interesse?: string[] | null
           cpf?: string | null
           created_at?: string
           creditos?: number
@@ -901,6 +922,7 @@ export type Database = {
           missao?: string | null
           nivel?: number
           nome?: string
+          onboarding_done?: boolean
           perfil_publico?: boolean
           reputacao_pts?: number
           streak_dias?: number

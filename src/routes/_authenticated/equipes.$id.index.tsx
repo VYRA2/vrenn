@@ -71,6 +71,7 @@ function EquipeProfile() {
   const [busy, setBusy] = useState(false);
   const [desafioEditando, setDesafioEditando] = useState<any>(null);
   const [desafioCheckin, setDesafioCheckin] = useState<any>(null);
+  const [desafioDetalhes, setDesafioDetalhes] = useState<any>(null);
   const qc = useQueryClient();
 
   const { data: equipe, isLoading: loadingEquipe } = useQuery({
@@ -444,7 +445,11 @@ function EquipeProfile() {
                 const participa = jaParticipa(d.id);
                 const carregando = entrando === d.id;
                 return (
-                <div key={d.id} className="rounded-2xl border border-border bg-card p-4">
+                <div
+                  key={d.id}
+                  onClick={() => setDesafioDetalhes(d)}
+                  className="rounded-2xl border border-border bg-card p-4 cursor-pointer hover:border-primary/50 transition-colors"
+                >
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold">{d.titulo}</h4>
                     <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary-light">{d.status}</span>
@@ -463,7 +468,7 @@ function EquipeProfile() {
                             <CheckCircle2 size={14} /> Participando
                           </div>
                           <button
-                            onClick={() => setDesafioCheckin(d)}
+                            onClick={(e) => { e.stopPropagation(); setDesafioCheckin(d); }}
                             className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
                           >
                             <Camera size={13} /> Check-in
@@ -471,7 +476,7 @@ function EquipeProfile() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => entrarNoDesafio(d)}
+                          onClick={(e) => { e.stopPropagation(); entrarNoDesafio(d); }}
                           disabled={carregando}
                           className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-glow disabled:opacity-60"
                         >
@@ -551,6 +556,10 @@ function EquipeProfile() {
             setDesafioEditando(null);
           }}
         />
+      )}
+
+      {desafioDetalhes && (
+        <DesafioDetalhesSheet desafio={desafioDetalhes} onClose={() => setDesafioDetalhes(null)} />
       )}
 
       <BottomNav />
@@ -882,6 +891,45 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
           {loading && <Loader2 size={14} className="animate-spin" />} Publicar check-in
         </button>
       </div>
+    </div>
+  );
+}
+
+function DesafioDetalhesSheet({ desafio, onClose }: { desafio: any; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold">{desafio.titulo}</h3>
+            <span className="mt-1 inline-block rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary-light">{desafio.status}</span>
+          </div>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background">✕</button>
+        </div>
+        {desafio.descricao && <p className="mt-3 text-sm text-muted-foreground">{desafio.descricao}</p>}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <InfoBox label="Valor de entrada" value={`R$ ${Number(desafio.valor_entrada ?? 0).toFixed(2)}`} />
+          <InfoBox label="Duração" value={`${desafio.duracao_dias ?? 0} dias`} />
+          <InfoBox label="Categoria" value={desafio.categoria ?? "—"} />
+          <InfoBox label="Tipo validação" value={desafio.tipo_validacao ?? "—"} />
+        </div>
+        {desafio.regras && (
+          <div className="mt-4 rounded-2xl border border-border bg-background p-3">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Regras</div>
+            <p className="text-xs leading-relaxed">{desafio.regras}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-background p-3">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-bold">{value}</div>
     </div>
   );
 }

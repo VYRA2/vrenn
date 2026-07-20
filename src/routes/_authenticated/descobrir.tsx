@@ -314,11 +314,15 @@ function DescobrirPage() {
         <h3 className="mt-6 mb-3 text-base font-bold">Explorar por categorias</h3>
         <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2">
           {CATEGORIAS.map(({ label, pubs, icon: Icon, color }) => (
-            <div key={label} className="w-28 shrink-0 rounded-2xl border border-border bg-card p-3 text-center">
+            <button
+              key={label}
+              onClick={() => navigate({ to: "/busca", search: { q: label.toLowerCase() } as any })}
+              className="w-28 shrink-0 rounded-2xl border border-border bg-card p-3 text-center hover:border-primary/50 transition-colors"
+            >
               <Icon size={26} className="mx-auto mb-1.5" style={{ color }} />
               <div className="text-xs font-bold">{label}</div>
               <div className="mt-0.5 text-[10px] text-muted-foreground">{pubs} publicações</div>
-            </div>
+            </button>
           ))}
         </div>
 
