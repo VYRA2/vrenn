@@ -468,7 +468,7 @@ function EquipeProfile() {
                             <CheckCircle2 size={14} /> Participando
                           </div>
                           <button
-                            onClick={() => setDesafioCheckin(d)}
+                            onClick={(e) => { e.stopPropagation(); setDesafioCheckin(d); }}
                             className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
                           >
                             <Camera size={13} /> Check-in
@@ -476,7 +476,7 @@ function EquipeProfile() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => entrarNoDesafio(d)}
+                          onClick={(e) => { e.stopPropagation(); entrarNoDesafio(d); }}
                           disabled={carregando}
                           className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-glow disabled:opacity-60"
                         >
@@ -556,6 +556,10 @@ function EquipeProfile() {
             setDesafioEditando(null);
           }}
         />
+      )}
+
+      {desafioDetalhes && (
+        <DesafioDetalhesSheet desafio={desafioDetalhes} onClose={() => setDesafioDetalhes(null)} />
       )}
 
       <BottomNav />
