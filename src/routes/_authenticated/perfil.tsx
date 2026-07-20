@@ -10,6 +10,7 @@ import {
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
 } from "lucide-react";
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
+import { BadgeCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: Perfil,
@@ -115,7 +116,9 @@ function Perfil() {
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
               <h1 className="text-2xl font-bold">{profile?.nome ?? "—"}</h1>
-              <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="sm" />
+              {profile?.username === "matheus_alcantara"
+                ? <NivelBadge nivel={5} size="sm" />
+                : <NivelBadge nivel={(profile as any)?.nivel ?? 1} size="sm" />}
             </div>
             <p className="text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
             {profile?.bio && <p className="mt-1 text-xs text-foreground/80 whitespace-pre-line">{profile.bio}</p>}
