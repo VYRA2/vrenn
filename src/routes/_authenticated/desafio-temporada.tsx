@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { ArrowLeft, Info, Users, ClipboardCheck, Shield, Flag, Trophy, ArrowRight, ChevronRight, Pencil, X, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const ADMIN_ID = "52fd9ebb-5d88-4b33-acc3-97b70c62a426";
