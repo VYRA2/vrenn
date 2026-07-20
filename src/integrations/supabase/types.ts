@@ -882,6 +882,7 @@ export type Database = {
           missao: string | null
           nivel: number
           nome: string
+          onboarding_done: boolean
           perfil_publico: boolean
           reputacao_pts: number
           streak_dias: number
@@ -901,6 +902,7 @@ export type Database = {
           missao?: string | null
           nivel?: number
           nome: string
+          onboarding_done?: boolean
           perfil_publico?: boolean
           reputacao_pts?: number
           streak_dias?: number
@@ -920,6 +922,7 @@ export type Database = {
           missao?: string | null
           nivel?: number
           nome?: string
+          onboarding_done?: boolean
           perfil_publico?: boolean
           reputacao_pts?: number
           streak_dias?: number
