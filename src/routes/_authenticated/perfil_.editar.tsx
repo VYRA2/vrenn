@@ -51,11 +51,11 @@ function EditarPerfil() {
     const path = `${user.id}/avatar-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
     if (error) { setUploading(false); return toast.error(error.message); }
-    const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const publicUrl = publicData.publicUrl;
-    const { error: updErr } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id);
+    const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed) { setUploading(false); return toast.error(sErr?.message ?? "Falha ao gerar URL"); }
+    const { error: updErr } = await supabase.from("profiles").update({ avatar_url: signed.signedUrl }).eq("id", user.id);
     if (updErr) { setUploading(false); setAvatarPreview(null); return toast.error("Falha ao salvar foto: " + updErr.message); }
-    setAvatarPreview(publicUrl);
+    setAvatarPreview(signed.signedUrl);
     setUploading(false);
     toast.success("Foto atualizada!");
     refetch();
