@@ -29,7 +29,8 @@ function Perfil() {
         supabase.rpc("get_my_profile_stats"),
       ]);
       const stats = statsRows?.[0] ?? {};
-      return (data ? { ...data, ...stats } : null) as (typeof data & { nivel?: number; streak_dias?: number; reputacao_pts?: number; creditos?: number }) | null;
+      // stats spread BEFORE data so profile fields (nome, avatar_url, etc) always win
+      return (data ? { ...stats, ...data } : null) as (typeof data & { nivel?: number; streak_dias?: number; reputacao_pts?: number; creditos?: number }) | null;
     },
   });
 
