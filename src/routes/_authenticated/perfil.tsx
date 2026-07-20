@@ -2,14 +2,14 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { NivelBadge } from "@/components/NivelBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
+  Share, Settings, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
 } from "lucide-react";
+import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: Perfil,
@@ -24,11 +24,11 @@ function Perfil() {
     queryKey: ["profile", user.id],
     queryFn: async () => {
       const [{ data }, { data: statsRows }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, nivel, created_at").eq("id", user.id).maybeSingle(),
         supabase.rpc("get_my_profile_stats"),
       ]);
       const stats = statsRows?.[0] ?? {};
-      // stats spread BEFORE data so profile fields (avatar_url, nome) always win
+      // stats spread BEFORE data so profile fields (nome, avatar_url, etc) always win
       return (data ? { ...stats, ...data } : null) as (typeof data & { nivel?: number; streak_dias?: number; reputacao_pts?: number; creditos?: number }) | null;
     },
   });
@@ -104,7 +104,7 @@ function Perfil() {
           <div className="relative">
             <div className="h-24 w-24 rounded-full border-2 border-primary p-0.5">
               {profile?.avatar_url ? (
-                <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" />
+                <img key={profile.avatar_url} src={profile.avatar_url} className="h-full w-full rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display="none"; }} />
               ) : (
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold">{initial}</div>
               )}
@@ -116,16 +116,11 @@ function Perfil() {
           <div className="flex-1">
             <div className="flex items-center gap-1.5">
               <h1 className="text-2xl font-bold">{profile?.nome ?? "—"}</h1>
-              {profile?.username === "matheus_alcantara"
-                ? <NivelBadge nivel={5} size="sm" />
-                : <NivelBadge nivel={(profile as any)?.nivel ?? 1} size="sm" />}
+              <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="sm" />
             </div>
             <p className="text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
             {profile?.bio && <p className="mt-1 text-xs text-foreground/80 whitespace-pre-line">{profile.bio}</p>}
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1">
-              <Gem size={12} className="text-primary-light" />
-              <span className="text-xs font-semibold text-primary-light">Nível Diamante</span>
-            </div>
+            <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="md" />
           </div>
         </section>
 
