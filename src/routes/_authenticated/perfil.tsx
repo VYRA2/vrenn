@@ -114,13 +114,19 @@ function Perfil() {
             </Link>
           </div>
           <div className="flex-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h1 className="text-2xl font-bold">{profile?.nome ?? "—"}</h1>
-              <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="sm" />
+              {/* Badge de verificado apenas para o fundador */}
+              {user.id === "52fd9ebb-5d88-4b33-acc3-97b70c62a426" && (
+                <BadgeCheck size={20} className="text-primary-light fill-primary/20" />
+              )}
             </div>
             <p className="text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
             {profile?.bio && <p className="mt-1 text-xs text-foreground/80 whitespace-pre-line">{profile.bio}</p>}
-            <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="md" />
+            {/* Nível — único, no lugar do antigo "Nível Diamante" */}
+            <div className="mt-2">
+              <NivelBadge nivel={nivelDoUsuario(profile?.username, (profile as any)?.nivel)} size="md" />
+            </div>
           </div>
         </section>
 
