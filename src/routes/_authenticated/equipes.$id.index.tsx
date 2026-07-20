@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import {
-  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera,
+  ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera, MessageSquare,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
   Pencil, Trash2, LogOut, X, QrCode, Lock, Heart, DollarSign,
 } from "lucide-react";
@@ -39,6 +39,27 @@ function fmtMoeda(v: number) {
 
 function EquipeProfile() {
   const navigate = useNavigate();
+
+  async function criarChatEquipe() {
+    // Check if group chat already exists
+    const { data: existing } = await (supabase as any)
+      .from("conversas")
+      .select("id")
+      .eq("equipe_id", id)
+      .eq("tipo", "grupo_equipe")
+      .maybeSingle();
+    if (existing?.id) {
+      navigate({ to: "/mensagens/$id", params: { id: existing.id } });
+      return;
+    }
+    // Create group chat
+    const { data: nova, error } = await (supabase as any)
+      .from("conversas")
+      .insert({ tipo: "grupo_equipe", equipe_id: id, nome: equipe?.nome ?? "Grupo", user1_id: user.id, user2_id: user.id })
+      .select("id").single();
+    if (error || !nova) return toast.error(error?.message ?? "Erro ao criar chat");
+    navigate({ to: "/mensagens/$id", params: { id: nova.id } });
+  }
   const { user } = Route.useRouteContext();
   const { id } = Route.useParams();
   const [tab, setTab] = useState<Tab>("resumo");
@@ -468,12 +489,17 @@ function EquipeProfile() {
         )}
 
         {/* Ações */}
-        <div className="mt-5 flex gap-2">
-          <button onClick={convidar} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
-            <UserPlus size={16} /> Convidar membros
-          </button>
-          <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
-            <Sparkles size={16} /> Criar desafio
+        <div className="mt-5 space-y-2">
+          <div className="flex gap-2">
+            <button onClick={convidar} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
+              <UserPlus size={16} /> Convidar
+            </button>
+            <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
+              <Sparkles size={16} /> Criar desafio
+            </button>
+          </div>
+          <button onClick={criarChatEquipe} className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary-light">
+            <MessageSquare size={16} /> Chat da equipe
           </button>
         </div>
       </div>
@@ -535,8 +561,36 @@ function EquipeProfile() {
 function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy: boolean; onClose: () => void; onSave: (p: any) => void }) {
   const [nome, setNome] = useState(equipe.nome ?? "");
   const [descricao, setDescricao] = useState(equipe.descricao ?? "");
-  const [avatarUrl, setAvatarUrl] = useState(equipe.avatar_url ?? "");
   const [categoria, setCategoria] = useState(equipe.categoria ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(equipe.avatar_url ?? null);
+  const [uploading, setUploading] = useState(false);
+
+  function onPickAvatar(file: File) {
+    if (!["image/jpeg","image/png","image/webp"].includes(file.type)) return toast.error("Use JPG, PNG ou WebP");
+    if (file.size > 10 * 1024 * 1024) return toast.error("Máximo 10MB");
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  }
+
+  async function salvar() {
+    if (!nome.trim()) return;
+    setUploading(true);
+    let avatar_url = equipe.avatar_url ?? null;
+    if (avatarFile) {
+      const ext = avatarFile.name.split(".").pop();
+      const path = `equipes/${equipe.id}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+      if (error) { toast.error(error.message); setUploading(false); return; }
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      avatar_url = data.publicUrl;
+    }
+    setUploading(false);
+    onSave({ nome: nome.trim(), descricao: descricao.trim() || null, avatar_url, categoria: categoria.trim() || null });
+  }
+
+  const isBusy = busy || uploading;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
@@ -544,6 +598,23 @@ function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy:
           <h3 className="text-base font-bold">Editar equipe</h3>
           <button onClick={onClose} className="text-muted-foreground"><X size={18} /></button>
         </div>
+
+        {/* Avatar upload */}
+        <div className="flex flex-col items-center gap-2">
+          <label className="relative cursor-pointer group">
+            <div className="h-20 w-20 rounded-full overflow-hidden ring-2 ring-primary/40">
+              {avatarPreview
+                ? <img src={avatarPreview} className="h-full w-full object-cover" alt="" />
+                : <div className="flex h-full w-full items-center justify-center bg-gradient-primary text-xl font-bold text-primary-foreground">{nome[0]?.toUpperCase()}</div>}
+            </div>
+            <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Camera size={20} className="text-white" />
+            </div>
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickAvatar(f); }} />
+          </label>
+          <span className="text-xs text-muted-foreground">Toque para trocar a foto</span>
+        </div>
+
         <label className="block text-xs">
           <span className="text-muted-foreground">Nome</span>
           <input value={nome} onChange={(e) => setNome(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
@@ -553,21 +624,13 @@ function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy:
           <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="mt-1 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
         </label>
         <label className="block text-xs">
-          <span className="text-muted-foreground">URL do avatar</span>
-          <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
-        </label>
-        <label className="block text-xs">
           <span className="text-muted-foreground">Categoria</span>
           <input value={categoria} onChange={(e) => setCategoria(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
         </label>
         <div className="flex gap-2 pt-2">
-          <button onClick={onClose} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold">Cancelar</button>
-          <button
-            onClick={() => onSave({ nome: nome.trim(), descricao: descricao.trim() || null, avatar_url: avatarUrl.trim() || null, categoria: categoria.trim() || null })}
-            disabled={busy || !nome.trim()}
-            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 inline-flex items-center justify-center gap-2"
-          >
-            {busy && <Loader2 size={14} className="animate-spin" />} Salvar
+          <button onClick={onClose} disabled={isBusy} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold disabled:opacity-60">Cancelar</button>
+          <button onClick={salvar} disabled={isBusy || !nome.trim()} className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 inline-flex items-center justify-center gap-2">
+            {isBusy && <Loader2 size={14} className="animate-spin" />} Salvar
           </button>
         </div>
       </div>
