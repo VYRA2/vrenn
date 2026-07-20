@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { Search, X, Shield, Users, Archive, MessageCircle, PenSquare } from "lucide-react";
+import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/mensagens")({
