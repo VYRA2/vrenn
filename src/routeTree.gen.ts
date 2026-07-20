@@ -38,8 +38,8 @@ import { Route as AuthenticatedPerfilEditarRouteImport } from './routes/_authent
 import { Route as AuthenticatedMetaIdRouteImport } from './routes/_authenticated/meta.$id'
 import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenticated/mensagens_.$id'
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
-import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as AuthenticatedDueloIdRouteImport } from './routes/_authenticated/duelo.$id'
+import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
@@ -206,17 +206,17 @@ const AuthenticatedEquipesNovaRoute =
     path: '/equipes/nova',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDueloIdRoute = AuthenticatedDueloIdRouteImport.update({
+  id: '/duelo/$id',
+  path: '/duelo/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDueloConviteIdRoute =
   AuthenticatedDueloConviteIdRouteImport.update({
     id: '/duelo-convite/$id',
     path: '/duelo-convite/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDueloIdRoute = AuthenticatedDueloIdRouteImport.update({
-  id: '/duelo/$id',
-  path: '/duelo/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
