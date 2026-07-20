@@ -92,13 +92,14 @@ function DescobrirPage() {
       const ids = top.map(([id]) => id);
       const [{ data: profs }, { data: lastPosts }] = await Promise.all([
         supabase.from("profiles").select("id, nome, username, avatar_url").in("id", ids),
-        supabase.from("posts").select("user_id, media_url, created_at").in("user_id", ids).not("media_url", "is", null).order("created_at", { ascending: false }),
+        supabase.from("posts").select("user_id, media_url, tipo, created_at").in("user_id", ids).not("media_url", "is", null).eq("tipo", "video").order("created_at", { ascending: false }),
       ]);
-      const lastByUser = new Map<string, string>();
-      (lastPosts ?? []).forEach((p: any) => { if (!lastByUser.has(p.user_id) && p.media_url) lastByUser.set(p.user_id, p.media_url); });
+      const lastByUser = new Map<string, any>();
+      (lastPosts ?? []).forEach((p: any) => { if (!lastByUser.has(p.user_id) && p.media_url) lastByUser.set(p.user_id, { url: p.media_url, tipo: p.tipo }); });
       return top.map(([id, pts]) => {
         const prof = (profs ?? []).find((p: any) => p.id === id);
-        return { id, pts, nome: prof?.nome ?? "—", username: prof?.username ?? "—", avatar_url: prof?.avatar_url, media_url: lastByUser.get(id) };
+        const media = lastByUser.get(id);
+        return { id, pts, nome: prof?.nome ?? "—", username: prof?.username ?? "—", avatar_url: prof?.avatar_url, media_url: media?.url, media_tipo: media?.tipo };
       });
     },
   });
@@ -256,7 +257,12 @@ function DescobrirPage() {
           {(destaques ?? []).map((d: any) => (
             <Link to="/u/$username" params={{ username: d.username }} key={d.id} className="w-56 shrink-0 overflow-hidden rounded-2xl border border-border bg-card">
               <div className="relative h-40 w-full bg-gradient-to-br from-primary/30 to-background">
-                {d.media_url && <img src={d.media_url} className="h-full w-full object-cover" />}
+                {d.media_url && d.media_tipo === "video"
+                  ? <video src={d.media_url} className="h-full w-full object-cover" playsInline muted autoPlay loop />
+                  : d.media_url ? <img src={d.media_url} className="h-full w-full object-cover" /> : null}
+                {d.media_tipo === "video" && (
+                  <div className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white">▶ Reel</div>
+                )}
                 <div className="absolute inset-x-2 top-2 flex items-center gap-2 rounded-full bg-black/60 px-2 py-1 backdrop-blur">
                   {d.avatar_url ? (
                     <img src={d.avatar_url} className="h-5 w-5 rounded-full object-cover" />
