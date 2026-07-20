@@ -55,6 +55,7 @@ function DesafioTemporada() {
   const [showRegulamento, setShowRegulamento] = useState(false);
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showParticipar, setShowParticipar] = useState(false);
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-32">
@@ -154,7 +155,7 @@ function DesafioTemporada() {
         </section>
 
         <button
-          onClick={() => navigate({ to: "/nova-meta", search: { desafio_master: true } as any })}
+          onClick={() => setShowParticipar(true)}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-3xl bg-primary py-4 text-sm font-bold text-primary-foreground shadow-glow"
         >
           Quero participar do desafio <ArrowRight size={16} />
@@ -163,6 +164,43 @@ function DesafioTemporada() {
 
         <Link to="/descobrir" className="mt-6 block text-center text-xs text-muted-foreground">← Voltar para Descobrir</Link>
       </div>
+
+      {showParticipar && (
+        <Modal onClose={() => setShowParticipar(false)} title="Como funciona o Desafio Master">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Flag size={16} className="text-primary-light" />
+                <span className="text-sm font-bold">O que é</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                O Desafio Master é o maior desafio de accountability do VRENN. Você cria uma meta pública, deposita um valor em custódia e comprova sua evolução com check-ins diários.
+              </p>
+            </div>
+            <div className="space-y-2">
+              {STEPS.map(({ n, icon: Icon, title, desc }) => (
+                <div key={n} className="flex gap-3 rounded-xl border border-border bg-card p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold text-primary-foreground">{n}</div>
+                  <div>
+                    <div className="text-sm font-bold">{title}</div>
+                    <div className="text-xs text-muted-foreground">{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
+              <div className="text-xs font-bold text-accent mb-1">🏆 Premiação</div>
+              <p className="text-xs text-muted-foreground">Os melhores ao final da temporada dividem o fundo acumulado. 1º lugar recebe {formatBRL(premios.p1)}, 2º recebe {formatBRL(premios.p2)}, 3º recebe {formatBRL(premios.p3)}.</p>
+            </div>
+            <button
+              onClick={() => { setShowParticipar(false); navigate({ to: "/nova-meta" }); }}
+              className="w-full rounded-3xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
+            >
+              Criar minha meta agora →
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {showRegulamento && (
         <Modal onClose={() => setShowRegulamento(false)} title="Regulamento">
