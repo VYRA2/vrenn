@@ -38,6 +38,8 @@ function NovoDesafio() {
   const [aceito, setAceito] = useState(false);
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("foto_arbitro");
   const [localId, setLocalId] = useState<string | null>(null);
+  const [frequenciaTipo, setFrequenciaTipo] = useState<"diario" | "semanal" | "total">("total");
+  const [frequenciaQtd, setFrequenciaQtd] = useState(1);
 
   const inicio = new Date();
   const fim = new Date(); fim.setDate(fim.getDate() + duracao);
@@ -67,6 +69,8 @@ function NovoDesafio() {
       criador_id: user.id,
       tipo_validacao: tipoValidacao,
       local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+      frequencia_tipo: frequenciaTipo,
+      frequencia_quantidade: frequenciaQtd,
     }).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -193,6 +197,54 @@ function NovoDesafio() {
               onChangeLocalId={setLocalId}
               userId={user.id}
             />
+
+            {/* Frequência de check-in */}
+            <div className="mt-4">
+              <div className="text-sm font-bold mb-1">Frequência obrigatória</div>
+              <p className="text-xs text-muted-foreground mb-3">Quem não cumprir é eliminado automaticamente às 00h.</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(["diario", "semanal", "total"] as const).map((tipo) => {
+                  const labels = { diario: "Diário", semanal: "Semanal", total: "Total" };
+                  const subs = { diario: "Todo dia", semanal: "Por semana", total: "No prazo" };
+                  const active = frequenciaTipo === tipo;
+                  return (
+                    <button key={tipo} onClick={() => { setFrequenciaTipo(tipo); setFrequenciaQtd(1); }}
+                      className={`rounded-2xl border p-3 text-left transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                      <div className="text-sm font-bold">{labels[tipo]}</div>
+                      <div className="text-[10px]">{subs[tipo]}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              {frequenciaTipo !== "total" && (
+                <div className="mt-3">
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {frequenciaTipo === "diario" ? "Quantidade por dia" : "Quantidade por semana"}
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {Array.from({ length: frequenciaTipo === "diario" ? 5 : 7 }, (_, i) => i + 1).map((n) => (
+                      <button key={n} onClick={() => setFrequenciaQtd(n)}
+                        className={`h-10 w-10 shrink-0 rounded-xl border text-sm font-bold transition-colors ${frequenciaQtd === n ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {frequenciaTipo === "total" && (
+                <div className="mt-3">
+                  <div className="text-xs text-muted-foreground mb-2">Mínimo de check-ins até o fim do desafio</div>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {[1,2,3,5,7,10,15,20,30].map((n) => (
+                      <button key={n} onClick={() => setFrequenciaQtd(n)}
+                        className={`h-10 w-10 shrink-0 rounded-xl border text-sm font-bold transition-colors ${frequenciaQtd === n ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -209,6 +261,11 @@ function NovoDesafio() {
               <SummaryRow icon={<Users size={18}/>} label="Participação" value="Aberta" sub="Qualquer membro pode entrar" />
               <SummaryRow icon={<Shield size={18}/>} label="Regras" value={`${Object.values(regras).filter(Boolean).length} regras definidas`} sub="Toque para ver" />
               <SummaryRow icon={<Shield size={18}/>} label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
+              <SummaryRow icon={<Target size={18}/>} label="Frequência" value={
+                frequenciaTipo === "diario" ? `${frequenciaQtd}x por dia` :
+                frequenciaTipo === "semanal" ? `${frequenciaQtd}x por semana` :
+                `${frequenciaQtd} check-in(s) no total`
+              } />
             </div>
             <button onClick={() => setAceito(!aceito)} className={`w-full rounded-2xl border-2 p-4 flex items-start gap-3 text-left transition ${aceito ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
               <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${aceito ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>{aceito && "✓"}</div>
