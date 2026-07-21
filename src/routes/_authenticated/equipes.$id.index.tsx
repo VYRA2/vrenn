@@ -635,6 +635,7 @@ function EquipeProfile() {
         <JustificarFaltaDesafioModal
           desafio={desafioJustificar}
           userId={user.id}
+          adminId={(membros ?? []).find((m: any) => m.papel === "admin")?.user_id ?? ""}
           onClose={() => setDesafioJustificar(null)}
           onDone={() => {
             refetchJustificativas();
@@ -1059,8 +1060,8 @@ function InfoBox({ label, value }: { label: string; value: string }) {
 }
 
 // ─── Justificar Falta no Desafio de Equipe ───────────────────────────────────
-function JustificarFaltaDesafioModal({ desafio, userId, onClose, onDone }: {
-  desafio: any; userId: string; onClose: () => void; onDone: () => void;
+function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone }: {
+  desafio: any; userId: string; adminId: string; onClose: () => void; onDone: () => void;
 }) {
   const [motivo, setMotivo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1077,6 +1078,15 @@ function JustificarFaltaDesafioModal({ desafio, userId, onClose, onDone }: {
         motivo: motivo.trim(),
       });
       if (error) throw error;
+      // Notificar o admin da equipe para aprovar/recusar
+      if (adminId && adminId !== userId) {
+        await supabase.from("notificacoes").insert({
+          user_id: adminId,
+          tipo: "justificativa_pendente",
+          mensagem: `Um membro justificou a falta de hoje no desafio "${desafio.titulo}". Analise na página da equipe.`,
+          link_id: desafio.equipe_id,
+        });
+      }
       toast.success("Justificativa enviada! O admin da equipe vai analisar.");
       onDone();
     } catch (e: any) {

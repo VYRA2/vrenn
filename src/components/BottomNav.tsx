@@ -62,7 +62,7 @@ export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
             <div className="space-y-2">
               <SheetItem icon={<Camera size={20} />} title="Publicar prova" desc="Foto ou vídeo vinculado a uma meta" onClick={publish} color="#7B3FF2" />
               <SheetItem icon={<Flag size={20} />} title="Criar meta" desc="Defina um novo compromisso público" onClick={() => go("/nova-meta")} color="#22D3A1" />
-              <SheetItem icon={<Swords size={20} />} title="Criar duelo" desc="Desafie alguém em uma meta" onClick={() => go("/duelos")} color="#A855F7" />
+              <SheetItem icon={<Swords size={20} />} title="Criar duelo" desc="Desafie alguém em uma meta" onClick={() => go("/duelos?criar=1")} color="#A855F7" />
               <SheetItem icon={<Shield size={20} />} title="Criar desafio de equipe" desc="Lance um desafio para sua equipe" onClick={() => go("/equipes")} color="#F59E0B" />
               <SheetItem icon={<UserPlus size={20} />} title="Criar equipe" desc="Reúna pessoas com o mesmo objetivo" onClick={() => go("/equipes/nova")} color="#22D3A1" />
             </div>

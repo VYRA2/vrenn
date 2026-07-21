@@ -319,6 +319,7 @@ function DueloDetalhe() {
         <JustificarFaltaModal
           dueloId={id}
           userId={user.id}
+          rivalId={isChallenger ? duelo.opponent_id : duelo.challenger_id}
           onClose={() => setShowJustificar(false)}
           onDone={() => setShowJustificar(false)}
         />
@@ -559,7 +560,7 @@ function CheckinDueloModal({ dueloId, userId, onClose, onDone }: { dueloId: stri
 }
 
 // ─── Justificar Falta ────────────────────────────────────────────────────────
-function JustificarFaltaModal({ dueloId, userId, onClose, onDone }: { dueloId: string; userId: string; onClose: () => void; onDone: () => void }) {
+function JustificarFaltaModal({ dueloId, userId, rivalId, onClose, onDone }: { dueloId: string; userId: string; rivalId: string; onClose: () => void; onDone: () => void }) {
   const [motivo, setMotivo] = useState("");
   const [loading, setLoading] = useState(false);
   const hoje = new Date().toISOString().split("T")[0];
@@ -575,6 +576,13 @@ function JustificarFaltaModal({ dueloId, userId, onClose, onDone }: { dueloId: s
         motivo: motivo.trim(),
       });
       if (error) throw error;
+      // Notificar o oponente para que ele analise a justificativa
+      await supabase.from("notificacoes").insert({
+        user_id: rivalId,
+        tipo: "justificativa_pendente",
+        mensagem: "Seu oponente justificou a falta de hoje no duelo. Aprove ou recuse antes das 23h59.",
+        link_id: dueloId,
+      });
       toast.success("Justificativa enviada! Seu oponente vai analisar.");
       onDone();
     } catch (e: any) {

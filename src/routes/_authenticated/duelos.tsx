@@ -11,6 +11,7 @@ import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/duelos")({
   component: Duelos,
+  validateSearch: (s: Record<string, unknown>) => ({ criar: s.criar === "1" || s.criar === 1 }),
 });
 
 type Tab = "meus" | "disponiveis" | "historico";
@@ -19,7 +20,8 @@ function Duelos() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("meus");
-  const [showCreate, setShowCreate] = useState(false);
+  const search = Route.useSearch();
+  const [showCreate, setShowCreate] = useState(search.criar === true);
 
   const { data: duelos } = useQuery({
     queryKey: ["duelos", user.id],
