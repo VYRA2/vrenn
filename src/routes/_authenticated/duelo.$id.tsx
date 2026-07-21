@@ -243,6 +243,14 @@ function DueloDetalhe() {
                   await (supabase as any).from("justificativas_falta")
                     .update({ status: "aprovado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
                     .eq("id", justificativaPendente.id);
+                  // Notificar o solicitante
+                  await (supabase as any).from("notificacoes").insert({
+                    user_id: justificativaPendente.user_id,
+                    tipo: "justificativa_resultado",
+                    mensagem: `Sua justificativa de falta no duelo foi aprovada! Você não será eliminado por essa falta.`,
+                    link_id: id,
+                    lida: false,
+                  });
                   qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
                   toast.success("Justificativa aprovada. O oponente não será eliminado por essa falta.");
                 }}
@@ -254,6 +262,14 @@ function DueloDetalhe() {
                   await (supabase as any).from("justificativas_falta")
                     .update({ status: "recusado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
                     .eq("id", justificativaPendente.id);
+                  // Notificar o solicitante
+                  await (supabase as any).from("notificacoes").insert({
+                    user_id: justificativaPendente.user_id,
+                    tipo: "justificativa_resultado",
+                    mensagem: `Sua justificativa de falta no duelo foi recusada. Fique atento para não ser eliminado.`,
+                    link_id: id,
+                    lida: false,
+                  });
                   qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
                   toast("Justificativa recusada.");
                 }}
