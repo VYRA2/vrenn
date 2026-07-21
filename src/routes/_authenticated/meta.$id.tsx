@@ -55,6 +55,7 @@ function MetaDetail() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [showConcluirModal, setShowConcluirModal] = useState(false);
+  const [showJustificarModal, setShowJustificarModal] = useState(false);
 
   const { data: meta, isLoading } = useQuery({
     queryKey: ["meta", id],
@@ -62,7 +63,7 @@ function MetaDetail() {
       const { data, error } = await supabase
         .from("metas")
         .select(
-          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, motivacao, profiles:user_id (nome, username, avatar_url)",
+          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, motivacao, frequencia_tipo, frequencia_quantidade, profiles:user_id (nome, username, avatar_url)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -103,6 +104,28 @@ function MetaDetail() {
         .order("created_at", { ascending: false });
       return data ?? [];
     },
+  });
+
+  // Check-in de hoje nesta meta
+  const hoje = new Date().toISOString().split("T")[0];
+  const checkinHoje = (checkins ?? []).some(
+    (c: any) => c.created_at?.slice(0, 10) === hoje
+  );
+
+  // Justificativa já enviada hoje
+  const { data: justificativaHoje, refetch: refetchJustificativa } = useQuery({
+    queryKey: ["meta-justificativa-hoje", id, user.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("justificativas_falta")
+        .select("id, status, motivo")
+        .eq("meta_id", id)
+        .eq("user_id", user.id)
+        .eq("data_referencia", hoje)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isLoading === false,
   });
 
   const { data: arbitros } = useQuery({
@@ -276,7 +299,7 @@ function MetaDetail() {
         </section>
 
         {isOwner && meta.status === "em_andamento" && (
-          <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto flex max-w-md gap-2 px-4">
+          <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto flex max-w-md gap-2 px-4 flex-wrap">
             <button
               onClick={() => setShowCheckinModal(true)}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
@@ -289,6 +312,27 @@ function MetaDetail() {
             >
               <CheckCircle2 size={16} /> Concluir
             </button>
+            {/* Justificar falta — aparece só quando frequência diária e não fez check-in hoje */}
+            {(meta as any).frequencia_tipo === "diario" && !checkinHoje && (
+              justificativaHoje ? (
+                <div className={`w-full rounded-2xl border px-4 py-3 text-xs font-semibold text-center ${
+                  justificativaHoje.status === "aprovado" ? "border-accent/40 bg-accent/10 text-accent" :
+                  justificativaHoje.status === "recusado" ? "border-destructive/40 bg-destructive/10 text-destructive" :
+                  "border-yellow-500/40 bg-yellow-500/10 text-yellow-500"
+                }`}>
+                  {justificativaHoje.status === "aprovado" ? "✅ Justificativa aprovada — falta não conta" :
+                   justificativaHoje.status === "recusado" ? "❌ Justificativa recusada" :
+                   "⏳ Justificativa enviada — aguardando análise"}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowJustificarModal(true)}
+                  className="w-full rounded-2xl border border-yellow-500/40 bg-yellow-500/10 py-3 text-xs font-semibold text-yellow-500"
+                >
+                  ⚠️ Justificar falta de hoje
+                </button>
+              )
+            )}
             <button
               onClick={() => { navigator.clipboard?.writeText(window.location.href); toast.success("Link copiado!"); }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 py-3.5 text-sm font-bold"
@@ -352,6 +396,18 @@ function MetaDetail() {
             qc.invalidateQueries({ queryKey: ["my-metas-list"] });
             qc.invalidateQueries({ queryKey: ["wallet"] });
             setShowConcluirModal(false);
+          }}
+        />
+      )}
+
+      {showJustificarModal && (
+        <JustificarFaltaMetaModal
+          metaId={id}
+          userId={user.id}
+          onClose={() => setShowJustificarModal(false)}
+          onDone={() => {
+            refetchJustificativa();
+            setShowJustificarModal(false);
           }}
         />
       )}
@@ -1255,5 +1311,66 @@ function EmJogoPrivado({ metaId }: { metaId: string }) {
       </div>
       <p className="mt-2 text-sm whitespace-pre-line">{data}</p>
     </section>
+  );
+}
+
+// ─── Justificar Falta na Meta Solo ───────────────────────────────────────────
+function JustificarFaltaMetaModal({ metaId, userId, onClose, onDone }: {
+  metaId: string; userId: string; onClose: () => void; onDone: () => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const hoje = new Date().toISOString().split("T")[0];
+
+  async function enviar() {
+    if (motivo.trim().length < 10) return toast.error("Descreva o motivo (mínimo 10 caracteres).");
+    setLoading(true);
+    try {
+      const { error } = await (supabase as any).from("justificativas_falta").insert({
+        user_id: userId,
+        meta_id: metaId,
+        data_referencia: hoje,
+        motivo: motivo.trim(),
+      });
+      if (error) throw error;
+      toast.success("Justificativa registrada! Sua meta não será marcada como falhada por hoje.");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao enviar justificativa");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={onClose}>
+      <div className="w-full rounded-t-3xl bg-background p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Justificar falta de hoje</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-card">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Sua meta tem frequência diária obrigatória. Se não fizer check-in hoje e não registrar uma justificativa válida, ela poderá ser marcada como falhada às 00h.
+        </p>
+        <textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder="Ex: Viagem de emergência, problema de saúde, compromisso inadiável..."
+          className="w-full rounded-xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-primary resize-none h-28"
+          maxLength={500}
+        />
+        <p className="text-right text-[10px] text-muted-foreground">{motivo.length}/500</p>
+        <button
+          onClick={enviar}
+          disabled={loading || motivo.trim().length < 10}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+        >
+          {loading && <Loader2 size={14} className="animate-spin" />}
+          Registrar justificativa
+        </button>
+      </div>
+    </div>
   );
 }
