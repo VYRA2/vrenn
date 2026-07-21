@@ -23,28 +23,83 @@ function Ranking() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const [scope, setScope] = useState<Scope>("global");
-  const [periodo, setPeriodo] = useState<Periodo>("semanal");
+  const [periodo, setPeriodo] = useState<Periodo>("tudo");
   const [periodoOpen, setPeriodoOpen] = useState(false);
 
-  const { data: all } = useQuery({
-    queryKey: ["ranking", scope, user.id],
+  // IDs filtrados por scope (seguidores/amigos)
+  const { data: followIds } = useQuery({
+    queryKey: ["follow-ids", user.id],
     queryFn: async () => {
-      if (scope === "seguidores" || scope === "amigos") {
-        const { data: f } = await supabase
-          .from("follows").select("following_id")
-          .eq("follower_id", user.id).eq("status", "aceito");
-        const ids = (f ?? []).map((x: any) => x.following_id);
-        ids.push(user.id);
-        const { data } = await supabase
-          .from("profiles").select("id, nome, username, avatar_url, reputacao_pts, streak_dias")
-          .in("id", ids).order("reputacao_pts", { ascending: false }).limit(100);
-        return data ?? [];
-      }
       const { data } = await supabase
-        .from("profiles").select("id, nome, username, avatar_url, reputacao_pts, streak_dias")
-        .order("reputacao_pts", { ascending: false }).limit(100);
-      return data ?? [];
+        .from("follows").select("following_id")
+        .eq("follower_id", user.id).eq("status", "aceito");
+      const ids = (data ?? []).map((x: any) => x.following_id);
+      ids.push(user.id);
+      return ids as string[];
     },
+    enabled: scope === "seguidores" || scope === "amigos",
+  });
+
+  const { data: all, isLoading } = useQuery({
+    queryKey: ["ranking", scope, periodo, user.id],
+    queryFn: async () => {
+      const scopeIds = (scope === "seguidores" || scope === "amigos") ? followIds : null;
+
+      // ALL-TIME: usa reputacao_pts diretamente do profiles
+      if (periodo === "tudo") {
+        let q = supabase
+          .from("profiles")
+          .select("id, nome, username, avatar_url, reputacao_pts, streak_dias")
+          .order("reputacao_pts", { ascending: false })
+          .limit(100);
+        if (scopeIds) q = q.in("id", scopeIds);
+        const { data } = await q;
+        return (data ?? []).map((p: any) => ({ ...p, pts_periodo: p.reputacao_pts }));
+      }
+
+      // SEMANAL / MENSAL: soma do reputacao_log no período
+      const agora = new Date();
+      let desde: string;
+      if (periodo === "semanal") {
+        const d = new Date(agora);
+        d.setDate(d.getDate() - 7);
+        desde = d.toISOString();
+      } else {
+        const d = new Date(agora.getFullYear(), agora.getMonth(), 1);
+        desde = d.toISOString();
+      }
+
+      // Buscar logs do período
+      let logQ = (supabase as any)
+        .from("reputacao_log")
+        .select("user_id, pontos")
+        .gte("created_at", desde);
+      if (scopeIds) logQ = logQ.in("user_id", scopeIds);
+      const { data: logs } = await logQ;
+
+      // Agrupa por user_id
+      const totais: Record<string, number> = {};
+      for (const row of (logs ?? [])) {
+        totais[row.user_id] = (totais[row.user_id] ?? 0) + row.pontos;
+      }
+
+      if (Object.keys(totais).length === 0) return [];
+
+      // Buscar perfis dos usuários que pontuaram
+      const ids = Object.keys(totais);
+      let pQ = supabase
+        .from("profiles")
+        .select("id, nome, username, avatar_url, reputacao_pts, streak_dias")
+        .in("id", ids);
+      const { data: profiles } = await pQ;
+
+      // Montar lista com pts do período
+      return ((profiles ?? []) as any[])
+        .map((p: any) => ({ ...p, pts_periodo: totais[p.id] ?? 0 }))
+        .sort((a: any, b: any) => b.pts_periodo - a.pts_periodo)
+        .slice(0, 100);
+    },
+    enabled: periodo === "tudo" || !!followIds || (scope !== "seguidores" && scope !== "amigos"),
   });
 
   const list = all ?? [];
@@ -53,7 +108,7 @@ function Ranking() {
   const myIndex = list.findIndex((p: any) => p.id === user.id);
   const me = myIndex >= 0 ? list[myIndex] : null;
 
-  const periodoLabel = periodo === "semanal" ? "Semanal" : periodo === "mensal" ? "Mensal" : "Todos os tempos";
+  const periodoLabel = periodo === "semanal" ? "Esta semana" : periodo === "mensal" ? "Este mês" : "Todos os tempos";
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-44">
@@ -93,18 +148,24 @@ function Ranking() {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-bold leading-tight">Seja Top 1.<br />Inspire milhares.</h2>
-            <p className="mt-1.5 text-xs text-muted-foreground">Ranking baseado em pontos das últimas 4 semanas.</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {periodo === "tudo"
+                ? "Ranking geral — pontos acumulados desde sempre."
+                : periodo === "semanal"
+                ? "Pontos ganhos nos últimos 7 dias."
+                : "Pontos ganhos no mês atual."}
+            </p>
           </div>
           <div className="relative">
             <button onClick={() => setPeriodoOpen(v => !v)} className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold">
               {periodoLabel} <ChevronDown size={14} />
             </button>
             {periodoOpen && (
-              <div className="absolute right-0 top-full mt-1 z-20 w-36 rounded-xl border border-border bg-card shadow-xl">
-                {(["semanal","mensal","tudo"] as Periodo[]).map(p => (
+              <div className="absolute right-0 top-full mt-1 z-20 w-40 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+                {(["tudo", "mensal", "semanal"] as Periodo[]).map(p => (
                   <button key={p} onClick={() => { setPeriodo(p); setPeriodoOpen(false); }}
-                    className={`block w-full px-3 py-2 text-left text-xs font-semibold ${periodo === p ? "text-primary-light" : "text-foreground"}`}>
-                    {p === "semanal" ? "Semanal" : p === "mensal" ? "Mensal" : "Todos os tempos"}
+                    className={`flex w-full items-center px-3 py-2.5 text-left text-xs font-semibold gap-2 ${periodo === p ? "text-primary-light bg-primary/10" : "text-foreground hover:bg-card"}`}>
+                    {p === "semanal" ? "🔥 Esta semana" : p === "mensal" ? "📅 Este mês" : "🏆 Todos os tempos"}
                   </button>
                 ))}
               </div>
@@ -113,32 +174,37 @@ function Ranking() {
         </div>
       </div>
 
-      {/* Podium */}
-      {top3.length > 0 && (
-        <div className="mx-auto max-w-md px-5 mt-10">
-          <div className="grid grid-cols-3 items-end gap-3">
-            {top3[1] ? <PodiumCard user={top3[1]} place={2} /> : <div />}
-            {top3[0] ? <PodiumCard user={top3[0]} place={1} /> : <div />}
-            {top3[2] ? <PodiumCard user={top3[2]} place={3} /> : <div />}
-          </div>
+      {isLoading ? (
+        <div className="mx-auto max-w-md px-5 mt-10 text-center text-sm text-muted-foreground">Carregando ranking…</div>
+      ) : list.length === 0 ? (
+        <div className="mx-auto max-w-md px-5 mt-10 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+          {periodo === "tudo" ? "Ainda sem ranking nesta categoria." : `Ninguém pontuou ${periodo === "semanal" ? "essa semana" : "este mês"} ainda.`}
         </div>
-      )}
+      ) : (
+        <>
+          {/* Podium */}
+          {top3.length > 0 && (
+            <div className="mx-auto max-w-md px-5 mt-10">
+              <div className="grid grid-cols-3 items-end gap-3">
+                {top3[1] ? <PodiumCard user={top3[1]} place={2} /> : <div />}
+                {top3[0] ? <PodiumCard user={top3[0]} place={1} /> : <div />}
+                {top3[2] ? <PodiumCard user={top3[2]} place={3} /> : <div />}
+              </div>
+            </div>
+          )}
 
-      {/* List 4-10 */}
-      <div className="mx-auto max-w-md px-5 mt-8">
-        {rest.length > 0 && (
-          <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-            {rest.map((p: any, i: number) => (
-              <RankRow key={p.id} user={p} place={i + 4} />
-            ))}
+          {/* List 4-10 */}
+          <div className="mx-auto max-w-md px-5 mt-8">
+            {rest.length > 0 && (
+              <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+                {rest.map((p: any, i: number) => (
+                  <RankRow key={p.id} user={p} place={i + 4} />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-        {list.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            Ainda sem ranking nesta categoria.
-          </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* My position fixed */}
       {me && (
@@ -159,7 +225,7 @@ function Ranking() {
             </div>
             <div className="inline-flex items-baseline gap-1.5">
               <Gem size={16} className="text-primary-light self-center" />
-              <span className="text-lg font-bold">{formatPts(me.reputacao_pts ?? 0)}</span>
+              <span className="text-lg font-bold">{formatPts(me.pts_periodo ?? 0)}</span>
               <span className="text-xs text-muted-foreground">pts</span>
             </div>
           </div>
@@ -180,7 +246,6 @@ function PodiumCard({ user, place }: { user: any; place: 1 | 2 | 3 }) {
 
   return (
     <div className={`relative flex flex-col items-center rounded-2xl border ${cfg.border} ${cfg.cardBg} px-3 pt-8 pb-4 ${cfg.elev}`}>
-      {/* Badge with shield shape */}
       <div className="absolute -top-4 left-1/2 -translate-x-1/2">
         {place === 1 ? (
           <div className="relative">
@@ -205,10 +270,12 @@ function PodiumCard({ user, place }: { user: any; place: 1 | 2 | 3 }) {
         <div className="text-[10px] text-muted-foreground truncate">@{user.username}</div>
         <div className="mt-2 inline-flex items-baseline gap-1">
           <Gem size={12} className="text-primary-light self-center" />
-          <span className="text-sm font-bold text-primary-light">{formatPts(user.reputacao_pts ?? 0)}</span>
+          <span className="text-sm font-bold text-primary-light">{formatPts(user.pts_periodo ?? 0)}</span>
           <span className="text-[10px] text-primary-light">pts</span>
         </div>
-        <div className="mt-1 text-[10px] text-muted-foreground inline-flex items-center gap-1 justify-center"><Flame size={11} className="text-orange-400 fill-orange-400/40" />{user.streak_dias ?? 0} dias</div>
+        <div className="mt-1 text-[10px] text-muted-foreground inline-flex items-center gap-1 justify-center">
+          <Flame size={11} className="text-orange-400 fill-orange-400/40" />{user.streak_dias ?? 0} dias
+        </div>
       </div>
     </div>
   );
@@ -229,7 +296,7 @@ function RankRow({ user, place }: { user: any; place: number }) {
       </div>
       <div className="inline-flex items-baseline gap-1">
         <Gem size={13} className="text-primary-light self-center" />
-        <span className="text-sm font-bold">{formatPts(user.reputacao_pts ?? 0)}</span>
+        <span className="text-sm font-bold">{formatPts(user.pts_periodo ?? 0)}</span>
         <span className="text-[10px] text-muted-foreground">pts</span>
       </div>
       <ChevronRight size={16} className="text-muted-foreground" />
