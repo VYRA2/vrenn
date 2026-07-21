@@ -244,11 +244,11 @@ function DueloDetalhe() {
                     .update({ status: "aprovado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
                     .eq("id", justificativaPendente.id);
                   // Notificar o solicitante
-                  await (supabase as any).from("notificacoes").insert({
-                    user_id: justificativaPendente.user_id,
-                    tipo: "justificativa_resultado",
-                    mensagem: `Sua justificativa de falta no duelo foi aprovada! Você não será eliminado por essa falta.`,
-                    link_id: id,
+                  await supabase.rpc("notify", {
+                    _user_id: justificativaPendente.user_id,
+                    _tipo: "justificativa_resultado",
+                    _mensagem: `Sua justificativa de falta no duelo foi aprovada! Você não será eliminado por essa falta.`,
+                    _link_id: id,
                     lida: false,
                   });
                   qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
@@ -263,11 +263,11 @@ function DueloDetalhe() {
                     .update({ status: "recusado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
                     .eq("id", justificativaPendente.id);
                   // Notificar o solicitante
-                  await (supabase as any).from("notificacoes").insert({
-                    user_id: justificativaPendente.user_id,
-                    tipo: "justificativa_resultado",
-                    mensagem: `Sua justificativa de falta no duelo foi recusada. Fique atento para não ser eliminado.`,
-                    link_id: id,
+                  await supabase.rpc("notify", {
+                    _user_id: justificativaPendente.user_id,
+                    _tipo: "justificativa_resultado",
+                    _mensagem: `Sua justificativa de falta no duelo foi recusada. Fique atento para não ser eliminado.`,
+                    _link_id: id,
                     lida: false,
                   });
                   qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
@@ -593,11 +593,11 @@ function JustificarFaltaModal({ dueloId, userId, rivalId, onClose, onDone }: { d
       });
       if (error) throw error;
       // Notificar o oponente para que ele analise a justificativa
-      await supabase.from("notificacoes").insert({
-        user_id: rivalId,
-        tipo: "justificativa_pendente",
-        mensagem: "Seu oponente justificou a falta de hoje no duelo. Aprove ou recuse antes das 23h59.",
-        link_id: dueloId,
+      await supabase.rpc("notify", {
+        _user_id: rivalId,
+        _tipo: "justificativa_pendente",
+        _mensagem: "Seu oponente justificou a falta de hoje no duelo. Aprove ou recuse antes das 23h59.",
+        _link_id: dueloId,
       });
       toast.success("Justificativa enviada! Seu oponente vai analisar.");
       onDone();
@@ -637,3 +637,4 @@ function JustificarFaltaModal({ dueloId, userId, rivalId, onClose, onDone }: { d
     </div>
   );
 }
+
