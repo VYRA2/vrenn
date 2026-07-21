@@ -23,13 +23,18 @@ function Perfil() {
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["profile", user.id],
     queryFn: async () => {
-      const [{ data }, { data: statsRows }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, nivel, created_at").eq("id", user.id).maybeSingle(),
-        supabase.rpc("get_my_profile_stats"),
-      ]);
-      const stats = statsRows?.[0] ?? {};
+      // Separate calls so a stats RPC failure doesn't erase the profile
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, nivel, created_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!data) return null;
+
+      const { data: statsRows } = await supabase.rpc("get_my_profile_stats").maybeSingle().catch(() => ({ data: null }));
+      const stats = (statsRows as any) ?? {};
       // stats spread BEFORE data so profile fields (nome, avatar_url, etc) always win
-      return (data ? { ...stats, ...data } : null) as (typeof data & { nivel?: number; streak_dias?: number; reputacao_pts?: number; creditos?: number }) | null;
+      return { ...stats, ...data } as (typeof data & { nivel?: number; streak_dias?: number; reputacao_pts?: number; creditos?: number });
     },
   });
 
@@ -358,3 +363,4 @@ function Medal({ icon, title, sub, color }: { icon: React.ReactNode; title: stri
     </div>
   );
 }
+
