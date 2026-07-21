@@ -36,6 +36,9 @@ function NovaMeta() {
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("qrcode");
   const [localId, setLocalId] = useState<string | null>(null);
 
+  const [frequenciaTipo, setFrequenciaTipo] = useState<"diario" | "semanal" | "total">("total");
+  const [frequenciaQtd, setFrequenciaQtd] = useState(1);
+
   // FIX: staleTime garante que o dado não seja re-fetchado enquanto o usuário navega entre steps
   const { data: localSelecionado } = useQuery({
     queryKey: ["novo-meta-local", localId],
@@ -74,6 +77,8 @@ function NovaMeta() {
       valor_custodia: valor,
       tipo_validacao: tipoValidacao,
       local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+      frequencia_tipo: frequenciaTipo,
+      frequencia_quantidade: frequenciaQtd,
     } as any).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -152,9 +157,63 @@ function NovaMeta() {
         {step === 4 && (
           <div className="space-y-4 mt-4">
             <Field label="Prazo final" type="date" value={prazo} onChange={setPrazo} />
-            <div className="rounded-2xl border border-border bg-card p-4 text-xs text-muted-foreground">
-              Você poderá fazer check-ins diários a partir da data de início.
+
+            {/* Frequência de check-in */}
+            <div>
+              <span className="mb-2 block text-xs font-medium text-muted-foreground">Frequência de check-in</span>
+              <div className="grid grid-cols-3 gap-2">
+                {(["diario", "semanal", "total"] as const).map((tipo) => {
+                  const labels = { diario: "Diário", semanal: "Semanal", total: "Total" };
+                  const subs = { diario: "Todo dia", semanal: "Por semana", total: "No prazo" };
+                  const active = frequenciaTipo === tipo;
+                  return (
+                    <button key={tipo} onClick={() => { setFrequenciaTipo(tipo); setFrequenciaQtd(1); }}
+                      className={`rounded-2xl border p-3 text-left transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                      <div className="text-sm font-bold">{labels[tipo]}</div>
+                      <div className="text-[10px]">{subs[tipo]}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Quantidade — rola horizontal */}
+            {frequenciaTipo !== "total" && (
+              <div>
+                <span className="mb-2 block text-xs font-medium text-muted-foreground">
+                  {frequenciaTipo === "diario" ? "Check-ins por dia" : "Check-ins por semana"}
+                </span>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {Array.from({ length: frequenciaTipo === "diario" ? 5 : 7 }, (_, i) => i + 1).map((n) => (
+                    <button key={n} onClick={() => setFrequenciaQtd(n)}
+                      className={`h-10 w-10 shrink-0 rounded-xl border text-sm font-bold transition-colors ${frequenciaQtd === n ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {frequenciaTipo === "diario"
+                    ? `Quem não fizer ${frequenciaQtd}x por dia sem justificativa terá a meta marcada como falhada automaticamente.`
+                    : `Quem não atingir ${frequenciaQtd}x na semana terá a meta marcada como falhada.`}
+                </p>
+              </div>
+            )}
+            {frequenciaTipo === "total" && (
+              <div>
+                <span className="mb-2 block text-xs font-medium text-muted-foreground">Mínimo de check-ins até o prazo</span>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {[1,2,3,5,7,10,15,20,30].map((n) => (
+                    <button key={n} onClick={() => setFrequenciaQtd(n)}
+                      className={`h-10 w-10 shrink-0 rounded-xl border text-sm font-bold transition-colors ${frequenciaQtd === n ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  A meta falha automaticamente se não atingir {frequenciaQtd} check-in(s) até o prazo.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -167,6 +226,11 @@ function NovaMeta() {
             <ReviewRow label="Em jogo" value={valorCustodia ? `R$ ${valorCustodia}` : "—"} />
             <ReviewRow label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
             <ReviewRow label="Prazo" value={prazo || "Sem prazo"} />
+            <ReviewRow label="Frequência" value={
+              frequenciaTipo === "diario" ? `${frequenciaQtd}x por dia` :
+              frequenciaTipo === "semanal" ? `${frequenciaQtd}x por semana` :
+              `${frequenciaQtd} check-in(s) no total`
+            } />
 
             {/* FIX: mostra loading enquanto o dado não chega, em vez de não renderizar nada */}
             {tipoValidacao === "qrcode" && (
