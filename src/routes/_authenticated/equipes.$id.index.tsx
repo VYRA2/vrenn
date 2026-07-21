@@ -106,19 +106,56 @@ function EquipeProfile() {
     },
   });
 
-  const { data: participacoes } = useQuery({
+  const { data: participacoes, refetch: refetchParticipacoes } = useQuery({
     queryKey: ["equipe-desafios-participacoes", id, user.id],
     queryFn: async () => {
       if (!desafios?.length) return [];
       const ids = desafios.map((d: any) => d.id);
       const { data } = await (supabase as any)
         .from("desafio_equipe_participantes")
-        .select("desafio_id, status")
+        .select("desafio_id, status, eliminado")
         .in("desafio_id", ids)
         .eq("user_id", user.id);
       return data ?? [];
     },
     enabled: !!desafios?.length,
+  });
+
+  const [desafioJustificar, setDesafioJustificar] = useState<any>(null);
+  const hoje = new Date().toISOString().split("T")[0];
+
+  // Justificativas de hoje para cada desafio do user
+  const { data: justificativasHoje, refetch: refetchJustificativas } = useQuery({
+    queryKey: ["equipe-justificativas-hoje", id, user.id],
+    queryFn: async () => {
+      if (!desafios?.length) return [];
+      const ids = desafios.map((d: any) => d.id);
+      const { data } = await (supabase as any)
+        .from("justificativas_falta")
+        .select("desafio_id, status, motivo")
+        .in("desafio_id", ids)
+        .eq("user_id", user.id)
+        .eq("data_referencia", hoje);
+      return data ?? [];
+    },
+    enabled: !!desafios?.length,
+  });
+
+  // Justificativas pendentes de outros membros (para admin aprovar)
+  const { data: justificativasPendentes, refetch: refetchPendentes } = useQuery({
+    queryKey: ["equipe-justificativas-pendentes", id],
+    queryFn: async () => {
+      if (!desafios?.length) return [];
+      const ids = desafios.map((d: any) => d.id);
+      const { data } = await (supabase as any)
+        .from("justificativas_falta")
+        .select("id, user_id, desafio_id, motivo, data_referencia, profiles:user_id(nome, avatar_url)")
+        .in("desafio_id", ids)
+        .eq("status", "pendente")
+        .neq("user_id", user.id);
+      return data ?? [];
+    },
+    enabled: !!desafios?.length && (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "admin"),
   });
 
   if (loadingEquipe) {
@@ -460,32 +497,63 @@ function EquipeProfile() {
                     <span>{d.duracao_dias} dias</span>
                     <span>{fmtData(d.data_inicio)}</span>
                   </div>
-                  {d.status === "ativo" && (
-                    <div className="mt-3">
-                      {participa ? (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
-                            <CheckCircle2 size={14} /> Participando
+                  {d.status === "ativo" && (() => {
+                    const minha = (participacoes ?? []).find((p: any) => p.desafio_id === d.id);
+                    const eliminado = minha?.eliminado;
+                    const justHoje = (justificativasHoje ?? []).find((j: any) => j.desafio_id === d.id);
+                    return (
+                      <div className="mt-3 space-y-2">
+                        {eliminado && (
+                          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
+                            ⚠️ Eliminado — pode continuar fazendo check-ins mas não concorre ao prêmio
                           </div>
+                        )}
+                        {participa ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
+                              <CheckCircle2 size={14} /> Participando
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDesafioCheckin(d); }}
+                              className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
+                            >
+                              <Camera size={13} /> Check-in
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={(e) => { e.stopPropagation(); setDesafioCheckin(d); }}
-                            className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
+                            onClick={(e) => { e.stopPropagation(); entrarNoDesafio(d); }}
+                            disabled={carregando}
+                            className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-glow disabled:opacity-60"
                           >
-                            <Camera size={13} /> Check-in
+                            {carregando ? <Loader2 size={13} className="animate-spin" /> : <LogIn size={13} />}
+                            {carregando ? "Entrando…" : `Entrar — ${fmtMoeda(Number(d.valor_entrada ?? 0))}`}
                           </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); entrarNoDesafio(d); }}
-                          disabled={carregando}
-                          className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-glow disabled:opacity-60"
-                        >
-                          {carregando ? <Loader2 size={13} className="animate-spin" /> : <LogIn size={13} />}
-                          {carregando ? "Entrando…" : `Entrar — ${fmtMoeda(Number(d.valor_entrada ?? 0))}`}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                        )}
+                        {/* Botão justificar falta — só para participantes com frequência diária */}
+                        {participa && !eliminado && d.frequencia_tipo === "diario" && (
+                          justHoje ? (
+                            <div className={`rounded-xl border px-3 py-2 text-xs font-semibold text-center ${
+                              justHoje.status === "aprovado" ? "border-accent/40 bg-accent/10 text-accent" :
+                              justHoje.status === "recusado" ? "border-destructive/40 bg-destructive/10 text-destructive" :
+                              "border-yellow-500/40 bg-yellow-500/10 text-yellow-500"
+                            }`}>
+                              {justHoje.status === "aprovado" ? "✅ Justificativa aprovada" :
+                               justHoje.status === "recusado" ? "❌ Justificativa recusada" :
+                               "⏳ Justificativa pendente — aguardando admin"}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDesafioJustificar(d); }}
+                              className="w-full rounded-xl border border-yellow-500/40 bg-yellow-500/10 py-2 text-xs font-semibold text-yellow-500"
+                            >
+                              ⚠️ Justificar falta de hoje
+                            </button>
+                          )
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 );
               })
@@ -560,6 +628,62 @@ function EquipeProfile() {
 
       {desafioDetalhes && (
         <DesafioDetalhesSheet desafio={desafioDetalhes} onClose={() => setDesafioDetalhes(null)} />
+      )}
+
+      {/* Modal justificar falta no desafio de equipe */}
+      {desafioJustificar && (
+        <JustificarFaltaDesafioModal
+          desafio={desafioJustificar}
+          userId={user.id}
+          onClose={() => setDesafioJustificar(null)}
+          onDone={() => {
+            refetchJustificativas();
+            setDesafioJustificar(null);
+          }}
+        />
+      )}
+
+      {/* Painel de justificativas pendentes para admin */}
+      {souAdmin && (justificativasPendentes ?? []).length > 0 && (
+        <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto max-w-md px-4">
+          <div className="rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-4 space-y-3 shadow-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-yellow-500">⏳ Justificativas pendentes ({(justificativasPendentes ?? []).length})</span>
+            </div>
+            {(justificativasPendentes ?? []).slice(0, 3).map((j: any) => (
+              <div key={j.id} className="rounded-xl bg-background border border-border p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  {j.profiles?.avatar_url && <img src={j.profiles.avatar_url} className="h-6 w-6 rounded-full object-cover" />}
+                  <span className="text-xs font-semibold">{j.profiles?.nome}</span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">{new Date(j.data_referencia + "T12:00:00").toLocaleDateString("pt-BR")}</span>
+                </div>
+                <p className="text-xs italic text-muted-foreground">"{j.motivo}"</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await (supabase as any).from("justificativas_falta")
+                        .update({ status: "aprovado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
+                        .eq("id", j.id);
+                      refetchPendentes();
+                      toast.success("Justificativa aprovada!");
+                    }}
+                    className="flex-1 rounded-xl bg-primary py-1.5 text-xs font-bold text-primary-foreground"
+                  >✅ Aprovar</button>
+                  <button
+                    onClick={async () => {
+                      await (supabase as any).from("justificativas_falta")
+                        .update({ status: "recusado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
+                        .eq("id", j.id);
+                      refetchPendentes();
+                      toast("Justificativa recusada.");
+                    }}
+                    className="flex-1 rounded-xl border border-border bg-card py-1.5 text-xs font-bold text-destructive"
+                  >❌ Recusar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <BottomNav />
@@ -930,6 +1054,67 @@ function InfoBox({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-border bg-background p-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm font-bold">{value}</div>
+    </div>
+  );
+}
+
+// ─── Justificar Falta no Desafio de Equipe ───────────────────────────────────
+function JustificarFaltaDesafioModal({ desafio, userId, onClose, onDone }: {
+  desafio: any; userId: string; onClose: () => void; onDone: () => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const hoje = new Date().toISOString().split("T")[0];
+
+  async function enviar() {
+    if (motivo.trim().length < 10) return toast.error("Descreva o motivo (mínimo 10 caracteres).");
+    setLoading(true);
+    try {
+      const { error } = await (supabase as any).from("justificativas_falta").insert({
+        user_id: userId,
+        desafio_id: desafio.id,
+        data_referencia: hoje,
+        motivo: motivo.trim(),
+      });
+      if (error) throw error;
+      toast.success("Justificativa enviada! O admin da equipe vai analisar.");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao enviar justificativa");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={onClose}>
+      <div className="w-full rounded-t-3xl bg-background p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Justificar falta — {desafio.titulo}</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-card">
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Explique o motivo de não ter feito check-in hoje. O <strong>admin da equipe</strong> vai aprovar ou recusar. Se aprovado, você não será eliminado por essa falta. O motivo ficará visível para todos os membros da equipe.
+        </p>
+        <textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder="Ex: Viagem de emergência, problema de saúde, compromisso inadiável..."
+          className="w-full rounded-xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-primary resize-none h-28"
+          maxLength={500}
+        />
+        <p className="text-right text-[10px] text-muted-foreground">{motivo.length}/500</p>
+        <button
+          onClick={enviar}
+          disabled={loading || motivo.trim().length < 10}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+        >
+          {loading && <Loader2 size={14} className="animate-spin" />}
+          Enviar justificativa
+        </button>
+      </div>
     </div>
   );
 }
