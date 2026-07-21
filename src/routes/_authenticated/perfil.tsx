@@ -67,6 +67,17 @@ function Perfil() {
     },
   });
 
+  const { data: conquistasDesbloqueadas } = useQuery({
+    queryKey: ["conquistas", user.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("conquistas_usuarios")
+        .select("slug, desbloqueada_em")
+        .eq("user_id", user.id);
+      return (data ?? []) as { slug: string; desbloqueada_em: string }[];
+    },
+  });
+
   // Detect auto-generated username (handle_new_user appends first 4 chars of UUID)
   const autoSuffix = user.id.replace(/-/g, "").slice(0, 4);
   const needsUsername = !!profile && (!profile.username || profile.username.endsWith(autoSuffix));
@@ -158,15 +169,22 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Conquistas</h2>
-            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver todas</button>
-
+            <span className="text-xs text-muted-foreground">
+              {(conquistasDesbloqueadas ?? []).length}/{TODAS_CONQUISTAS.length}
+            </span>
           </div>
-          <div className="flex justify-between gap-2">
-            <Conquista icon={<Target size={22} />} label="Foco" sub="Nível 4" color="#A855F7" />
-            <Conquista icon={<Flame size={22} />} label="Sequência" sub="180 dias" color="#22D3A1" />
-            <Conquista icon={<Dumbbell size={22} />} label="Força Mental" sub="Nível 3" color="#F59E0B" />
-            <Conquista icon={<Users size={22} />} label="Líder" sub="Nível 2" color="#38BDF8" />
-            <Conquista icon={<Diamond size={22} />} label="Diamante" sub="Top 1%" color="#A855F7" />
+          <div className="grid grid-cols-5 gap-2">
+            {TODAS_CONQUISTAS.map((c) => {
+              const desbloqueada = (conquistasDesbloqueadas ?? []).find(x => x.slug === c.slug);
+              return (
+                <ConquistaCard
+                  key={c.slug}
+                  conquista={c}
+                  desbloqueada={!!desbloqueada}
+                  data={desbloqueada?.desbloqueada_em}
+                />
+              );
+            })}
           </div>
         </section>
 
@@ -297,6 +315,84 @@ function UsernameModal({ userId, currentName, onClose, onSaved }: { userId: stri
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Catálogo de Conquistas ──────────────────────────────────────────────────
+const TODAS_CONQUISTAS = [
+  // Primeiros passos
+  { slug: "primeira_fagulha", emoji: "🔥", label: "Faísca", sub: "1º check-in", color: "#F59E0B" },
+  { slug: "primeira_missao",  emoji: "🥇", label: "1ª Missão", sub: "1ª meta concluída", color: "#A855F7" },
+  { slug: "espirito_de_equipe", emoji: "👥", label: "Equipe", sub: "Entrou numa equipe", color: "#38BDF8" },
+  { slug: "desafiante",       emoji: "⚔️", label: "Desafiante", sub: "1º duelo aceito", color: "#EF4444" },
+  // Streak
+  { slug: "chama_acesa",      emoji: "🔥", label: "Chama Acesa", sub: "7 dias seguidos", color: "#F97316" },
+  { slug: "rotina_de_ferro",  emoji: "💪", label: "Rotina de Ferro", sub: "30 dias seguidos", color: "#22D3A1" },
+  { slug: "inabalavel",       emoji: "🏔️", label: "Inabalável", sub: "100 dias seguidos", color: "#A855F7" },
+  // Volume
+  { slug: "comprometido",     emoji: "✅", label: "Comprometido", sub: "10 check-ins", color: "#22D3A1" },
+  { slug: "maquina",          emoji: "✅", label: "Máquina", sub: "50 check-ins", color: "#3B82F6" },
+  { slug: "lendario_checkin", emoji: "✅", label: "200 Provas", sub: "200 check-ins", color: "#A855F7" },
+  { slug: "cacador_de_metas", emoji: "🎯", label: "Caçador", sub: "5 metas concluídas", color: "#F59E0B" },
+  { slug: "conquistador",     emoji: "🎯", label: "Conquistador", sub: "20 metas concluídas", color: "#A855F7" },
+  // Duelo
+  { slug: "primeira_vitoria", emoji: "⚔️", label: "1ª Vitória", sub: "1º duelo vencido", color: "#EF4444" },
+  { slug: "dominante",        emoji: "👑", label: "Dominante", sub: "5 duelos vencidos", color: "#F59E0B" },
+  { slug: "imbativel",        emoji: "💀", label: "Imbatível", sub: "10 duelos vencidos", color: "#7B2EFF" },
+  // Social
+  { slug: "influenciador",    emoji: "📣", label: "Influenciador", sub: "1k seguidores + 5k curtidas", color: "#F97316" },
+  { slug: "referencia",       emoji: "🌟", label: "Referência", sub: "10k seguidores + 20k curtidas", color: "#FBBF24" },
+  { slug: "icone",            emoji: "🏆", label: "Ícone", sub: "50k seguidores + 70k curtidas", color: "#A855F7" },
+  // Reputação
+  { slug: "prata_pura",       emoji: "💎", label: "Prata Pura", sub: "Nível Prata", color: "#C0C0C0" },
+  { slug: "ouro_solido",      emoji: "💎", label: "Ouro Sólido", sub: "Nível Ouro", color: "#FFD700" },
+  { slug: "diamante",         emoji: "💎", label: "Diamante", sub: "Nível Diamante", color: "#B9F2FF" },
+  { slug: "lenda",            emoji: "👑", label: "Lenda", sub: "Nível Lenda", color: "#7B2EFF" },
+] as const;
+
+function ConquistaCard({ conquista, desbloqueada, data }: {
+  conquista: typeof TODAS_CONQUISTAS[number];
+  desbloqueada: boolean;
+  data?: string;
+}) {
+  const [showTip, setShowTip] = useState(false);
+  return (
+    <div className="relative flex flex-col items-center" onClick={() => setShowTip(v => !v)}>
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition-all ${
+          desbloqueada ? "shadow-glow" : "opacity-30 grayscale"
+        }`}
+        style={desbloqueada ? {
+          background: `${conquista.color}22`,
+          border: `1px solid ${conquista.color}55`,
+        } : {
+          background: "hsl(var(--card))",
+          border: "1px solid hsl(var(--border))",
+        }}
+      >
+        {conquista.emoji}
+      </div>
+      <div className="mt-1 text-center">
+        <div className={`text-[9px] font-semibold leading-tight ${desbloqueada ? "text-foreground" : "text-muted-foreground"}`}>
+          {conquista.label}
+        </div>
+      </div>
+      {/* Tooltip */}
+      {showTip && (
+        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 w-36 rounded-xl border border-border bg-card p-2.5 shadow-xl text-center">
+          <div className="text-xs font-bold">{conquista.label}</div>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">{conquista.sub}</div>
+          {desbloqueada && data && (
+            <div className="mt-1 text-[9px] text-accent font-semibold">
+              ✓ {new Date(data).toLocaleDateString("pt-BR")}
+            </div>
+          )}
+          {!desbloqueada && (
+            <div className="mt-1 text-[9px] text-muted-foreground">🔒 Ainda não desbloqueada</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
