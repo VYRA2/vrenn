@@ -23,6 +23,7 @@ import {
   ScanLine,
   Crosshair,
   Pencil,
+  Flame,
   Dumbbell,
   Heart,
   BookOpen,
@@ -214,6 +215,40 @@ function MetaDetail() {
           <InfoBox icon={Target} label="Categoria" value={meta.categoria} />
           <InfoBox icon={CheckCircle2} label="Check-ins" value={String(checkins?.length ?? 0)} />
         </div>
+
+        {/* Card de frequência — só aparece se foi definida */}
+        {(meta as any).frequencia_tipo && (meta as any).frequencia_tipo !== "total" && (
+          <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary-light">
+              <Flame size={16} />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-muted-foreground">Frequência obrigatória</div>
+              <div className="text-sm font-bold">
+                {(meta as any).frequencia_tipo === "diario"
+                  ? `${(meta as any).frequencia_quantidade}x por dia`
+                  : `${(meta as any).frequencia_quantidade}x por semana`}
+              </div>
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-primary-light/80">
+              {(meta as any).frequencia_tipo === "diario" ? "Diário" : "Semanal"}
+            </div>
+          </section>
+        )}
+        {(meta as any).frequencia_tipo === "total" && (meta as any).frequencia_quantidade > 1 && (
+          <section className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card text-muted-foreground">
+              <Target size={16} />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-muted-foreground">Mínimo de check-ins até o prazo</div>
+              <div className="text-sm font-bold">{(meta as any).frequencia_quantidade} check-ins</div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {checkins?.length ?? 0}/{(meta as any).frequencia_quantidade}
+            </div>
+          </section>
+        )}
 
         {isOwner && Number(valorCustodia ?? 0) > 0 && (
           <section className="rounded-2xl border border-primary/40 bg-primary/5 p-4 flex items-center gap-3">
