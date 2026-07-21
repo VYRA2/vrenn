@@ -24,6 +24,7 @@ const TYPE_STYLES: Record<string, { icon: any; color: string; bg: string }> = {
   novo_desafio_equipe:   { icon: Swords,        color: "#7B2EFF", bg: "rgba(123,46,255,0.15)" },
   equipe_atualizada:     { icon: Users,         color: "#38BDF8", bg: "rgba(56,189,248,0.15)" },
   justificativa_pendente: { icon: FileQuestion, color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
+  justificativa_resultado: { icon: FileQuestion, color: "#22D3A1", bg: "rgba(34,211,161,0.15)" },
 };
 
 function Notificacoes() {
@@ -98,6 +99,8 @@ function Notificacoes() {
                 const isDueloConvite = n.tipo === "convite_duelo";
                 const isDueloAtivo = n.tipo === "justificativa_pendente" && n.link_id && !n.mensagem?.includes("equipe");
                 const isEquipeNav = n.tipo === "novo_desafio_equipe" || n.tipo === "equipe_atualizada" || (n.tipo === "justificativa_pendente" && n.mensagem?.includes("equipe"));
+                const isResultadoDuelo = n.tipo === "justificativa_resultado" && n.link_id && !n.mensagem?.includes("equipe");
+                const isResultadoEquipe = n.tipo === "justificativa_resultado" && n.mensagem?.includes("equipe");
 
                 const card = (
                   <div className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
@@ -124,11 +127,11 @@ function Notificacoes() {
                   <Link key={n.id} to="/duelo-convite/$id" params={{ id: n.link_id }} className="block">
                     {card}
                   </Link>
-                ) : isDueloAtivo ? (
+                ) : isDueloAtivo || isResultadoDuelo ? (
                   <Link key={n.id} to="/duelo/$id" params={{ id: n.link_id }} className="block">
                     {card}
                   </Link>
-                ) : isEquipeNav ? (
+                ) : isEquipeNav || isResultadoEquipe ? (
                   <Link key={n.id} to="/equipes/$id" params={{ id: n.link_id }} className="block">
                     {card}
                   </Link>
