@@ -127,11 +127,13 @@ export type Database = {
         Row: {
           created_at: string
           data: string
+          desafio_id: string | null
           dia: string | null
+          duelo_id: string | null
           foto_url: string | null
           id: string
           mensagem: string | null
-          meta_id: string
+          meta_id: string | null
           user_id: string
           validado: boolean
           wearable_activity_id: string | null
@@ -139,11 +141,13 @@ export type Database = {
         Insert: {
           created_at?: string
           data?: string
+          desafio_id?: string | null
           dia?: string | null
+          duelo_id?: string | null
           foto_url?: string | null
           id?: string
           mensagem?: string | null
-          meta_id: string
+          meta_id?: string | null
           user_id: string
           validado?: boolean
           wearable_activity_id?: string | null
@@ -151,16 +155,32 @@ export type Database = {
         Update: {
           created_at?: string
           data?: string
+          desafio_id?: string | null
           dia?: string | null
+          duelo_id?: string | null
           foto_url?: string | null
           id?: string
           mensagem?: string | null
-          meta_id?: string
+          meta_id?: string | null
           user_id?: string
           validado?: boolean
           wearable_activity_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "checkins_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafios_equipe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_duelo_id_fkey"
+            columns: ["duelo_id"]
+            isOneToOne: false
+            referencedRelation: "duelos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "checkins_meta_id_fkey"
             columns: ["meta_id"]
@@ -170,6 +190,70 @@ export type Database = {
           },
           {
             foreignKeyName: "checkins_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkins_desafio_equipe: {
+        Row: {
+          created_at: string
+          desafio_id: string
+          foto_url: string | null
+          id: string
+          mensagem: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          desafio_id: string
+          foto_url?: string | null
+          id?: string
+          mensagem?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          desafio_id?: string
+          foto_url?: string | null
+          id?: string
+          mensagem?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_desafio_equipe_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafios_equipe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conquistas_usuarios: {
+        Row: {
+          desbloqueada_em: string | null
+          id: string
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          desbloqueada_em?: string | null
+          id?: string
+          slug: string
+          user_id: string
+        }
+        Update: {
+          desbloqueada_em?: string | null
+          id?: string
+          slug?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conquistas_usuarios_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -239,7 +323,10 @@ export type Database = {
         Row: {
           created_at: string
           desafio_id: string
+          eliminado: boolean | null
+          eliminado_em: string | null
           id: string
+          motivo_eliminacao: string | null
           progresso: number
           status: string
           updated_at: string
@@ -248,7 +335,10 @@ export type Database = {
         Insert: {
           created_at?: string
           desafio_id: string
+          eliminado?: boolean | null
+          eliminado_em?: string | null
           id?: string
+          motivo_eliminacao?: string | null
           progresso?: number
           status?: string
           updated_at?: string
@@ -257,7 +347,10 @@ export type Database = {
         Update: {
           created_at?: string
           desafio_id?: string
+          eliminado?: boolean | null
+          eliminado_em?: string | null
           id?: string
+          motivo_eliminacao?: string | null
           progresso?: number
           status?: string
           updated_at?: string
@@ -283,6 +376,8 @@ export type Database = {
           descricao: string | null
           duracao_dias: number
           equipe_id: string
+          frequencia_quantidade: number | null
+          frequencia_tipo: string | null
           id: string
           local_id: string | null
           premiacao: string | null
@@ -302,6 +397,8 @@ export type Database = {
           descricao?: string | null
           duracao_dias?: number
           equipe_id: string
+          frequencia_quantidade?: number | null
+          frequencia_tipo?: string | null
           id?: string
           local_id?: string | null
           premiacao?: string | null
@@ -321,6 +418,8 @@ export type Database = {
           descricao?: string | null
           duracao_dias?: number
           equipe_id?: string
+          frequencia_quantidade?: number | null
+          frequencia_tipo?: string | null
           id?: string
           local_id?: string | null
           premiacao?: string | null
@@ -351,9 +450,15 @@ export type Database = {
       duelos: {
         Row: {
           categoria: string | null
+          challenger_eliminado: boolean | null
+          challenger_eliminado_em: string | null
           challenger_id: string
           created_at: string
+          frequencia_quantidade: number | null
+          frequencia_tipo: string | null
           id: string
+          opponent_eliminado: boolean | null
+          opponent_eliminado_em: string | null
           opponent_email: string | null
           opponent_id: string | null
           prazo: string | null
@@ -366,9 +471,15 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          challenger_eliminado?: boolean | null
+          challenger_eliminado_em?: string | null
           challenger_id: string
           created_at?: string
+          frequencia_quantidade?: number | null
+          frequencia_tipo?: string | null
           id?: string
+          opponent_eliminado?: boolean | null
+          opponent_eliminado_em?: string | null
           opponent_email?: string | null
           opponent_id?: string | null
           prazo?: string | null
@@ -381,9 +492,15 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          challenger_eliminado?: boolean | null
+          challenger_eliminado_em?: string | null
           challenger_id?: string
           created_at?: string
+          frequencia_quantidade?: number | null
+          frequencia_tipo?: string | null
           id?: string
+          opponent_eliminado?: boolean | null
+          opponent_eliminado_em?: string | null
           opponent_email?: string | null
           opponent_id?: string | null
           prazo?: string | null
@@ -527,6 +644,84 @@ export type Database = {
         }
         Relationships: []
       }
+      justificativas_falta: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string | null
+          data_referencia: string
+          desafio_id: string | null
+          duelo_id: string | null
+          id: string
+          meta_id: string | null
+          motivo: string
+          respondido_em: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string | null
+          data_referencia: string
+          desafio_id?: string | null
+          duelo_id?: string | null
+          id?: string
+          meta_id?: string | null
+          motivo: string
+          respondido_em?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string | null
+          data_referencia?: string
+          desafio_id?: string | null
+          duelo_id?: string | null
+          id?: string
+          meta_id?: string | null
+          motivo?: string
+          respondido_em?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "justificativas_falta_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justificativas_falta_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafios_equipe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justificativas_falta_duelo_id_fkey"
+            columns: ["duelo_id"]
+            isOneToOne: false
+            referencedRelation: "duelos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justificativas_falta_meta_id_fkey"
+            columns: ["meta_id"]
+            isOneToOne: false
+            referencedRelation: "metas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justificativas_falta_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locais_validacao: {
         Row: {
           created_at: string
@@ -608,6 +803,8 @@ export type Database = {
           created_at: string
           descricao: string | null
           foto_capa_url: string | null
+          frequencia_quantidade: number | null
+          frequencia_tipo: string | null
           id: string
           local_id: string | null
           motivacao: string | null
@@ -626,6 +823,8 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           foto_capa_url?: string | null
+          frequencia_quantidade?: number | null
+          frequencia_tipo?: string | null
           id?: string
           local_id?: string | null
           motivacao?: string | null
@@ -644,6 +843,8 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           foto_capa_url?: string | null
+          frequencia_quantidade?: number | null
+          frequencia_tipo?: string | null
           id?: string
           local_id?: string | null
           motivacao?: string | null
@@ -931,6 +1132,41 @@ export type Database = {
         }
         Relationships: []
       }
+      reputacao_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          motivo: string
+          pontos: number
+          ref_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          motivo: string
+          pontos: number
+          ref_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          motivo?: string
+          pontos?: number
+          ref_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reputacao_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           created_at: string
@@ -1164,6 +1400,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      dar_reputacao: {
+        Args: {
+          p_motivo: string
+          p_pontos: number
+          p_ref_id?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      desbloquear_conquista: {
+        Args: { p_slug: string; p_user_id: string }
+        Returns: undefined
+      }
       distancia_metros: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
@@ -1211,6 +1460,8 @@ export type Database = {
         }
         Returns: string
       }
+      processar_eliminacoes_diarias: { Args: never; Returns: undefined }
+      resetar_streaks_quebrados: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
