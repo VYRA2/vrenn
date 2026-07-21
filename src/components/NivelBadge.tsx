@@ -23,7 +23,8 @@ export function NivelBadge({ nivel, size = "sm" }: { nivel?: number | null; size
   );
 }
 
-export function nivelDoUsuario(username?: string | null, nivel?: number | null): number {
-  if (username === "matheus_alcantara") return 5;
+export function nivelDoUsuario(username?: string | null, nivel?: number | null, userId?: string | null): number {
+  // Fundador — sempre Lenda independente dos pontos
+  if (username === "matheus" || userId === "52fd9ebb-5d88-4b33-acc3-97b70c62a426") return 5;
   return nivel ?? 1;
 }
