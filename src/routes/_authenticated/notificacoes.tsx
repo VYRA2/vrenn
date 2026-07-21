@@ -46,13 +46,13 @@ function Notificacoes() {
     if (error) return toast.error(error.message);
     await supabase.from("notificacoes").update({ lida: true }).eq("id", notif.id);
     if (arb?.metas) {
-      await supabase.from("notificacoes").insert({
-        user_id: (arb.metas as any).user_id,
-        tipo: aceitar ? "arbitro_aceitou" : "arbitro_recusou",
-        mensagem: aceitar
+      await supabase.rpc("notify", {
+        _user_id: (arb.metas as any).user_id,
+        _tipo: aceitar ? "arbitro_aceitou" : "arbitro_recusou",
+        _mensagem: aceitar
           ? `Seu convite para árbitro foi aceito.`
           : `Seu convite para árbitro foi recusado.`,
-        link_id: arb.meta_id,
+        _link_id: arb.meta_id,
       });
     }
     toast.success(aceitar ? "Convite aceito!" : "Convite recusado");
@@ -164,3 +164,4 @@ function groupByDay(items: any[]) {
   }
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v.length));
 }
+
