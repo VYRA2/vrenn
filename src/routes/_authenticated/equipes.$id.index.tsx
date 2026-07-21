@@ -704,12 +704,11 @@ function EquipeProfile() {
                         .update({ status: "aprovado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
                         .eq("id", j.id);
                       // Notificar solicitante
-                      await (supabase as any).from("notificacoes").insert({
-                        user_id: j.user_id,
-                        tipo: "justificativa_resultado",
-                        mensagem: `Sua justificativa de falta no desafio da equipe foi aprovada pelo admin! Você não será eliminado por essa falta.`,
-                        link_id: j.desafio_id,
-                        lida: false,
+                      await supabase.rpc("notify", {
+                        _user_id: j.user_id,
+                        _tipo: "justificativa_resultado",
+                        _mensagem: `Sua justificativa de falta no desafio da equipe foi aprovada pelo admin! Você não será eliminado por essa falta.`,
+                        _link_id: j.desafio_id,
                       });
                       refetchPendentes();
                       toast.success("Justificativa aprovada!");
@@ -722,12 +721,11 @@ function EquipeProfile() {
                         .update({ status: "recusado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
                         .eq("id", j.id);
                       // Notificar solicitante
-                      await (supabase as any).from("notificacoes").insert({
-                        user_id: j.user_id,
-                        tipo: "justificativa_resultado",
-                        mensagem: `Sua justificativa de falta no desafio da equipe foi recusada pelo admin. Fique atento para não ser eliminado.`,
-                        link_id: j.desafio_id,
-                        lida: false,
+                      await supabase.rpc("notify", {
+                        _user_id: j.user_id,
+                        _tipo: "justificativa_resultado",
+                        _mensagem: `Sua justificativa de falta no desafio da equipe foi recusada pelo admin. Fique atento para não ser eliminado.`,
+                        _link_id: j.desafio_id,
                       });
                       refetchPendentes();
                       toast("Justificativa recusada.");
@@ -1119,11 +1117,11 @@ function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone
       if (error) throw error;
       // Notificar o admin da equipe para aprovar/recusar
       if (adminId && adminId !== userId) {
-        await supabase.from("notificacoes").insert({
-          user_id: adminId,
-          tipo: "justificativa_pendente",
-          mensagem: `Um membro justificou a falta de hoje no desafio "${desafio.titulo}". Analise na página da equipe.`,
-          link_id: desafio.equipe_id,
+        await supabase.rpc("notify", {
+          _user_id: adminId,
+          _tipo: "justificativa_pendente",
+          _mensagem: `Um membro justificou a falta de hoje no desafio "${desafio.titulo}". Analise na página da equipe.`,
+          _link_id: desafio.equipe_id,
         });
       }
       toast.success("Justificativa enviada! O admin da equipe vai analisar.");
@@ -1167,3 +1165,4 @@ function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone
     </div>
   );
 }
+
