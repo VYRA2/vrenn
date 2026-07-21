@@ -9,7 +9,7 @@ import { useState } from "react";
 import {
   ArrowLeft, Calendar, Wallet, Pencil, Trash2, X,
   Loader2, Target, QrCode, Lock, Dumbbell, Heart, BookOpen,
-  DollarSign, Sparkles, Swords,
+  DollarSign, Sparkles, Swords, Camera, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/duelo/$id")({
@@ -32,6 +32,8 @@ function DueloDetalhe() {
   const navigate = useNavigate();
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showCheckin, setShowCheckin] = useState(false);
+  const [showJustificar, setShowJustificar] = useState(false);
 
   const { data: duelo, isLoading } = useQuery({
     queryKey: ["duelo", id],
@@ -60,6 +62,37 @@ function DueloDetalhe() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Check-in de hoje neste duelo
+  const hoje = new Date().toISOString().split("T")[0];
+  const { data: checkinHoje } = useQuery({
+    queryKey: ["duelo-checkin-hoje", id, user.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("checkins")
+        .select("id")
+        .eq("duelo_id", id)
+        .eq("user_id", user.id)
+        .gte("created_at", `${hoje}T00:00:00`)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!duelo && duelo.status === "ativo",
+  });
+
+  // Justificativa pendente (enviada pelo oponente esperando minha aprovação)
+  const { data: justificativaPendente } = useQuery({
+    queryKey: ["duelo-justificativa-pendente", id, user.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("justificativas_falta")
+        .select("id, user_id, motivo, data_referencia, profiles:user_id(nome, avatar_url)")
+        .eq("duelo_id", id)
+        .eq("status", "pendente")
+        .neq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!duelo && duelo.status === "ativo",
+  });
+
   if (isLoading) return <main className="min-h-screen bg-background" />;
   if (!duelo) return (
     <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -74,6 +107,13 @@ function DueloDetalhe() {
   const meuProgresso = isChallenger ? duelo.progresso_challenger : duelo.progresso_opponent;
   const rivalProgresso = isChallenger ? duelo.progresso_opponent : duelo.progresso_challenger;
   const dias = duelo.prazo ? Math.max(0, Math.ceil((new Date(duelo.prazo).getTime() - Date.now()) / 86400000)) : null;
+  const euEliminado = isChallenger ? duelo.challenger_eliminado : duelo.opponent_eliminado;
+  const rivalEliminado = isChallenger ? duelo.opponent_eliminado : duelo.challenger_eliminado;
+  const frequenciaLabel = duelo.frequencia_tipo === "diario"
+    ? `${duelo.frequencia_quantidade}x por dia`
+    : duelo.frequencia_tipo === "semanal"
+    ? `${duelo.frequencia_quantidade}x por semana`
+    : `${duelo.frequencia_quantidade} check-in(s) no total`;
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
@@ -152,6 +192,98 @@ function DueloDetalhe() {
           </section>
         )}
 
+        {/* Frequência */}
+        {duelo.frequencia_tipo && (
+          <section className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary-light">
+              <Target size={16} />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Frequência exigida</div>
+              <div className="text-sm font-bold">{frequenciaLabel}</div>
+            </div>
+          </section>
+        )}
+
+        {/* Banner eliminado */}
+        {euEliminado && (
+          <section className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 flex items-center gap-3">
+            <AlertTriangle size={20} className="text-destructive shrink-0" />
+            <div>
+              <div className="text-sm font-bold text-destructive">Você foi eliminado</div>
+              <div className="text-xs text-muted-foreground">Você não cumpriu a frequência exigida. Pode continuar fazendo check-ins, mas não concorre ao prêmio.</div>
+            </div>
+          </section>
+        )}
+        {rivalEliminado && !euEliminado && (
+          <section className="rounded-2xl border border-primary/40 bg-primary/5 p-4 flex items-center gap-3">
+            <CheckCircle2 size={20} className="text-primary-light shrink-0" />
+            <div>
+              <div className="text-sm font-bold text-primary-light">Seu oponente foi eliminado!</div>
+              <div className="text-xs text-muted-foreground">Continue fazendo check-ins para garantir sua vitória.</div>
+            </div>
+          </section>
+        )}
+
+        {/* Justificativa pendente do oponente — admin aprova */}
+        {justificativaPendente && (
+          <section className="rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={16} className="text-yellow-500" />
+              <span className="text-sm font-bold text-yellow-500">Falta justificada pelo oponente</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{(justificativaPendente as any).profiles?.nome}</span> justificou a falta do dia{" "}
+              {new Date(justificativaPendente.data_referencia + "T12:00:00").toLocaleDateString("pt-BR")}:
+            </p>
+            <p className="rounded-xl bg-card border border-border px-3 py-2 text-sm italic">"{justificativaPendente.motivo}"</p>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  await (supabase as any).from("justificativas_falta")
+                    .update({ status: "aprovado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
+                    .eq("id", justificativaPendente.id);
+                  qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
+                  toast.success("Justificativa aprovada. O oponente não será eliminado por essa falta.");
+                }}
+                className="flex-1 rounded-xl bg-primary py-2 text-xs font-bold text-primary-foreground">
+                ✅ Aprovar
+              </button>
+              <button
+                onClick={async () => {
+                  await (supabase as any).from("justificativas_falta")
+                    .update({ status: "recusado", aprovado_por: user.id, respondido_em: new Date().toISOString() })
+                    .eq("id", justificativaPendente.id);
+                  qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
+                  toast("Justificativa recusada.");
+                }}
+                className="flex-1 rounded-xl border border-border bg-card py-2 text-xs font-bold text-destructive">
+                ❌ Recusar
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* Botões de ação — check-in e justificar falta */}
+        {duelo.status === "ativo" && !euEliminado && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowCheckin(true)}
+              disabled={!!checkinHoje}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50">
+              <Camera size={16} />
+              {checkinHoje ? "Check-in feito hoje ✓" : "Fazer check-in"}
+            </button>
+            {!checkinHoje && duelo.frequencia_tipo === "diario" && (
+              <button
+                onClick={() => setShowJustificar(true)}
+                className="rounded-2xl border border-border bg-card px-4 py-3.5 text-xs font-semibold text-muted-foreground hover:border-yellow-500/50 hover:text-yellow-500">
+                Justificar falta
+              </button>
+            )}
+          </div>
+        )}
+
         {/* QR Code permanente */}
         {isOwner && duelo.tipo_validacao === "qrcode" && duelo.local_id && (
           <section className="space-y-2">
@@ -167,6 +299,30 @@ function DueloDetalhe() {
           </section>
         )}
       </div>
+
+      {/* Modal check-in do duelo */}
+      {showCheckin && (
+        <CheckinDueloModal
+          dueloId={id}
+          userId={user.id}
+          onClose={() => setShowCheckin(false)}
+          onDone={() => {
+            qc.invalidateQueries({ queryKey: ["duelo-checkin-hoje", id, user.id] });
+            qc.invalidateQueries({ queryKey: ["duelo", id] });
+            setShowCheckin(false);
+          }}
+        />
+      )}
+
+      {/* Modal justificar falta */}
+      {showJustificar && (
+        <JustificarFaltaModal
+          dueloId={id}
+          userId={user.id}
+          onClose={() => setShowJustificar(false)}
+          onDone={() => setShowJustificar(false)}
+        />
+      )}
 
       {showEdit && (
         <EditDueloSheet
@@ -308,6 +464,152 @@ function InfoBox({ icon: Icon, label, value }: { icon: any; label: string; value
       <Icon size={18} className="mx-auto text-primary-light" />
       <div className="mt-1 text-xs font-bold truncate">{value}</div>
       <div className="text-[10px] text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+// ─── Check-in do Duelo ───────────────────────────────────────────────────────
+function CheckinDueloModal({ dueloId, userId, onClose, onDone }: { dueloId: string; userId: string; onClose: () => void; onDone: () => void }) {
+  const [mensagem, setMensagem] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const fileRef = { current: null as HTMLInputElement | null };
+
+  function pickFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,video/*";
+    input.capture = "environment";
+    input.onchange = (e) => {
+      const f = (e.target as HTMLInputElement).files?.[0];
+      if (!f) return;
+      setFile(f);
+      setPreview(URL.createObjectURL(f));
+    };
+    input.click();
+  }
+
+  async function enviar() {
+    setLoading(true);
+    try {
+      let foto_url: string | null = null;
+      if (file) {
+        const ext = file.name.split(".").pop();
+        const path = `duelo/${dueloId}/${userId}/${Date.now()}.${ext}`;
+        await supabase.storage.from("checkins").upload(path, file);
+        const { data: pub } = supabase.storage.from("checkins").getPublicUrl(path);
+        foto_url = pub.publicUrl;
+      }
+      const { error } = await supabase.from("checkins").insert({
+        duelo_id: dueloId,
+        user_id: userId,
+        foto_url,
+        mensagem: mensagem || null,
+        meta_id: null,
+      } as any);
+      if (error) throw error;
+      toast.success("Check-in registrado!");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao registrar check-in");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={onClose}>
+      <div className="w-full rounded-t-3xl bg-background p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Check-in do duelo</h3>
+          <button onClick={onClose}><X size={20} /></button>
+        </div>
+        {preview ? (
+          file?.type.startsWith("video") ? (
+            <video src={preview} controls className="w-full max-h-48 rounded-xl object-cover" />
+          ) : (
+            <img src={preview} className="w-full max-h-48 rounded-xl object-cover" />
+          )
+        ) : (
+          <button onClick={pickFile} className="flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-card py-8 text-sm text-muted-foreground hover:border-primary/50">
+            <Camera size={28} className="text-primary-light" />
+            Tirar foto ou gravar vídeo
+          </button>
+        )}
+        {preview && (
+          <button onClick={pickFile} className="text-xs text-primary-light underline">Trocar arquivo</button>
+        )}
+        <textarea
+          value={mensagem}
+          onChange={(e) => setMensagem(e.target.value)}
+          placeholder="Descreva sua prova (opcional)..."
+          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary resize-none h-20"
+        />
+        <button
+          onClick={enviar}
+          disabled={loading}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+          {loading && <Loader2 size={14} className="animate-spin" />}
+          Publicar check-in
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Justificar Falta ────────────────────────────────────────────────────────
+function JustificarFaltaModal({ dueloId, userId, onClose, onDone }: { dueloId: string; userId: string; onClose: () => void; onDone: () => void }) {
+  const [motivo, setMotivo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const hoje = new Date().toISOString().split("T")[0];
+
+  async function enviar() {
+    if (motivo.trim().length < 10) return toast.error("Descreva o motivo (mínimo 10 caracteres).");
+    setLoading(true);
+    try {
+      const { error } = await (supabase as any).from("justificativas_falta").insert({
+        user_id: userId,
+        duelo_id: dueloId,
+        data_referencia: hoje,
+        motivo: motivo.trim(),
+      });
+      if (error) throw error;
+      toast.success("Justificativa enviada! Seu oponente vai analisar.");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao enviar justificativa");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={onClose}>
+      <div className="w-full rounded-t-3xl bg-background p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold">Justificar falta de hoje</h3>
+          <button onClick={onClose}><X size={20} /></button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Explique o motivo de não ter feito check-in hoje. Seu oponente poderá aprovar ou recusar até as 23h59. Se aprovado, você não será eliminado por essa falta.
+        </p>
+        <textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder="Ex: Viagem de emergência, problema de saúde, compromisso inadiável..."
+          className="w-full rounded-xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-primary resize-none h-28"
+          maxLength={500}
+        />
+        <p className="text-right text-[10px] text-muted-foreground">{motivo.length}/500</p>
+        <button
+          onClick={enviar}
+          disabled={loading || motivo.trim().length < 10}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+          {loading && <Loader2 size={14} className="animate-spin" />}
+          Enviar justificativa
+        </button>
+      </div>
     </div>
   );
 }
