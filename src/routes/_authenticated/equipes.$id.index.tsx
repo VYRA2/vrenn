@@ -407,6 +407,11 @@ function EquipeProfile() {
                           <div className="text-sm font-bold truncate">{d.titulo}</div>
                           <div className="text-[11px] text-muted-foreground truncate">
                             {d.data_fim ? `Até ${fmtData(d.data_fim)}` : `${d.duracao_dias} dias`} · {d.duracao_dias} dias
+                            {d.frequencia_tipo && d.frequencia_tipo !== "total" && (
+                              <span className="ml-1 text-primary-light/80 font-semibold">
+                                · 🔥 {d.frequencia_tipo === "diario" ? `${d.frequencia_quantidade}x/dia` : `${d.frequencia_quantidade}x/sem`}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
@@ -509,10 +514,19 @@ function EquipeProfile() {
                     <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary-light">{d.status}</span>
                   </div>
                   {d.descricao && <p className="mt-1 text-xs text-muted-foreground">{d.descricao}</p>}
-                  <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap">
                     <span>{fmtMoeda(Number(d.valor_entrada ?? 0))}</span>
                     <span>{d.duracao_dias} dias</span>
                     <span>{fmtData(d.data_inicio)}</span>
+                    {d.frequencia_tipo && (
+                      <span className="flex items-center gap-1 font-semibold text-primary-light/80">
+                        🔥 {d.frequencia_tipo === "diario"
+                          ? `${d.frequencia_quantidade}x/dia`
+                          : d.frequencia_tipo === "semanal"
+                          ? `${d.frequencia_quantidade}x/semana`
+                          : `${d.frequencia_quantidade} check-ins no total`}
+                      </span>
+                    )}
                   </div>
                   {d.status === "ativo" && (() => {
                     const minha = (participacoes ?? []).find((p: any) => p.desafio_id === d.id);
