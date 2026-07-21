@@ -124,6 +124,23 @@ function EquipeProfile() {
   const [desafioJustificar, setDesafioJustificar] = useState<any>(null);
   const hoje = new Date().toISOString().split("T")[0];
 
+  // Checkins de hoje para cada desafio do user
+  const { data: checkinsHoje, refetch: refetchCheckinsHoje } = useQuery({
+    queryKey: ["equipe-checkins-hoje", id, user.id, hoje],
+    queryFn: async () => {
+      if (!desafios?.length) return [];
+      const ids = desafios.map((d: any) => d.id);
+      const { data } = await (supabase as any)
+        .from("checkins_desafio_equipe")
+        .select("desafio_id")
+        .in("desafio_id", ids)
+        .eq("user_id", user.id)
+        .gte("created_at", `${hoje}T00:00:00`);
+      return data ?? [];
+    },
+    enabled: !!desafios?.length,
+  });
+
   // Justificativas de hoje para cada desafio do user
   const { data: justificativasHoje, refetch: refetchJustificativas } = useQuery({
     queryKey: ["equipe-justificativas-hoje", id, user.id],
@@ -513,12 +530,18 @@ function EquipeProfile() {
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
                               <CheckCircle2 size={14} /> Participando
                             </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDesafioCheckin(d); }}
-                              className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
-                            >
-                              <Camera size={13} /> Check-in
-                            </button>
+                            {(checkinsHoje ?? []).some((c: any) => c.desafio_id === d.id) ? (
+                              <div className="flex items-center gap-1.5 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent">
+                                <CheckCircle2 size={13} /> Check-in feito hoje
+                              </div>
+                            ) : (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setDesafioCheckin(d); }}
+                                className="flex items-center gap-1.5 rounded-xl bg-gradient-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-glow"
+                              >
+                                <Camera size={13} /> Check-in
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <button
@@ -610,6 +633,7 @@ function EquipeProfile() {
           onClose={() => setDesafioCheckin(null)}
           onCreated={() => {
             qc.invalidateQueries({ queryKey: ["equipe-desafios", id] });
+            qc.invalidateQueries({ queryKey: ["equipe-checkins-hoje", id, user.id, hoje] });
             setDesafioCheckin(null);
           }}
         />
@@ -952,29 +976,14 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
         const { data } = supabase.storage.from("checkins").getPublicUrl(path);
         foto_url = data.publicUrl;
       }
-      // Insert checkin_desafio record
+      // Insere em checkins_desafio_equipe — trigger atualiza progresso + reputação automaticamente
       const { error } = await (supabase as any).from("checkins_desafio_equipe").insert({
         desafio_id: desafio.id,
         user_id: userId,
         mensagem: msg.trim() || null,
         foto_url,
       });
-      // Fallback: se a tabela for checkins genérica com campo desafio_id
-      if (error) {
-        const { error: err2 } = await (supabase as any).from("checkins").insert({
-          meta_id: null,
-          desafio_id: desafio.id,
-          user_id: userId,
-          mensagem: msg.trim() || null,
-          foto_url,
-        });
-        if (err2) throw err2;
-      }
-      // Atualizar progresso do participante
-      await (supabase as any).from("desafio_equipe_participantes")
-        .update({ ultimo_checkin: new Date().toISOString() } as any)
-        .eq("desafio_id", desafio.id)
-        .eq("user_id", userId);
+      if (error) throw error;
       toast.success("Check-in registrado!");
       onCreated();
     } catch (e: any) {
