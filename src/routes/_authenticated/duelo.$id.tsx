@@ -249,7 +249,6 @@ function DueloDetalhe() {
                     _tipo: "justificativa_resultado",
                     _mensagem: `Sua justificativa de falta no duelo foi aprovada! Você não será eliminado por essa falta.`,
                     _link_id: id,
-                    lida: false,
                   });
                   qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
                   toast.success("Justificativa aprovada. O oponente não será eliminado por essa falta.");
@@ -268,7 +267,6 @@ function DueloDetalhe() {
                     _tipo: "justificativa_resultado",
                     _mensagem: `Sua justificativa de falta no duelo foi recusada. Fique atento para não ser eliminado.`,
                     _link_id: id,
-                    lida: false,
                   });
                   qc.invalidateQueries({ queryKey: ["duelo-justificativa-pendente", id, user.id] });
                   toast("Justificativa recusada.");
@@ -637,4 +635,5 @@ function JustificarFaltaModal({ dueloId, userId, rivalId, onClose, onDone }: { d
     </div>
   );
 }
+
 
