@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Search, SlidersHorizontal, MoreVertical, Clock, X } from "lucide-react";
+import { Search, SlidersHorizontal, MoreVertical, Clock, X, Users, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/busca")({
@@ -24,15 +24,36 @@ function BuscaPage() {
       if (q.trim().length < 2) return [];
       const term = `%${q.trim()}%`;
       if (tab === "pessoas") {
-        const { data } = await supabase.from("profiles").select("id, nome, username, avatar_url").or(`nome.ilike.${term},username.ilike.${term}`).limit(20);
+        const { data } = await supabase
+          .from("profiles")
+          .select("id, nome, username, avatar_url")
+          .or(`nome.ilike.${term},username.ilike.${term}`)
+          .limit(20);
         return data ?? [];
       }
       if (tab === "metas") {
-        const { data } = await supabase.from("metas").select("id, titulo, categoria, progresso, user_id, profiles:user_id(nome, username, avatar_url)").ilike("titulo", term).limit(20);
+        const { data } = await supabase
+          .from("metas")
+          .select("id, titulo, categoria, progresso, user_id, profiles:user_id(nome, username, avatar_url)")
+          .ilike("titulo", term)
+          .limit(20);
         return data ?? [];
       }
       if (tab === "duelos") {
-        const { data } = await supabase.from("duelos").select("id, titulo, status").ilike("titulo", term).limit(20);
+        const { data } = await supabase
+          .from("duelos")
+          .select("id, titulo, status")
+          .ilike("titulo", term)
+          .limit(20);
+        return data ?? [];
+      }
+      if (tab === "equipes") {
+        const { data } = await supabase
+          .from("equipes")
+          .select("id, nome, descricao, foto_url, publica, criador_id, profiles:criador_id(nome, username)")
+          .ilike("nome", term)
+          .eq("publica", true)
+          .limit(20);
         return data ?? [];
       }
       return [];
@@ -74,7 +95,7 @@ function BuscaPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onBlur={() => saveSearch(q)}
-            placeholder="Buscar pessoas, metas, duelos…"
+            placeholder="Buscar pessoas, metas, equipes…"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <button className="text-muted-foreground"><SlidersHorizontal size={16} /></button>
@@ -108,10 +129,23 @@ function BuscaPage() {
                 </Link>
               ))}
               {tab === "duelos" && (results ?? []).map((d: any) => (
-                <div key={d.id} className="rounded-2xl border border-border bg-card p-3 text-sm">{d.titulo}</div>
+                <Link key={d.id} to="/duelo/$id" params={{ id: d.id }} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold truncate">{d.titulo}</div>
+                  </div>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${
+                    d.status === "ativo" ? "bg-accent/15 text-accent" :
+                    d.status === "pendente" ? "bg-yellow-500/15 text-yellow-500" :
+                    "bg-muted text-muted-foreground"
+                  }`}>{d.status}</span>
+                </Link>
               ))}
-              {tab === "equipes" && <p className="text-xs text-muted-foreground">Equipes em breve.</p>}
-              {!isFetching && (results ?? []).length === 0 && <p className="text-xs text-muted-foreground">Sem resultados.</p>}
+              {tab === "equipes" && (results ?? []).map((e: any) => (
+                <EquipeRow key={e.id} equipe={e} userId={user.id} />
+              ))}
+              {!isFetching && (results ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">Sem resultados para "{q}".</p>
+              )}
             </div>
           </section>
         )}
@@ -181,5 +215,58 @@ function PessoaRow({ pessoa, userId }: { pessoa: any; userId: string }) {
       </button>
       <button className="text-muted-foreground"><MoreVertical size={18} /></button>
     </div>
+  );
+}
+
+function EquipeRow({ equipe, userId }: { equipe: any; userId: string }) {
+  const [entrando, setEntrando] = useState(false);
+  const [entrou, setEntrou] = useState(false);
+
+  async function entrar() {
+    if (equipe.criador_id === userId) return;
+    setEntrando(true);
+    const { error } = await supabase
+      .from("equipe_membros")
+      .insert({ equipe_id: equipe.id, user_id: userId, papel: "membro" });
+    if (error && !error.message.includes("duplicate")) toast.error(error.message);
+    else { setEntrou(true); toast.success(`Você entrou em ${equipe.nome}!`); }
+    setEntrando(false);
+  }
+
+  const initial = (equipe.nome || "?")[0].toUpperCase();
+  const ehCriador = equipe.criador_id === userId;
+
+  return (
+    <Link to="/equipes/$id" params={{ id: equipe.id }} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+      {equipe.foto_url ? (
+        <img src={equipe.foto_url} className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover shrink-0" />
+      ) : (
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-primary/60 bg-gradient-primary text-sm font-bold">{initial}</div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-bold truncate">{equipe.nome}</span>
+          <Globe size={11} className="shrink-0 text-muted-foreground" />
+        </div>
+        <div className="text-xs text-muted-foreground truncate">
+          por @{equipe.profiles?.username ?? "—"}
+        </div>
+        {equipe.descricao && (
+          <div className="mt-0.5 text-xs text-muted-foreground truncate">{equipe.descricao}</div>
+        )}
+      </div>
+      {!ehCriador && (
+        <button
+          onClick={(e) => { e.preventDefault(); entrar(); }}
+          disabled={entrando || entrou}
+          className={`shrink-0 rounded-2xl px-3 py-2 text-xs font-bold ${
+            entrou ? "border border-border text-muted-foreground" : "bg-primary text-primary-foreground"
+          }`}
+        >
+          <Users size={12} className="inline mr-1" />
+          {entrou ? "Membro" : entrando ? "…" : "Entrar"}
+        </button>
+      )}
+    </Link>
   );
 }
