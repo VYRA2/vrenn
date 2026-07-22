@@ -19,6 +19,7 @@ function Perfil() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [showConquistasSheet, setShowConquistasSheet] = useState(false);
 
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ["profile", user.id],
@@ -169,24 +170,94 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Conquistas</h2>
-            <span className="text-xs text-muted-foreground">
-              {(conquistasDesbloqueadas ?? []).length}/{TODAS_CONQUISTAS.length}
-            </span>
+            <button
+              onClick={() => setShowConquistasSheet(true)}
+              className="text-xs font-semibold text-primary-light"
+            >
+              Ver todas ({(conquistasDesbloqueadas ?? []).length}/{TODAS_CONQUISTAS.length})
+            </button>
           </div>
-          <div className="grid grid-cols-5 gap-2">
-            {TODAS_CONQUISTAS.map((c) => {
-              const desbloqueada = (conquistasDesbloqueadas ?? []).find(x => x.slug === c.slug);
-              return (
-                <ConquistaCard
-                  key={c.slug}
-                  conquista={c}
-                  desbloqueada={!!desbloqueada}
-                  data={desbloqueada?.desbloqueada_em}
-                />
-              );
-            })}
-          </div>
+
+          {(conquistasDesbloqueadas ?? []).length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card px-4 py-5 text-center">
+              <div className="text-2xl mb-1">🔒</div>
+              <div className="text-xs font-semibold text-muted-foreground">Nenhuma conquista ainda</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">Faça seu primeiro check-in para desbloquear</div>
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+              {TODAS_CONQUISTAS.filter(c =>
+                (conquistasDesbloqueadas ?? []).some(x => x.slug === c.slug)
+              ).map(c => {
+                const desbloqueada = (conquistasDesbloqueadas ?? []).find(x => x.slug === c.slug);
+                return (
+                  <div key={c.slug} className="flex shrink-0 flex-col items-center gap-1.5">
+                    <div
+                      className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl shadow-glow"
+                      style={{ background: `${c.color}22`, border: `1px solid ${c.color}55` }}
+                    >
+                      {c.emoji}
+                    </div>
+                    <div className="text-center w-14">
+                      <div className="text-[9px] font-semibold leading-tight truncate">{c.label}</div>
+                      {desbloqueada?.desbloqueada_em && (
+                        <div className="text-[8px] text-muted-foreground">
+                          {new Date(desbloqueada.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
+
+        {/* Sheet — todas as conquistas */}
+        {showConquistasSheet && (
+          <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setShowConquistasSheet(false)}>
+            <div className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl bg-background p-6" onClick={e => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-base font-bold">Todas as conquistas</h3>
+                <button onClick={() => setShowConquistasSheet(false)} className="rounded-full p-1.5 text-muted-foreground hover:bg-card">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="mb-4 text-xs text-muted-foreground">
+                {(conquistasDesbloqueadas ?? []).length} de {TODAS_CONQUISTAS.length} desbloqueadas
+              </p>
+              <div className="grid grid-cols-4 gap-3">
+                {TODAS_CONQUISTAS.map(c => {
+                  const desbloqueada = (conquistasDesbloqueadas ?? []).find(x => x.slug === c.slug);
+                  return (
+                    <div key={c.slug} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl transition-all ${desbloqueada ? "shadow-glow" : "opacity-30 grayscale"}`}
+                        style={desbloqueada
+                          ? { background: `${c.color}22`, border: `1px solid ${c.color}55` }
+                          : { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }
+                        }
+                      >
+                        {c.emoji}
+                      </div>
+                      <div className="text-center w-14">
+                        <div className={`text-[9px] font-semibold leading-tight ${desbloqueada ? "text-foreground" : "text-muted-foreground"}`}>
+                          {c.label}
+                        </div>
+                        <div className="text-[8px] text-muted-foreground leading-tight mt-0.5">
+                          {desbloqueada
+                            ? new Date(desbloqueada.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "2-digit" })
+                            : c.sub
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Meta em andamento */}
         <section className="mt-6">
@@ -350,52 +421,6 @@ const TODAS_CONQUISTAS = [
   { slug: "diamante",         emoji: "💎", label: "Diamante", sub: "Nível Diamante", color: "#B9F2FF" },
   { slug: "lenda",            emoji: "👑", label: "Lenda", sub: "Nível Lenda", color: "#7B2EFF" },
 ] as const;
-
-function ConquistaCard({ conquista, desbloqueada, data }: {
-  conquista: typeof TODAS_CONQUISTAS[number];
-  desbloqueada: boolean;
-  data?: string;
-}) {
-  const [showTip, setShowTip] = useState(false);
-  return (
-    <div className="relative flex flex-col items-center" onClick={() => setShowTip(v => !v)}>
-      <div
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition-all ${
-          desbloqueada ? "shadow-glow" : "opacity-30 grayscale"
-        }`}
-        style={desbloqueada ? {
-          background: `${conquista.color}22`,
-          border: `1px solid ${conquista.color}55`,
-        } : {
-          background: "hsl(var(--card))",
-          border: "1px solid hsl(var(--border))",
-        }}
-      >
-        {conquista.emoji}
-      </div>
-      <div className="mt-1 text-center">
-        <div className={`text-[9px] font-semibold leading-tight ${desbloqueada ? "text-foreground" : "text-muted-foreground"}`}>
-          {conquista.label}
-        </div>
-      </div>
-      {/* Tooltip */}
-      {showTip && (
-        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 w-36 rounded-xl border border-border bg-card p-2.5 shadow-xl text-center">
-          <div className="text-xs font-bold">{conquista.label}</div>
-          <div className="mt-0.5 text-[10px] text-muted-foreground">{conquista.sub}</div>
-          {desbloqueada && data && (
-            <div className="mt-1 text-[9px] text-accent font-semibold">
-              ✓ {new Date(data).toLocaleDateString("pt-BR")}
-            </div>
-          )}
-          {!desbloqueada && (
-            <div className="mt-1 text-[9px] text-muted-foreground">🔒 Ainda não desbloqueada</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function BigStat({ value, label, accent, info }: { value: number | string; label: string; accent?: boolean; info?: boolean }) {
   return (
