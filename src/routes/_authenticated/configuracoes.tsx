@@ -85,6 +85,8 @@ function Configuracoes() {
           <Row icon={<LogOut size={18}/>} label="Sair da conta" onClick={logout} danger />
           <Row icon={<Trash2 size={18}/>} label="Excluir conta" onClick={() => setShowDel(true)} danger />
         </Section>
+
+        {user.id === ADMIN_ID && <AdminSection />}
       </div>
 
       {showPwd && <TrocarSenhaModal onClose={() => setShowPwd(false)} />}
