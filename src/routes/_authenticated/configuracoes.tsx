@@ -109,6 +109,117 @@ function Configuracoes() {
   );
 }
 
+function AdminSection() {
+  const seedUsers = useServerFn(seedUsersBatch);
+  const seedContentFn = useServerFn(seedContent);
+  const cleanup = useServerFn(seedCleanup);
+  const status = useServerFn(seedStatus);
+  const [busy, setBusy] = useState<null | "seed" | "clean" | "status">(null);
+  const [progress, setProgress] = useState<string>("");
+  const [stats, setStats] = useState<Record<string, number> | null>(null);
+  const [confirmClean, setConfirmClean] = useState(false);
+
+  async function refreshStatus() {
+    setBusy("status");
+    try {
+      const res = await status();
+      setStats(res as Record<string, number>);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runSeed() {
+    if (busy) return;
+    setBusy("seed");
+    setProgress("Iniciando…");
+    try {
+      const TARGET = 200;
+      const BATCH = 20;
+      const createdIds: string[] = [];
+      for (let start = 0; start < TARGET; start += BATCH) {
+        setProgress(`Criando usuários ${start + 1}–${Math.min(start + BATCH, TARGET)}…`);
+        const res: any = await seedUsers({ data: { startIndex: start, count: BATCH } });
+        createdIds.push(...(res.created ?? []));
+      }
+      setProgress(`Populando metas, posts, duelos, follows para ${createdIds.length} usuários…`);
+      const contentRes: any = await seedContentFn({ data: { userIds: createdIds } });
+      setProgress("Concluído.");
+      toast.success(`Seed pronto: ${createdIds.length} usuários, ${contentRes.metas} metas, ${contentRes.posts} posts, ${contentRes.duelos} duelos, ${contentRes.follows} follows.`);
+      await refreshStatus();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falhou no seed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runCleanup() {
+    if (busy) return;
+    setConfirmClean(false);
+    setBusy("clean");
+    setProgress("Apagando dados fictícios…");
+    try {
+      const res: any = await cleanup();
+      const total = Object.values(res.deleted as Record<string, number>).reduce((a: number, b: number) => a + b, 0);
+      toast.success(`${total} registros fictícios apagados.`);
+      setProgress("");
+      await refreshStatus();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falhou na limpeza");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Section title="ADMIN — TESTES">
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Popula o banco com ~200 usuários fictícios (metas, posts, duelos, follows). Todos marcados com <code className="text-primary-light">is_seed=true</code>. Nada dos seus dados reais é tocado.
+        </p>
+        {stats && (
+          <div className="rounded-xl border border-border bg-background p-3 text-xs space-y-1">
+            <div className="font-bold mb-1 text-primary-light">Registros fictícios no banco:</div>
+            {Object.entries(stats).map(([k, v]) => (
+              <div key={k} className="flex justify-between"><span className="text-muted-foreground">{k}</span><span className="font-bold">{v}</span></div>
+            ))}
+          </div>
+        )}
+        {progress && <div className="text-xs text-primary-light">{progress}</div>}
+        <div className="grid grid-cols-1 gap-2">
+          <button onClick={runSeed} disabled={!!busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50">
+            {busy === "seed" ? <Loader2 size={14} className="animate-spin"/> : <Sparkles size={14}/>} Popular banco (~200 usuários)
+          </button>
+          <button onClick={refreshStatus} disabled={!!busy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-bold disabled:opacity-50">
+            {busy === "status" ? <Loader2 size={14} className="animate-spin"/> : <FlaskConical size={14}/>} Ver contagem atual
+          </button>
+          <button onClick={() => setConfirmClean(true)} disabled={!!busy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 text-sm font-bold text-destructive disabled:opacity-50">
+            {busy === "clean" ? <Loader2 size={14} className="animate-spin"/> : <Eraser size={14}/>} Apagar dados fictícios
+          </button>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          Emails dos fictícios: <code>seed-N@seed.vrenn.test</code> — senha padrão para permitir login nos testes automatizados.
+        </p>
+      </div>
+      {confirmClean && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={() => setConfirmClean(false)}>
+          <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold">Apagar dados fictícios?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Todos os registros marcados como <code>is_seed=true</code> serão apagados. Seus dados reais permanecem. Continuar?</p>
+            <div className="mt-4 flex gap-2">
+              <button onClick={() => setConfirmClean(false)} className="flex-1 rounded-xl border border-border bg-background py-3 text-sm font-semibold">Cancelar</button>
+              <button onClick={runCleanup} className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground">Apagar tudo</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 function TrocarSenhaModal({ onClose }: { onClose: () => void }) {
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
