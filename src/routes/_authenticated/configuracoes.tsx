@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { ArrowLeft, ChevronRight, User as UserIcon, Camera, AtSign, Mail, Lock, Shield, Bell, Globe, Ruler, HelpCircle, FileText, Info, LogOut, Trash2, X, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, User as UserIcon, Camera, AtSign, Mail, Lock, Shield, Bell, Globe, Ruler, HelpCircle, FileText, Info, LogOut, Trash2, X, Loader2, FlaskConical, Sparkles, Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAccount } from "@/lib/account.functions";
+import { seedUsersBatch, seedContent, seedCleanup, seedStatus } from "@/lib/admin-seed.functions";
+
+const ADMIN_ID = "52fd9ebb-5d88-4b33-acc3-97b70c62a426";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: Configuracoes,
