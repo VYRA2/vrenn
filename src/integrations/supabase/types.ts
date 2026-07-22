@@ -132,6 +132,7 @@ export type Database = {
           duelo_id: string | null
           foto_url: string | null
           id: string
+          is_seed: boolean
           mensagem: string | null
           meta_id: string | null
           user_id: string
@@ -146,6 +147,7 @@ export type Database = {
           duelo_id?: string | null
           foto_url?: string | null
           id?: string
+          is_seed?: boolean
           mensagem?: string | null
           meta_id?: string | null
           user_id: string
@@ -160,6 +162,7 @@ export type Database = {
           duelo_id?: string | null
           foto_url?: string | null
           id?: string
+          is_seed?: boolean
           mensagem?: string | null
           meta_id?: string | null
           user_id?: string
@@ -379,6 +382,7 @@ export type Database = {
           frequencia_quantidade: number | null
           frequencia_tipo: string | null
           id: string
+          is_seed: boolean
           local_id: string | null
           premiacao: string | null
           premio_acumulado: number
@@ -400,6 +404,7 @@ export type Database = {
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
+          is_seed?: boolean
           local_id?: string | null
           premiacao?: string | null
           premio_acumulado?: number
@@ -421,6 +426,7 @@ export type Database = {
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
+          is_seed?: boolean
           local_id?: string | null
           premiacao?: string | null
           premio_acumulado?: number
@@ -457,6 +463,7 @@ export type Database = {
           frequencia_quantidade: number | null
           frequencia_tipo: string | null
           id: string
+          is_seed: boolean
           opponent_eliminado: boolean | null
           opponent_eliminado_em: string | null
           opponent_email: string | null
@@ -478,6 +485,7 @@ export type Database = {
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
+          is_seed?: boolean
           opponent_eliminado?: boolean | null
           opponent_eliminado_em?: string | null
           opponent_email?: string | null
@@ -499,6 +507,7 @@ export type Database = {
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
+          is_seed?: boolean
           opponent_eliminado?: boolean | null
           opponent_eliminado_em?: string | null
           opponent_email?: string | null
@@ -533,6 +542,7 @@ export type Database = {
           created_at: string
           equipe_id: string
           id: string
+          is_seed: boolean
           papel: string
           user_id: string
         }
@@ -540,6 +550,7 @@ export type Database = {
           created_at?: string
           equipe_id: string
           id?: string
+          is_seed?: boolean
           papel?: string
           user_id: string
         }
@@ -547,6 +558,7 @@ export type Database = {
           created_at?: string
           equipe_id?: string
           id?: string
+          is_seed?: boolean
           papel?: string
           user_id?: string
         }
@@ -568,6 +580,7 @@ export type Database = {
           criador_id: string
           descricao: string | null
           id: string
+          is_seed: boolean
           nome: string
           publica: boolean
           regras: string | null
@@ -579,6 +592,7 @@ export type Database = {
           criador_id: string
           descricao?: string | null
           id?: string
+          is_seed?: boolean
           nome: string
           publica?: boolean
           regras?: string | null
@@ -590,6 +604,7 @@ export type Database = {
           criador_id?: string
           descricao?: string | null
           id?: string
+          is_seed?: boolean
           nome?: string
           publica?: boolean
           regras?: string | null
@@ -602,6 +617,7 @@ export type Database = {
           follower_id: string
           following_id: string
           id: string
+          is_seed: boolean
           status: string
         }
         Insert: {
@@ -609,6 +625,7 @@ export type Database = {
           follower_id: string
           following_id: string
           id?: string
+          is_seed?: boolean
           status?: string
         }
         Update: {
@@ -616,6 +633,7 @@ export type Database = {
           follower_id?: string
           following_id?: string
           id?: string
+          is_seed?: boolean
           status?: string
         }
         Relationships: []
@@ -806,6 +824,7 @@ export type Database = {
           frequencia_quantidade: number | null
           frequencia_tipo: string | null
           id: string
+          is_seed: boolean
           local_id: string | null
           motivacao: string | null
           prazo: string | null
@@ -826,6 +845,7 @@ export type Database = {
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
+          is_seed?: boolean
           local_id?: string | null
           motivacao?: string | null
           prazo?: string | null
@@ -846,6 +866,7 @@ export type Database = {
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
+          is_seed?: boolean
           local_id?: string | null
           motivacao?: string | null
           prazo?: string | null
@@ -879,6 +900,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_seed: boolean
           lida: boolean
           link_id: string | null
           mensagem: string
@@ -888,6 +910,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_seed?: boolean
           lida?: boolean
           link_id?: string | null
           mensagem: string
@@ -897,6 +920,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_seed?: boolean
           lida?: boolean
           link_id?: string | null
           mensagem?: string
@@ -909,6 +933,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_seed: boolean
           post_id: string
           texto: string
           user_id: string
@@ -916,6 +941,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_seed?: boolean
           post_id: string
           texto: string
           user_id: string
@@ -923,6 +949,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_seed?: boolean
           post_id?: string
           texto?: string
           user_id?: string
@@ -948,18 +975,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_seed: boolean
           post_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_seed?: boolean
           post_id: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_seed?: boolean
           post_id?: string
           user_id?: string
         }
@@ -1010,6 +1040,7 @@ export type Database = {
           desafio_id: string | null
           hashtags: string[] | null
           id: string
+          is_seed: boolean
           legenda: string | null
           media_url: string | null
           meta_id: string | null
@@ -1024,6 +1055,7 @@ export type Database = {
           desafio_id?: string | null
           hashtags?: string[] | null
           id?: string
+          is_seed?: boolean
           legenda?: string | null
           media_url?: string | null
           meta_id?: string | null
@@ -1038,6 +1070,7 @@ export type Database = {
           desafio_id?: string | null
           hashtags?: string[] | null
           id?: string
+          is_seed?: boolean
           legenda?: string | null
           media_url?: string | null
           meta_id?: string | null
@@ -1080,6 +1113,7 @@ export type Database = {
           creditos: number
           id: string
           idioma: string
+          is_seed: boolean
           missao: string | null
           nivel: number
           nome: string
@@ -1100,6 +1134,7 @@ export type Database = {
           creditos?: number
           id: string
           idioma?: string
+          is_seed?: boolean
           missao?: string | null
           nivel?: number
           nome: string
@@ -1120,6 +1155,7 @@ export type Database = {
           creditos?: number
           id?: string
           idioma?: string
+          is_seed?: boolean
           missao?: string | null
           nivel?: number
           nome?: string
@@ -1231,6 +1267,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_seed: boolean
           meta_id: string | null
           status: string
           type: string
@@ -1244,6 +1281,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_seed?: boolean
           meta_id?: string | null
           status?: string
           type: string
@@ -1257,6 +1295,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_seed?: boolean
           meta_id?: string | null
           status?: string
           type?: string
@@ -1299,6 +1338,7 @@ export type Database = {
           balance: number
           created_at: string
           id: string
+          is_seed: boolean
           locked_balance: number
           updated_at: string
           user_id: string
@@ -1307,6 +1347,7 @@ export type Database = {
           balance?: number
           created_at?: string
           id?: string
+          is_seed?: boolean
           locked_balance?: number
           updated_at?: string
           user_id: string
@@ -1315,6 +1356,7 @@ export type Database = {
           balance?: number
           created_at?: string
           id?: string
+          is_seed?: boolean
           locked_balance?: number
           updated_at?: string
           user_id?: string
