@@ -328,6 +328,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/busca': typeof AuthenticatedBuscaRoute
+  '/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/desafio-temporada': typeof AuthenticatedDesafioTemporadaRoute
   '/descobrir': typeof AuthenticatedDescobrirRoute
@@ -371,6 +372,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
+  '/_authenticated/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/desafio-temporada': typeof AuthenticatedDesafioTemporadaRoute
   '/_authenticated/descobrir': typeof AuthenticatedDescobrirRoute
@@ -414,6 +416,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/busca'
+    | '/como-funciona'
     | '/configuracoes'
     | '/desafio-temporada'
     | '/descobrir'
@@ -455,6 +458,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/busca'
+    | '/como-funciona'
     | '/configuracoes'
     | '/desafio-temporada'
     | '/descobrir'
@@ -497,6 +501,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/busca'
+    | '/_authenticated/como-funciona'
     | '/_authenticated/configuracoes'
     | '/_authenticated/desafio-temporada'
     | '/_authenticated/descobrir'
@@ -655,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/como-funciona': {
+      id: '/_authenticated/como-funciona'
+      path: '/como-funciona'
+      fullPath: '/como-funciona'
+      preLoaderRoute: typeof AuthenticatedComoFuncionaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/busca': {
@@ -830,6 +842,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
+  AuthenticatedComoFuncionaRoute: typeof AuthenticatedComoFuncionaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDesafioTemporadaRoute: typeof AuthenticatedDesafioTemporadaRoute
   AuthenticatedDescobrirRoute: typeof AuthenticatedDescobrirRoute

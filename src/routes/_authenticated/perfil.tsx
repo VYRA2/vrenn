@@ -7,8 +7,9 @@ import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
   Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
-  CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut,
+  CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut, X,
 } from "lucide-react";
+
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 
 export const Route = createFileRoute("/_authenticated/perfil")({

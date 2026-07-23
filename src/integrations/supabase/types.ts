@@ -1035,6 +1035,7 @@ export type Database = {
       posts: {
         Row: {
           auto_gerado: boolean
+          comments_count: number
           contador: string | null
           created_at: string
           desafio_id: string | null
@@ -1042,6 +1043,7 @@ export type Database = {
           id: string
           is_seed: boolean
           legenda: string | null
+          likes_count: number
           media_url: string | null
           meta_id: string | null
           tipo: string
@@ -1050,6 +1052,7 @@ export type Database = {
         }
         Insert: {
           auto_gerado?: boolean
+          comments_count?: number
           contador?: string | null
           created_at?: string
           desafio_id?: string | null
@@ -1057,6 +1060,7 @@ export type Database = {
           id?: string
           is_seed?: boolean
           legenda?: string | null
+          likes_count?: number
           media_url?: string | null
           meta_id?: string | null
           tipo?: string
@@ -1065,6 +1069,7 @@ export type Database = {
         }
         Update: {
           auto_gerado?: boolean
+          comments_count?: number
           contador?: string | null
           created_at?: string
           desafio_id?: string | null
@@ -1072,6 +1077,7 @@ export type Database = {
           id?: string
           is_seed?: boolean
           legenda?: string | null
+          likes_count?: number
           media_url?: string | null
           meta_id?: string | null
           tipo?: string
@@ -1504,6 +1510,7 @@ export type Database = {
       }
       processar_eliminacoes_diarias: { Args: never; Returns: undefined }
       resetar_streaks_quebrados: { Args: never; Returns: undefined }
+      teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
