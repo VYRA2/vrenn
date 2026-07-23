@@ -1510,6 +1510,7 @@ export type Database = {
       }
       processar_eliminacoes_diarias: { Args: never; Returns: undefined }
       resetar_streaks_quebrados: { Args: never; Returns: undefined }
+      teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
