@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { ArrowLeft, ChevronRight, User as UserIcon, Camera, AtSign, Mail, Lock, Shield, Bell, Globe, Ruler, HelpCircle, FileText, Info, LogOut, Trash2, X, Loader2, FlaskConical, Sparkles, Eraser } from "lucide-react";
+import { ArrowLeft, ChevronRight, User as UserIcon, Camera, AtSign, Mail, Lock, Shield, Bell, Globe, Ruler, HelpCircle, FileText, Info, LogOut, Trash2, X, Loader2, FlaskConical, Sparkles, Eraser, DollarSign, CheckCircle2, XCircle, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { seedUsersBatch, seedContent, seedCleanup, seedStatus } from "@/lib/admin-seed.functions";
@@ -118,6 +118,25 @@ function AdminSection() {
   const [progress, setProgress] = useState<string>("");
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [confirmClean, setConfirmClean] = useState(false);
+  const [testeFinanceiro, setTesteFinanceiro] = useState<null | "running" | "done" | "error">(null);
+  const [testeResultado, setTesteResultado] = useState<any>(null);
+
+  async function runTesteFinanceiro() {
+    if (busy || testeFinanceiro === "running") return;
+    setTesteFinanceiro("running");
+    setTesteResultado(null);
+    try {
+      const { data, error } = await supabase.rpc("teste_desafio_equipe_financeiro");
+      if (error) throw error;
+      setTesteResultado(data);
+      setTesteFinanceiro("done");
+      toast.success("Teste financeiro concluído!");
+    } catch (e: any) {
+      setTesteResultado({ erro: e?.message ?? "Erro desconhecido" });
+      setTesteFinanceiro("error");
+      toast.error(e?.message ?? "Falhou no teste financeiro");
+    }
+  }
 
   async function refreshStatus() {
     setBusy("status");
@@ -204,6 +223,82 @@ function AdminSection() {
           Emails dos fictícios: <code>seed-N@seed.vrenn.test</code> — senha padrão para permitir login nos testes automatizados.
         </p>
       </div>
+      {/* Card Teste Financeiro */}
+      <div className="mt-4 rounded-2xl border border-border bg-background p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary-light">
+            <DollarSign size={16}/>
+          </span>
+          <div>
+            <div className="text-sm font-bold">Teste Financeiro — Desafio de Equipe</div>
+            <div className="text-[11px] text-muted-foreground">50 participantes · R$ 50 entrada · 5 vencedores · modo proporcional</div>
+          </div>
+        </div>
+
+        <button
+          onClick={runTesteFinanceiro}
+          disabled={testeFinanceiro === "running"}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary-light disabled:opacity-50"
+        >
+          {testeFinanceiro === "running"
+            ? <><Loader2 size={14} className="animate-spin"/> Rodando teste…</>
+            : <><FlaskConical size={14}/> Rodar teste financeiro</>
+          }
+        </button>
+
+        {testeFinanceiro === "done" && testeResultado && (
+          <div className="space-y-3 text-xs">
+            {/* Resumo */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Participantes", val: testeResultado.n_participantes },
+                { label: "Entrada", val: `R$ ${Number(testeResultado.entrada).toFixed(2)}` },
+                { label: "Pool esperado", val: `R$ ${Number(testeResultado.pool_esperado).toFixed(2)}` },
+                { label: "Pool total real", val: `R$ ${Number(testeResultado.resultado?.pool_total ?? 0).toFixed(2)}` },
+              ].map(({ label, val }) => (
+                <div key={label} className="rounded-xl border border-border bg-card p-2">
+                  <div className="text-muted-foreground mb-0.5">{label}</div>
+                  <div className="font-bold text-sm">{val}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Vencedores */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+              <div className="flex items-center gap-1.5 font-bold text-primary-light mb-1">
+                <Trophy size={13}/> Distribuição
+              </div>
+              {(testeResultado.resultado?.distribuicao ?? []).map((w: any) => (
+                <div key={w.posicao} className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary-light font-bold text-[11px]">
+                    {w.posicao}
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-muted-foreground font-mono text-[10px]">{String(w.user_id).slice(0,8)}…</div>
+                  </div>
+                  <span className="text-muted-foreground">{w.pct}%</span>
+                  <span className="font-bold text-green-400">R$ {Number(w.premio).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Verificação */}
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-2">
+              {Math.abs(Number(testeResultado.pool_esperado) - Number(testeResultado.resultado?.pool_total ?? 0)) < 0.05
+                ? <><CheckCircle2 size={14} className="text-green-400 shrink-0"/> <span className="text-green-400 font-bold">Pool bate com o esperado ✓</span></>
+                : <><XCircle size={14} className="text-destructive shrink-0"/> <span className="text-destructive font-bold">Divergência no pool!</span></>
+              }
+            </div>
+          </div>
+        )}
+
+        {testeFinanceiro === "error" && testeResultado && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive font-mono">
+            {testeResultado.erro}
+          </div>
+        )}
+      </div>
+
       {confirmClean && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={() => setConfirmClean(false)}>
           <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8" onClick={(e) => e.stopPropagation()}>
@@ -299,3 +394,4 @@ function Row({ icon, label, right, onClick, danger, noArrow }: any) {
     </button>
   );
 }
+
