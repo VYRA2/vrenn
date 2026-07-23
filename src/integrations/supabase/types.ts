@@ -455,6 +455,8 @@ export type Database = {
       }
       duelos: {
         Row: {
+          arbitro_id: string | null
+          arbitro_status: string | null
           categoria: string | null
           challenger_eliminado: boolean | null
           challenger_eliminado_em: string | null
@@ -477,6 +479,8 @@ export type Database = {
           winner_id: string | null
         }
         Insert: {
+          arbitro_id?: string | null
+          arbitro_status?: string | null
           categoria?: string | null
           challenger_eliminado?: boolean | null
           challenger_eliminado_em?: string | null
@@ -499,6 +503,8 @@ export type Database = {
           winner_id?: string | null
         }
         Update: {
+          arbitro_id?: string | null
+          arbitro_status?: string | null
           categoria?: string | null
           challenger_eliminado?: boolean | null
           challenger_eliminado_em?: string | null
@@ -521,6 +527,13 @@ export type Database = {
           winner_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "duelos_arbitro_id_fkey"
+            columns: ["arbitro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "duelos_challenger_profile_fk"
             columns: ["challenger_id"]
@@ -1448,6 +1461,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      arbitro_declarar_resultado_duelo: {
+        Args: {
+          _duelo_id: string
+          _empate?: boolean
+          _sucesso?: boolean
+          _winner_id: string
+        }
+        Returns: undefined
+      }
+      convidar_arbitro_duelo: {
+        Args: { _arbitro_id: string; _duelo_id: string }
+        Returns: undefined
+      }
       dar_reputacao: {
         Args: {
           p_motivo: string
@@ -1510,6 +1536,10 @@ export type Database = {
       }
       processar_eliminacoes_diarias: { Args: never; Returns: undefined }
       resetar_streaks_quebrados: { Args: never; Returns: undefined }
+      responder_convite_arbitro_duelo: {
+        Args: { _aceitar: boolean; _duelo_id: string }
+        Returns: undefined
+      }
       teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
     }
     Enums: {
