@@ -75,7 +75,7 @@ function Configuracoes() {
         </Section>
 
         <Section title="GERAL">
-          <Row icon={<HelpCircle size={18}/>} label="Central de ajuda"/>
+          <Row icon={<HelpCircle size={18}/>} label="Central de ajuda" onClick={() => navigate({ to: "/como-funciona" })} />
           <Row icon={<FileText size={18}/>} label="Termos de uso"/>
           <Row icon={<Shield size={18}/>} label="Política de privacidade"/>
           <Row icon={<Info size={18}/>} label="Sobre o VRENN" right={<span className="text-xs text-muted-foreground">v1.0</span>}/>
