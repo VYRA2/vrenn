@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar } from "lucide-react";
+import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar, Award, BarChart2, Star } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/desafio/novo")({
@@ -13,8 +13,9 @@ const STEPS = [
   { id: 1, label: "Desafio" },
   { id: 2, label: "Detalhes" },
   { id: 3, label: "Regras" },
-  { id: 4, label: "Validação" },
-  { id: 5, label: "Resumo" },
+  { id: 4, label: "Premiação" },
+  { id: 5, label: "Validação" },
+  { id: 6, label: "Resumo" },
 ];
 
 const CATEGORIAS = ["foco", "estudos", "saude", "esportes", "outro"];
@@ -41,14 +42,24 @@ function NovoDesafio() {
   const [frequenciaTipo, setFrequenciaTipo] = useState<"diario" | "semanal" | "total">("total");
   const [frequenciaQtd, setFrequenciaQtd] = useState(1);
 
+  // Distribuição
+  const [modoDistribuicao, setModoDistribuicao] = useState<"igual" | "proporcional" | "personalizado">("proporcional");
+  const [colocacoesPremiadas, setColocacoesPremiadas] = useState<number | null>(null);
+  const [criterioRanking, setCriterioRanking] = useState<"checkins" | "progresso" | "streak" | "primeiro_a_concluir">("checkins");
+  const [customDist, setCustomDist] = useState<{posicao: number; pct: number}[]>([]);
+
   const inicio = new Date();
   const fim = new Date(); fim.setDate(fim.getDate() + duracao);
   const fmt = (d: Date) => d.toLocaleDateString("pt-BR");
 
   function next() {
     if (step === 1 && (!titulo.trim() || !descricao.trim())) return toast.error("Preencha título e descrição");
-    if (step === 4 && tipoValidacao !== "foto_arbitro" && !localId) return toast.error("Selecione ou cadastre um local");
-    setStep((s) => Math.min(5, s + 1));
+    if (step === 4 && modoDistribuicao === "personalizado") {
+      const soma = customDist.reduce((a, b) => a + b.pct, 0);
+      if (Math.abs(soma - 100) > 0.5) return toast.error(`Soma dos percentuais deve ser 100% (atual: ${soma.toFixed(0)}%)`);
+    }
+    if (step === 5 && tipoValidacao !== "foto_arbitro" && !localId) return toast.error("Selecione ou cadastre um local");
+    setStep((s) => Math.min(6, s + 1));
   }
 
   async function publicar() {
@@ -71,6 +82,10 @@ function NovoDesafio() {
       local_id: tipoValidacao === "foto_arbitro" ? null : localId,
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
+      modo_distribuicao: modoDistribuicao,
+      colocacoes_premiadas: colocacoesPremiadas,
+      criterio_ranking: criterioRanking,
+      distribuicao_custom: modoDistribuicao === "personalizado" ? customDist : null,
     }).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -189,6 +204,104 @@ function NovoDesafio() {
 
         {step === 4 && (
           <>
+            <HeroCard icon={<Award size={26}/>} title="Como será a premiação?" desc="Defina como o pool de prêmios será distribuído entre os vencedores." color="primary" />
+
+            {/* Modo de distribuição */}
+            <div>
+              <div className="text-sm font-bold mb-2">Modo de distribuição</div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: "proporcional", label: "Proporcional", sub: "35/25/18/12/10%" },
+                  { id: "igual",        label: "Igual",        sub: "Partes iguais" },
+                  { id: "personalizado",label: "Personalizado",sub: "Você define" },
+                ] as const).map((m) => (
+                  <button key={m.id} onClick={() => setModoDistribuicao(m.id)}
+                    className={`rounded-2xl border p-3 text-left transition-colors ${modoDistribuicao === m.id ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                    <div className="text-xs font-bold">{m.label}</div>
+                    <div className="text-[10px] mt-0.5">{m.sub}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Posições premiadas */}
+            <div>
+              <div className="text-sm font-bold mb-1">Posições premiadas</div>
+              <p className="text-xs text-muted-foreground mb-2">Quantas posições recebem prêmio? Deixe em "Todos" para premiar todos que concluírem.</p>
+              <div className="flex gap-2 flex-wrap">
+                {[null, 1, 2, 3, 5, 10].map((n) => (
+                  <button key={String(n)} onClick={() => setColocacoesPremiadas(n)}
+                    className={`rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${colocacoesPremiadas === n ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                    {n === null ? "Todos" : `Top ${n}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Critério de ranking */}
+            <div>
+              <div className="text-sm font-bold mb-2">Critério de ranking dos vencedores</div>
+              <div className="space-y-2">
+                {([
+                  { id: "checkins",            label: "Mais check-ins",        sub: "Quem fez mais check-ins no período" },
+                  { id: "progresso",           label: "Maior progresso",        sub: "Maior % de progresso registrado" },
+                  { id: "streak",              label: "Maior streak",           sub: "Sequência mais longa sem falhar" },
+                  { id: "primeiro_a_concluir", label: "Primeiro a concluir",    sub: "Quem terminou mais cedo" },
+                ] as const).map((c) => (
+                  <button key={c.id} onClick={() => setCriterioRanking(c.id)}
+                    className={`w-full rounded-2xl border p-3.5 text-left flex items-center gap-3 transition-colors ${criterioRanking === c.id ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
+                    <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${criterioRanking === c.id ? "border-primary bg-primary" : "border-border"}`}>
+                      {criterioRanking === c.id && <span className="h-2 w-2 rounded-full bg-white"/>}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold">{c.label}</div>
+                      <div className="text-[11px] text-muted-foreground">{c.sub}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Distribuição personalizada */}
+            {modoDistribuicao === "personalizado" && (
+              <div>
+                <div className="text-sm font-bold mb-2">Percentuais por posição</div>
+                <p className="text-xs text-muted-foreground mb-3">A soma deve ser 100%.</p>
+                {Array.from({ length: colocacoesPremiadas ?? 3 }, (_, i) => i + 1).map((pos) => {
+                  const entry = customDist.find(d => d.posicao === pos);
+                  return (
+                    <div key={pos} className="flex items-center gap-3 mb-2">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary-light text-xs font-bold shrink-0">{pos}º</span>
+                      <div className="flex-1 rounded-xl border border-border bg-card px-3 py-2 flex items-center gap-1">
+                        <input
+                          type="number" min={0} max={100} value={entry?.pct ?? ""}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setCustomDist(prev => {
+                              const rest = prev.filter(d => d.posicao !== pos);
+                              return val > 0 ? [...rest, { posicao: pos, pct: val }] : rest;
+                            });
+                          }}
+                          className="w-full bg-transparent text-sm font-bold outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-xs text-muted-foreground">%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="text-right text-xs text-muted-foreground mt-1">
+                  Soma: <span className={Math.abs(customDist.reduce((a,b)=>a+b.pct,0)-100)<0.5?"text-green-400 font-bold":"text-destructive font-bold"}>
+                    {customDist.reduce((a,b)=>a+b.pct,0).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {step === 5 && (
+          <>
             <HeroCard icon={<Shield size={26}/>} title="Validação dos check-ins" desc="Escolha como cada participante irá comprovar o cumprimento do desafio." color="primary" />
             <ValidacaoStep
               tipoValidacao={tipoValidacao}
@@ -248,7 +361,7 @@ function NovoDesafio() {
           </>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <>
             <HeroCard icon={<Flag size={26}/>} title="Resumo do desafio" desc="Revise todas as informações antes de publicar seu desafio." color="primary" />
             <div className="rounded-2xl border border-border bg-card divide-y divide-border">
@@ -266,6 +379,17 @@ function NovoDesafio() {
                 frequenciaTipo === "semanal" ? `${frequenciaQtd}x por semana` :
                 `${frequenciaQtd} check-in(s) no total`
               } />
+              <SummaryRow icon={<Award size={18}/>} label="Distribuição" value={
+                modoDistribuicao === "proporcional" ? "Proporcional (35/25/18/12/10%)" :
+                modoDistribuicao === "igual" ? "Partes iguais entre vencedores" :
+                "Personalizado"
+              } sub={colocacoesPremiadas ? `Top ${colocacoesPremiadas} premiados` : "Todos os concluintes premiados"} />
+              <SummaryRow icon={<BarChart2 size={18}/>} label="Critério de ranking" value={
+                criterioRanking === "checkins" ? "Mais check-ins" :
+                criterioRanking === "progresso" ? "Maior progresso" :
+                criterioRanking === "streak" ? "Maior streak" :
+                "Primeiro a concluir"
+              } />
             </div>
             <button onClick={() => setAceito(!aceito)} className={`w-full rounded-2xl border-2 p-4 flex items-start gap-3 text-left transition ${aceito ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
               <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${aceito ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>{aceito && "✓"}</div>
@@ -277,7 +401,7 @@ function NovoDesafio() {
           </>
         )}
 
-        {step < 5 ? (
+        {step < 6 ? (
           <button onClick={next} className="mt-2 w-full rounded-2xl bg-gradient-primary py-4 text-base font-bold text-primary-foreground shadow-glow">Continuar →</button>
         ) : (
           <>
@@ -366,3 +490,4 @@ function SummaryRow({ icon, label, value, sub }: any) {
     </div>
   );
 }
+
