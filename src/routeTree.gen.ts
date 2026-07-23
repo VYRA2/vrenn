@@ -25,6 +25,7 @@ import { Route as AuthenticatedDuelosRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDescobrirRouteImport } from './routes/_authenticated/descobrir'
 import { Route as AuthenticatedDesafioTemporadaRouteImport } from './routes/_authenticated/desafio-temporada'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedComoFuncionaRouteImport } from './routes/_authenticated/como-funciona'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -130,6 +131,12 @@ const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
     path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedComoFuncionaRoute =
+  AuthenticatedComoFuncionaRouteImport.update({
+    id: '/como-funciona',
+    path: '/como-funciona',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedBuscaRoute = AuthenticatedBuscaRouteImport.update({
@@ -279,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/busca': typeof AuthenticatedBuscaRoute
+  '/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/desafio-temporada': typeof AuthenticatedDesafioTemporadaRoute
   '/descobrir': typeof AuthenticatedDescobrirRoute
@@ -856,6 +864,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
+  AuthenticatedComoFuncionaRoute: AuthenticatedComoFuncionaRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDesafioTemporadaRoute: AuthenticatedDesafioTemporadaRoute,
   AuthenticatedDescobrirRoute: AuthenticatedDescobrirRoute,
