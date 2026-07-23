@@ -301,7 +301,7 @@ function Perfil() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Resumo de atividade</h2>
-            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver relatório</button>
+            <Link to="/ranking" className="text-xs font-semibold text-primary-light">Ver ranking</Link>
           </div>
           <div className="grid grid-cols-5 gap-2">
             <Link to="/perfil/publicacoes" className="block"><ActivityTile icon={<CheckCircle2 size={20} />} value={profileStats?.publicacoes ?? 0} label="Publicações" color="#A855F7" /></Link>
@@ -316,7 +316,7 @@ function Perfil() {
         <section className="mt-6 mb-6">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">Medalhas recentes</h2>
-            <button onClick={() => toast("Em breve")} className="text-xs font-semibold text-primary-light">Ver todas</button>
+            <button onClick={() => setShowConquistasSheet(true)} className="text-xs font-semibold text-primary-light">Ver conquistas</button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             <Medal icon={<Flame size={16} />} title={`Sequência ${profile?.streak_dias ?? 0} dias`} sub="hoje" color="#A855F7" />
