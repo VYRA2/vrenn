@@ -73,20 +73,8 @@ function Feed() {
       }
       return list;
     },
-      if (tab === "destaques" && list.length) {
-        const ids = list.map((p: any) => p.id);
-        const [{ data: likes }, { data: comments }] = await Promise.all([
-          supabase.from("post_likes").select("post_id").in("post_id", ids),
-          supabase.from("post_comments").select("post_id").in("post_id", ids),
-        ]);
-        const score = new Map<string, number>();
-        (likes ?? []).forEach((l: any) => score.set(l.post_id, (score.get(l.post_id) ?? 0) + 1));
-        (comments ?? []).forEach((c: any) => score.set(c.post_id, (score.get(c.post_id) ?? 0) + 1));
-        return list.sort((a: any, b: any) => (score.get(b.id) ?? 0) - (score.get(a.id) ?? 0));
-      }
-      return list;
-    },
   });
+
 
   const { data: me } = useQuery({
     queryKey: ["profile-me-mini", user.id],
