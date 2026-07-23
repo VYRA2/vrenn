@@ -22,6 +22,25 @@ function Duelos() {
   const [tab, setTab] = useState<Tab>("meus");
   const search = Route.useSearch();
   const [showCreate, setShowCreate] = useState(search.criar === true);
+  const [aceitando, setAceitando] = useState<string | null>(null);
+
+  // Duelos abertos da comunidade (sem oponente, não criados pelo próprio usuário)
+  const { data: duelosAbertos, refetch: refetchAbertos } = useQuery({
+    queryKey: ["duelos-abertos"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("duelos")
+        .select("id, titulo, categoria, valor_custodia, prazo, frequencia_tipo, frequencia_quantidade, created_at, challenger:profiles!duelos_challenger_profile_fk(nome, username, avatar_url)")
+        .is("opponent_id", null)
+        .eq("status", "pendente")
+        .neq("challenger_id", user.id)
+        .eq("is_seed", false)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      return data ?? [];
+    },
+    enabled: tab === "disponiveis",
+  });
 
   const { data: duelos } = useQuery({
     queryKey: ["duelos", user.id],
@@ -94,8 +113,54 @@ function Duelos() {
         )}
 
         {tab === "disponiveis" && (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            Em breve: duelos abertos da comunidade.
+          <div className="space-y-3">
+            {(duelosAbertos ?? []).length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+                <div className="text-3xl mb-2">⚔️</div>
+                <div className="text-sm font-semibold">Nenhum duelo aberto no momento</div>
+                <p className="mt-1 text-xs text-muted-foreground">Quando alguém criar um duelo aberto, vai aparecer aqui.</p>
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-gradient-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-glow"
+                >
+                  <Swords size={14} /> Criar duelo aberto
+                </button>
+              </div>
+            ) : (
+              (duelosAbertos ?? []).map((d: any) => (
+                <DueloAbertoCard
+                  key={d.id}
+                  duelo={d}
+                  userId={user.id}
+                  aceitando={aceitando === d.id}
+                  onAceitar={async () => {
+                    setAceitando(d.id);
+                    try {
+                      const { error } = await (supabase as any)
+                        .from("duelos")
+                        .update({ opponent_id: user.id, status: "em_andamento" })
+                        .eq("id", d.id)
+                        .is("opponent_id", null);
+                      if (error) throw error;
+                      // Notificar o criador
+                      await supabase.rpc("notify" as any, {
+                        _user_id: d.challenger_id ?? d.challenger?.id,
+                        _tipo: "desafio_duelo",
+                        _mensagem: `Seu duelo "${d.titulo}" foi aceito! A batalha começou.`,
+                        _link_id: d.id,
+                      });
+                      toast.success("Duelo aceito! Boa sorte.");
+                      refetchAbertos();
+                      qc.invalidateQueries({ queryKey: ["duelos", user.id] });
+                    } catch (e: any) {
+                      toast.error(e.message ?? "Erro ao aceitar duelo");
+                    } finally {
+                      setAceitando(null);
+                    }
+                  }}
+                />
+              ))
+            )}
           </div>
         )}
       </div>
@@ -241,5 +306,90 @@ function Input({ label, value, onChange, type="text", placeholder }: any) {
       <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
       <input type={type} value={value} onChange={(e)=>onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"/>
     </label>
+  );
+}
+
+// ─── Card de Duelo Aberto ─────────────────────────────────────────────────────
+function DueloAbertoCard({ duelo, userId, aceitando, onAceitar }: {
+  duelo: any;
+  userId: string;
+  aceitando: boolean;
+  onAceitar: () => void;
+}) {
+  const challenger = duelo.challenger;
+  const diasRestantes = duelo.prazo
+    ? Math.max(0, Math.ceil((new Date(duelo.prazo).getTime() - Date.now()) / 86400000))
+    : null;
+
+  const freqLabel = duelo.frequencia_tipo === "diario"
+    ? `${duelo.frequencia_quantidade}x/dia`
+    : duelo.frequencia_tipo === "semanal"
+    ? `${duelo.frequencia_quantidade}x/sem`
+    : null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      {/* Header com o desafiante */}
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+        {challenger?.avatar_url ? (
+          <img src={challenger.avatar_url} className="h-10 w-10 rounded-full object-cover border border-border" />
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-primary text-sm font-bold text-primary-foreground">
+            {(challenger?.nome || "?")[0].toUpperCase()}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold truncate">{challenger?.nome ?? "Usuário"}</div>
+          <div className="text-[11px] text-muted-foreground">@{challenger?.username ?? "?"} desafia a comunidade</div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-xs font-bold text-primary-light">
+            {duelo.valor_custodia
+              ? `R$ ${Number(duelo.valor_custodia).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+              : "Sem custódia"}
+          </div>
+          <div className="text-[10px] text-muted-foreground">em custódia</div>
+        </div>
+      </div>
+
+      {/* Título e infos */}
+      <div className="px-4 pb-3 border-t border-border/50 pt-3">
+        <div className="flex items-start gap-2 mb-2">
+          <Swords size={14} className="text-primary-light shrink-0 mt-0.5" />
+          <p className="text-sm font-semibold leading-snug">{duelo.titulo}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {duelo.categoria && (
+            <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold capitalize">
+              {duelo.categoria}
+            </span>
+          )}
+          {diasRestantes !== null && (
+            <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold">
+              ⏳ {diasRestantes} dias restantes
+            </span>
+          )}
+          {freqLabel && (
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary-light">
+              🔥 {freqLabel}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Botão aceitar */}
+      <div className="px-4 pb-4">
+        <button
+          onClick={onAceitar}
+          disabled={aceitando}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+        >
+          {aceitando
+            ? <><Loader2 size={14} className="animate-spin" /> Aceitando…</>
+            : <><Swords size={14} /> Aceitar duelo</>
+          }
+        </button>
+      </div>
+    </div>
   );
 }
