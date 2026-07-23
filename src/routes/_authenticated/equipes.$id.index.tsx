@@ -113,7 +113,7 @@ function EquipeProfile() {
       const ids = desafios.map((d: any) => d.id);
       const { data } = await (supabase as any)
         .from("desafio_equipe_participantes")
-        .select("desafio_id, status, eliminado")
+        .select("desafio_id, status, eliminado, progresso, ultimo_checkin")
         .in("desafio_id", ids)
         .eq("user_id", user.id);
       return data ?? [];
@@ -531,6 +531,7 @@ function EquipeProfile() {
                   {d.status === "ativo" && (() => {
                     const minha = (participacoes ?? []).find((p: any) => p.desafio_id === d.id);
                     const eliminado = minha?.eliminado;
+                    const progresso = minha?.progresso ?? 0;
                     const justHoje = (justificativasHoje ?? []).find((j: any) => j.desafio_id === d.id);
                     return (
                       <div className="mt-3 space-y-2">
@@ -539,6 +540,23 @@ function EquipeProfile() {
                             ⚠️ Eliminado — pode continuar fazendo check-ins mas não concorre ao prêmio
                           </div>
                         )}
+
+                        {/* Barra de progresso */}
+                        {participa && progresso > 0 && (
+                          <div>
+                            <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                              <span>Seu progresso</span>
+                              <span className="font-semibold text-primary-light">{progresso} check-ins</span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-primary transition-all"
+                                style={{ width: `${Math.min(100, (progresso / Math.max(1, d.frequencia_quantidade ?? 1)) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         {participa ? (
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent">
