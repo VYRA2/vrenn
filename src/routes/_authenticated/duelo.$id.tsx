@@ -34,6 +34,7 @@ function DueloDetalhe() {
   const [showDelete, setShowDelete] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
   const [showJustificar, setShowJustificar] = useState(false);
+  const [showEncerrar, setShowEncerrar] = useState(false);
 
   const { data: duelo, isLoading } = useQuery({
     queryKey: ["duelo", id],
@@ -192,6 +193,25 @@ function DueloDetalhe() {
           </section>
         )}
 
+        {/* Encerrar duelo — só para o challenger quando duelo está ativo */}
+        {isOwner && duelo.status === "ativo" && (
+          <section className="rounded-2xl border border-primary/40 bg-card p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light">🏆</div>
+              <div className="flex-1">
+                <div className="text-sm font-bold">Encerrar duelo</div>
+                <div className="text-xs text-muted-foreground">Declare o vencedor e libere as custódias conforme as regras do VRENN.</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowEncerrar(true)}
+              className="w-full rounded-xl bg-primary/10 border border-primary/40 py-2.5 text-sm font-bold text-primary-light"
+            >
+              Declarar resultado 🏆
+            </button>
+          </section>
+        )}
+
         {/* Frequência */}
         {duelo.frequencia_tipo && (
           <section className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
@@ -346,12 +366,147 @@ function DueloDetalhe() {
           onSaved={() => { qc.invalidateQueries({ queryKey: ["duelo", id] }); qc.invalidateQueries({ queryKey: ["duelos"] }); setShowEdit(false); }}
         />
       )}
+      {showEncerrar && (
+        <EncerrarDueloModal
+          duelo={duelo}
+          userId={user.id}
+          onClose={() => setShowEncerrar(false)}
+          onDone={() => { setShowEncerrar(false); qc.invalidateQueries({ queryKey: ["duelo", id] }); }}
+        />
+      )}
       {showDelete && (
         <DeleteDueloModal dueloId={id} onClose={() => setShowDelete(false)} onDeleted={() => navigate({ to: "/duelos" })} />
       )}
 
       <BottomNav />
     </main>
+  );
+}
+
+function EncerrarDueloModal({ duelo, userId, onClose, onDone }: {
+  duelo: any; userId: string; onClose: () => void; onDone: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [resultado, setResultado] = useState<"eu_venci" | "rival_venceu" | "empate_sucesso" | "empate_sem_sucesso" | null>(null);
+
+  const isChallenger = duelo.challenger_id === userId;
+  const meuProgresso = isChallenger ? duelo.progresso_challenger : duelo.progresso_opponent;
+  const rivalProgresso = isChallenger ? duelo.progresso_opponent : duelo.progresso_challenger;
+  const ambosCompletos = meuProgresso >= 100 && rivalProgresso >= 100;
+  const nenhum = meuProgresso < 100 && rivalProgresso < 100;
+
+  const OPCOES = [
+    { id: "eu_venci",           label: "Eu venci",              sub: "Completei meu objetivo, rival não",  emoji: "🏆", show: !ambosCompletos && !nenhum || meuProgresso >= 100 },
+    { id: "rival_venceu",       label: "Rival venceu",          sub: "Rival completou, eu não",           emoji: "🤝", show: !ambosCompletos && !nenhum || rivalProgresso >= 100 },
+    { id: "empate_sucesso",     label: "Empate — ambos vencemos", sub: "Ambos completaram o objetivo",   emoji: "✨", show: ambosCompletos },
+    { id: "empate_sem_sucesso", label: "Empate — ambos falhamos", sub: "Nenhum completou o objetivo",    emoji: "😓", show: nenhum },
+  ] as const;
+
+  // Percentuais conforme tabela VRENN:
+  // Vitória: vencedor recebe 100% próprio + 88% rival; fundo 6% rival; VRENN 6% rival
+  // Empate sucesso: cada um recebe 100% próprio, 0% VRENN
+  // Empate sem sucesso: cada um perde tudo; 75% fundo, 25% VRENN
+
+  function calcPreview() {
+    const v = duelo.valor_custodia ?? 0;
+    if (!resultado) return null;
+    if (resultado === "eu_venci")     return { voce: v + v * 0.88, rival: 0,   vrenn: v * 0.06, fundo: v * 0.06 };
+    if (resultado === "rival_venceu") return { voce: 0,   rival: v + v * 0.88, vrenn: v * 0.06, fundo: v * 0.06 };
+    if (resultado === "empate_sucesso")     return { voce: v, rival: v, vrenn: 0,         fundo: 0 };
+    if (resultado === "empate_sem_sucesso") return { voce: 0, rival: 0, vrenn: v * 0.25 * 2, fundo: v * 0.75 * 2 };
+    return null;
+  }
+
+  async function confirmar() {
+    if (!resultado) return toast.error("Selecione o resultado");
+    setLoading(true);
+    try {
+      const winnerId =
+        resultado === "eu_venci"           ? userId :
+        resultado === "rival_venceu"       ? (isChallenger ? duelo.opponent_id : duelo.challenger_id) :
+        null;
+
+      const { error } = await supabase.rpc("resolve_duelo_custodia", {
+        _duelo_id:   duelo.id,
+        _winner_id:  winnerId,
+        _empate:     resultado.startsWith("empate"),
+        _sucesso:    resultado === "empate_sucesso",
+      });
+
+      if (error) throw error;
+
+      // Notificar rival
+      const rivalId = isChallenger ? duelo.opponent_id : duelo.challenger_id;
+      const msg =
+        resultado === "eu_venci"           ? "O criador do duelo declarou que venceu. Confira o resultado." :
+        resultado === "rival_venceu"       ? "O criador do duelo declarou que você venceu! Parabéns 🏆" :
+        resultado === "empate_sucesso"     ? "O duelo terminou em empate — ambos completaram o objetivo! ✨" :
+        "O duelo terminou sem sucesso para nenhum dos dois.";
+
+      await supabase.rpc("notify", {
+        _user_id:  rivalId,
+        _tipo:     "desafio_duelo",
+        _mensagem: msg,
+        _link_id:  duelo.id,
+      });
+
+      toast.success("Resultado declarado! Custódias liberadas.");
+      onDone();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao encerrar duelo");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const preview = calcPreview();
+  const v = duelo.valor_custodia ?? 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 space-y-4 pb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-light text-lg">🏆</div>
+          <div>
+            <h3 className="text-base font-bold">Declarar resultado do duelo</h3>
+            <p className="text-xs text-muted-foreground">As custódias serão liberadas automaticamente.</p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {OPCOES.filter(o => o.show).map((o) => (
+            <button key={o.id} onClick={() => setResultado(o.id as any)}
+              className={`w-full rounded-2xl border p-3.5 text-left flex items-center gap-3 transition-colors ${resultado === o.id ? "border-primary bg-primary/10" : "border-border bg-background"}`}>
+              <span className="text-xl">{o.emoji}</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold">{o.label}</div>
+                <div className="text-xs text-muted-foreground">{o.sub}</div>
+              </div>
+              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${resultado === o.id ? "border-primary bg-primary" : "border-border"}`}>
+                {resultado === o.id && <span className="h-2 w-2 rounded-full bg-white"/>}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {preview && (
+          <div className="rounded-2xl border border-border bg-background p-3 space-y-1.5 text-xs">
+            <div className="font-bold text-primary-light mb-1">Prévia da distribuição (R$ {v} cada)</div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Você recebe</span><span className="font-bold text-green-400">R$ {preview.voce.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Rival recebe</span><span className="font-bold text-green-400">R$ {preview.rival.toFixed(2)}</span></div>
+            {preview.vrenn > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Taxa VRENN</span><span className="font-bold">R$ {preview.vrenn.toFixed(2)}</span></div>}
+            {preview.fundo > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Fundo temporada</span><span className="font-bold">R$ {preview.fundo.toFixed(2)}</span></div>}
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground disabled:opacity-60">Cancelar</button>
+          <button onClick={confirmar} disabled={loading || !resultado} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
+            {loading && <Loader2 size={14} className="animate-spin"/>} Confirmar resultado
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -635,5 +790,6 @@ function JustificarFaltaModal({ dueloId, userId, rivalId, onClose, onDone }: { d
     </div>
   );
 }
+
 
 
