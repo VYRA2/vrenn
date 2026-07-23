@@ -7,11 +7,32 @@ import { toast } from "sonner";
 import { ArrowLeft, AtSign, Eye, EyeOff, Lock, Mail, ShieldCheck, User, Loader2, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "Entrar ou criar conta — VRENN" },
+      {
+        name: "description",
+        content:
+          "Entre na sua conta VRENN ou crie uma nova para começar a registrar metas, publicar provas de disciplina e construir sua reputação verificável.",
+      },
+      { property: "og:title", content: "Entrar ou criar conta — VRENN" },
+      {
+        property: "og:description",
+        content:
+          "Acesse o VRENN e comece a transformar sua disciplina em reputação verificável.",
+      },
+      { property: "og:url", content: "https://vrenn.lovable.app/auth" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://vrenn.lovable.app/auth" }],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
   }),
   component: AuthPage,
 });
+
 
 type Mode = "login" | "signup";
 
@@ -70,9 +91,10 @@ function AuthPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[45vh] bg-gradient-glow opacity-50" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col px-6 pt-10 pb-10">
-        <button onClick={() => mode === "signup" ? setMode("login") : navigate({ to: "/" })} className="self-start rounded-full p-1.5 text-foreground/90">
+        <button onClick={() => mode === "signup" ? setMode("login") : navigate({ to: "/" })} aria-label="Voltar" className="self-start rounded-full p-1.5 text-foreground/90">
           <ArrowLeft size={22} />
         </button>
+
 
         <div className="mt-4 flex flex-col items-center">
           <VyraLogo size={72} vertical />
@@ -96,10 +118,11 @@ function AuthPage() {
                 onChange={setPassword}
                 placeholder="Senha"
                 rightIcon={
-                  <button type="button" onClick={() => setShowPwd(v => !v)} className="text-muted-foreground">
+                  <button type="button" onClick={() => setShowPwd(v => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="text-muted-foreground">
                     {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 }
+
               />
               <div className="text-right">
                 <button type="button" className="text-xs font-semibold text-primary-light">Esqueci minha senha</button>
@@ -164,10 +187,11 @@ function AuthPage() {
                   onChange={setPassword}
                   placeholder="Crie uma senha forte"
                   rightIcon={
-                    <button type="button" onClick={() => setShowPwd(v => !v)} className="text-muted-foreground">
+                    <button type="button" onClick={() => setShowPwd(v => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="text-muted-foreground">
                       {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   }
+
                 />
               </FieldLabel>
               <FieldLabel label="Confirmar senha">
@@ -178,10 +202,11 @@ function AuthPage() {
                   onChange={setConfirm}
                   placeholder="Confirme sua senha"
                   rightIcon={
-                    <button type="button" onClick={() => setShowPwd2(v => !v)} className="text-muted-foreground">
+                    <button type="button" onClick={() => setShowPwd2(v => !v)} aria-label={showPwd2 ? "Ocultar senha" : "Mostrar senha"} className="text-muted-foreground">
                       {showPwd2 ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   }
+
                 />
               </FieldLabel>
               <PrimaryButton loading={loading}>Continuar</PrimaryButton>

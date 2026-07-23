@@ -6,8 +6,29 @@ import { TrendingUp } from "lucide-react";
 import heroImg from "@/assets/splash-hero.jpg";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "VRENN — Transforme disciplina em reputação" },
+      {
+        name: "description",
+        content:
+          "VRENN é a rede social brasileira onde sua disciplina vira reputação: registre metas, publique provas, participe de duelos e construa um histórico auditável de conquistas.",
+      },
+      { property: "og:title", content: "VRENN — Transforme disciplina em reputação" },
+      {
+        property: "og:description",
+        content:
+          "Registre metas, publique provas de progresso e transforme disciplina em reputação verificável na primeira rede social de evolução pessoal.",
+      },
+      { property: "og:url", content: "https://vrenn.lovable.app/" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://vrenn.lovable.app/" }],
+  }),
   component: Splash,
 });
+
 
 function Splash() {
   const navigate = useNavigate();
@@ -41,10 +62,11 @@ function Splash() {
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-primary/40 bg-card/40 backdrop-blur">
             <TrendingUp size={20} className="text-primary-light" />
           </div>
-          <h2 className="text-xl font-bold leading-tight">
+          <h1 className="text-xl font-bold leading-tight">
             Transforme disciplina<br />
             <span className="text-primary-light">em reputação.</span>
-          </h2>
+          </h1>
+
           <p className="mt-3 max-w-xs text-xs text-muted-foreground leading-relaxed">
             A primeira rede social onde sua evolução é registrada, acompanhada e reconhecida.
           </p>

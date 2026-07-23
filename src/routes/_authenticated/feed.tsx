@@ -91,10 +91,11 @@ function Feed() {
             <Link to="/mensagens" className="rounded-full p-2 text-foreground/90" aria-label="Mensagens">
               <MessageCircle size={22} />
             </Link>
-            <Link to="/notificacoes" className="relative rounded-full p-2 text-foreground/90">
+            <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
               <Bell size={22} />
               {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}
             </Link>
+
             <Link to="/wallet" className="rounded-full p-2 text-primary-light" aria-label="Carteira">
               <Wallet size={22} />
             </Link>
@@ -115,7 +116,9 @@ function Feed() {
       </header>
 
       <div className="mx-auto max-w-md space-y-4 px-4 py-4">
+        <h1 className="sr-only">Feed de evolução</h1>
         <button onClick={() => setShowPublish(true)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left">
+
           <div className="relative shrink-0">
             {me?.avatar_url ? (
               <img src={me.avatar_url} alt="" className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
@@ -263,7 +266,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           </button>
         )}
         <div className="relative">
-          <button onClick={() => setShowMenu((v) => !v)} className="text-muted-foreground"><MoreHorizontal size={18} /></button>
+          <button onClick={() => setShowMenu((v) => !v)} aria-label="Opções da publicação" className="text-muted-foreground"><MoreHorizontal size={18} /></button>
           {showMenu && isOwner && (
             <>
               <div className="fixed inset-0 z-30" onClick={() => setShowMenu(false)} />
