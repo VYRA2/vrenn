@@ -248,13 +248,13 @@ function AdminSection() {
 
         {testeFinanceiro === "done" && testeResultado && (
           <div className="space-y-3 text-xs">
-            {/* Resumo */}
+            {/* Config */}
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: "Participantes", val: testeResultado.n_participantes },
-                { label: "Entrada", val: `R$ ${Number(testeResultado.entrada).toFixed(2)}` },
-                { label: "Pool esperado", val: `R$ ${Number(testeResultado.pool_esperado).toFixed(2)}` },
-                { label: "Pool total real", val: `R$ ${Number(testeResultado.resultado?.pool_total ?? 0).toFixed(2)}` },
+                { label: "Participantes", val: testeResultado.config?.participantes ?? "—" },
+                { label: "Entrada", val: `R$ ${Number(testeResultado.config?.entrada ?? 0).toFixed(2)}` },
+                { label: "Perdedores", val: testeResultado.config?.perdedores ?? "—" },
+                { label: "Vencedores", val: testeResultado.config?.vencedores ?? "—" },
               ].map(({ label, val }) => (
                 <div key={label} className="rounded-xl border border-border bg-card p-2">
                   <div className="text-muted-foreground mb-0.5">{label}</div>
@@ -263,31 +263,58 @@ function AdminSection() {
               ))}
             </div>
 
-            {/* Vencedores */}
-            <div className="rounded-xl border border-border bg-card p-3 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-primary-light mb-1">
-                <Trophy size={13}/> Distribuição
-              </div>
-              {(testeResultado.resultado?.distribuicao ?? []).map((w: any) => (
-                <div key={w.posicao} className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary-light font-bold text-[11px]">
-                    {w.posicao}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-muted-foreground font-mono text-[10px]">{String(w.user_id).slice(0,8)}…</div>
-                  </div>
-                  <span className="text-muted-foreground">{w.pct}%</span>
-                  <span className="font-bold text-green-400">R$ {Number(w.premio).toFixed(2)}</span>
+            {/* Financeiro */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-1.5">
+              <div className="font-bold text-primary-light mb-1">Fluxo financeiro</div>
+              {[
+                { label: "Custódia total", val: testeResultado.financeiro?.custodia_total },
+                { label: "Pool de prêmios (75% dos perdedores)", val: testeResultado.financeiro?.pool_premios },
+                { label: "Fundo temporada (12.5%)", val: testeResultado.financeiro?.fundo_temporada },
+                { label: "Taxa VRENN total", val: testeResultado.financeiro?.taxa_vrenn_total },
+                { label: "Devolução vencedores (97%)", val: testeResultado.financeiro?.devolucao_vencedores_total },
+              ].map(({ label, val }) => (
+                <div key={label} className="flex justify-between">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-bold">R$ {Number(val ?? 0).toFixed(2)}</span>
                 </div>
               ))}
             </div>
 
-            {/* Verificação */}
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-2">
-              {Math.abs(Number(testeResultado.pool_esperado) - Number(testeResultado.resultado?.pool_total ?? 0)) < 0.05
-                ? <><CheckCircle2 size={14} className="text-green-400 shrink-0"/> <span className="text-green-400 font-bold">Pool bate com o esperado ✓</span></>
-                : <><XCircle size={14} className="text-destructive shrink-0"/> <span className="text-destructive font-bold">Divergência no pool!</span></>
-              }
+            {/* Distribuição */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+              <div className="flex items-center gap-1.5 font-bold text-primary-light mb-1">
+                <Trophy size={13}/> Distribuição por posição
+              </div>
+              {(testeResultado.distribuicao ?? []).map((w: any) => (
+                <div key={w.posicao} className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary-light font-bold text-[11px]">
+                    {w.posicao}
+                  </span>
+                  <span className="text-muted-foreground flex-1">{w.pct_pool}% do pool</span>
+                  <span className="text-muted-foreground">+R$ {Number(w.premio_extra).toFixed(2)}</span>
+                  <span className="font-bold text-green-400">= R$ {Number(w.total_recebe).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Verificações */}
+            <div className="rounded-xl border border-border bg-card p-3 space-y-1.5">
+              <div className="font-bold text-primary-light mb-1">Verificações</div>
+              {Object.entries(testeResultado.verificacoes ?? {}).map(([key, val]) => (
+                <div key={key} className="flex items-center gap-2">
+                  {val
+                    ? <CheckCircle2 size={13} className="text-green-400 shrink-0"/>
+                    : <XCircle size={13} className="text-destructive shrink-0"/>
+                  }
+                  <span className={val ? "text-green-400" : "text-destructive"}>{key.replace(/_/g, ' ')}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Seeds disponíveis */}
+            <div className="rounded-xl border border-border bg-card p-2 flex justify-between">
+              <span className="text-muted-foreground">Usuários seed disponíveis</span>
+              <span className="font-bold">{testeResultado.config?.seed_profiles_count ?? "—"}</span>
             </div>
           </div>
         )}
@@ -394,4 +421,5 @@ function Row({ icon, label, right, onClick, danger, noArrow }: any) {
     </button>
   );
 }
+
 
