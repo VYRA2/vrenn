@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Camera, Image as ImageIcon, Loader2, Flag } from "lucide-react";
+import { X, Camera, Image as ImageIcon, Video, Loader2, Flag } from "lucide-react";
 import { toast } from "sonner";
 
 const SUGGESTIONS: Record<string, string[]> = {
@@ -81,8 +81,9 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
     if (!metaId) return toast.error("Vincule a uma meta");
     setSaving(true);
     try {
-      const finalFile = await compressImage(file);
-      const ext = finalFile.name.split(".").pop() || "jpg";
+      // Vídeos não passam por compressão — só imagens
+      const finalFile = file.type.startsWith("video") ? file : await compressImage(file);
+      const ext = finalFile.name.split(".").pop() || (file.type.startsWith("video") ? "mp4" : "jpg");
       const path = `${userId}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("posts").upload(path, finalFile, { upsert: false, contentType: finalFile.type });
       if (upErr) throw upErr;
@@ -151,11 +152,18 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
           </div>
         ) : (
           <div className="mb-3 grid grid-cols-2 gap-2">
-            <button onClick={() => pick("camera")} className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-background py-6 text-sm font-semibold text-foreground hover:border-primary/50">
-              <Camera size={22} className="text-primary-light" /> Câmera
+            <button onClick={() => pick("camera")} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-6 text-sm font-semibold text-foreground hover:border-primary/50">
+              <Camera size={22} className="text-primary-light" />
+              <span>Câmera</span>
+              <span className="text-[10px] text-muted-foreground font-normal">Foto ou vídeo</span>
             </button>
-            <button onClick={() => pick("gallery")} className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-background py-6 text-sm font-semibold text-foreground hover:border-primary/50">
-              <ImageIcon size={22} className="text-primary-light" /> Galeria
+            <button onClick={() => pick("gallery")} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-6 text-sm font-semibold text-foreground hover:border-primary/50">
+              <div className="flex items-center gap-1.5">
+                <ImageIcon size={20} className="text-primary-light" />
+                <Video size={20} className="text-primary-light" />
+              </div>
+              <span>Galeria</span>
+              <span className="text-[10px] text-muted-foreground font-normal">Foto ou vídeo</span>
             </button>
           </div>
         )}
