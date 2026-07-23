@@ -78,6 +78,19 @@ function PerfilPublico() {
     },
   });
 
+  const { data: conquistasPublicas } = useQuery({
+    enabled: !!targetId && tab === "conquistas",
+    queryKey: ["public-conquistas", targetId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("conquistas_usuarios")
+        .select("slug, desbloqueada_em")
+        .eq("user_id", targetId!)
+        .order("desbloqueada_em", { ascending: false });
+      return (data ?? []) as { slug: string; desbloqueada_em: string }[];
+    },
+  });
+
   const { data: follow, refetch: refetchFollow } = useQuery({
     enabled: !!targetId,
     queryKey: ["public-follow", user.id, targetId],
@@ -377,8 +390,68 @@ function PerfilPublico() {
               </>
             )}
 
-            {tab === "habitos" && <EmptyTab msg="Hábitos chegando em breve." />}
-            {tab === "conquistas" && <EmptyTab msg="Conquistas chegando em breve." />}
+            {tab === "habitos" && (
+              <div className="space-y-3 px-4 pt-4">
+                <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-light text-xl">🔥</div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Sequência atual</div>
+                    <div className="text-sm font-bold">{stats?.streak_dias ?? 0} dias consecutivos</div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent text-xl">⭐</div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Reputação total</div>
+                    <div className="text-sm font-bold">{stats?.reputacao_pts?.toLocaleString("pt-BR") ?? 0} pts</div>
+                  </div>
+                </div>
+                {habitoTop && (
+                  <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/15 text-yellow-500 text-xl">🏅</div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Categoria favorita</div>
+                      <div className="text-sm font-bold capitalize">{habitoTop}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === "conquistas" && (
+              <div className="px-4 pt-4">
+                {(conquistasPublicas ?? []).length === 0 ? (
+                  <EmptyTab msg="Nenhuma conquista desbloqueada ainda." />
+                ) : (
+                  <>
+                    <p className="mb-3 text-xs text-muted-foreground">{(conquistasPublicas ?? []).length} conquistas desbloqueadas</p>
+                    <div className="grid grid-cols-4 gap-3">
+                      {CONQUISTAS_CATALOGO.filter(c =>
+                        (conquistasPublicas ?? []).some((x: any) => x.slug === c.slug)
+                      ).map(c => {
+                        const data = (conquistasPublicas ?? []).find((x: any) => x.slug === c.slug);
+                        return (
+                          <div key={c.slug} className="flex flex-col items-center gap-1.5">
+                            <div
+                              className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl shadow-glow"
+                              style={{ background: `${c.color}22`, border: `1px solid ${c.color}55` }}
+                            >
+                              {c.emoji}
+                            </div>
+                            <div className="text-center w-14">
+                              <div className="text-[9px] font-semibold leading-tight">{c.label}</div>
+                              <div className="text-[8px] text-muted-foreground">
+                                {data ? new Date(data.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : ""}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -449,3 +522,29 @@ function formatMonthYear(iso: string) {
   const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   return `${meses[d.getMonth()]}/${d.getFullYear()}`;
 }
+
+// Catálogo de conquistas (espelhado do perfil.tsx — mesmos slugs)
+const CONQUISTAS_CATALOGO = [
+  { slug: "primeira_fagulha",   emoji: "🔥", label: "Faísca",        color: "#F59E0B" },
+  { slug: "primeira_missao",    emoji: "🥇", label: "1ª Missão",     color: "#A855F7" },
+  { slug: "espirito_de_equipe", emoji: "👥", label: "Equipe",        color: "#38BDF8" },
+  { slug: "desafiante",         emoji: "⚔️", label: "Desafiante",    color: "#EF4444" },
+  { slug: "chama_acesa",        emoji: "🔥", label: "Chama Acesa",   color: "#F97316" },
+  { slug: "rotina_de_ferro",    emoji: "💪", label: "Rotina de Ferro", color: "#22D3A1" },
+  { slug: "inabalavel",         emoji: "🏔️", label: "Inabalável",    color: "#A855F7" },
+  { slug: "comprometido",       emoji: "✅", label: "Comprometido",  color: "#22D3A1" },
+  { slug: "maquina",            emoji: "✅", label: "Máquina",       color: "#3B82F6" },
+  { slug: "lendario_checkin",   emoji: "✅", label: "200 Provas",    color: "#A855F7" },
+  { slug: "cacador_de_metas",   emoji: "🎯", label: "Caçador",       color: "#F59E0B" },
+  { slug: "conquistador",       emoji: "🎯", label: "Conquistador",  color: "#A855F7" },
+  { slug: "primeira_vitoria",   emoji: "⚔️", label: "1ª Vitória",    color: "#EF4444" },
+  { slug: "dominante",          emoji: "👑", label: "Dominante",     color: "#F59E0B" },
+  { slug: "imbativel",          emoji: "💀", label: "Imbatível",     color: "#7B2EFF" },
+  { slug: "influenciador",      emoji: "📣", label: "Influenciador", color: "#F97316" },
+  { slug: "referencia",         emoji: "🌟", label: "Referência",    color: "#FBBF24" },
+  { slug: "icone",              emoji: "🏆", label: "Ícone",         color: "#A855F7" },
+  { slug: "prata_pura",         emoji: "💎", label: "Prata Pura",    color: "#C0C0C0" },
+  { slug: "ouro_solido",        emoji: "💎", label: "Ouro Sólido",   color: "#FFD700" },
+  { slug: "diamante",           emoji: "💎", label: "Diamante",      color: "#B9F2FF" },
+  { slug: "lenda",              emoji: "👑", label: "Lenda",         color: "#7B2EFF" },
+] as const;
