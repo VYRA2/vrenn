@@ -43,7 +43,7 @@ function Feed() {
     queryFn: async () => {
       let query = supabase
         .from("posts")
-        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, likes_count, comments_count, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
         .order("created_at", { ascending: false })
         .limit(30);
 
@@ -65,6 +65,14 @@ function Feed() {
       }
       const { data } = await query;
       const list = data ?? [];
+      // Destaques: ordenar por score (likes_count + comments_count) — sem queries extras
+      if (tab === "destaques" && list.length) {
+        return [...list].sort((a: any, b: any) =>
+          ((b.likes_count ?? 0) + (b.comments_count ?? 0)) - ((a.likes_count ?? 0) + (a.comments_count ?? 0))
+        );
+      }
+      return list;
+    },
       if (tab === "destaques" && list.length) {
         const ids = list.map((p: any) => p.id);
         const [{ data: likes }, { data: comments }] = await Promise.all([
@@ -171,14 +179,13 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const { data: stats, refetch } = useQuery({
     queryKey: ["post-stats", post.id, userId],
     queryFn: async () => {
-      const [{ count: likes }, { count: comments }, { data: myLike }, { data: mySave }, { data: follow }] = await Promise.all([
-        supabase.from("post_likes").select("*", { count: "exact", head: true }).eq("post_id", post.id),
-        supabase.from("post_comments").select("*", { count: "exact", head: true }).eq("post_id", post.id),
+      // likes e comments vêm dos contadores do post — sem queries extras
+      const [{ data: myLike }, { data: mySave }, { data: follow }] = await Promise.all([
         supabase.from("post_likes").select("id").eq("post_id", post.id).eq("user_id", userId).maybeSingle(),
         supabase.from("post_saves").select("id").eq("post_id", post.id).eq("user_id", userId).maybeSingle(),
         post.user_id !== userId ? supabase.from("follows").select("id, status").eq("follower_id", userId).eq("following_id", post.user_id).maybeSingle() : Promise.resolve({ data: null } as any),
       ]);
-      return { likes: likes ?? 0, comments: comments ?? 0, liked: !!myLike, saved: !!mySave, following: follow?.status === "aceito" };
+      return { likes: post.likes_count ?? 0, comments: post.comments_count ?? 0, liked: !!myLike, saved: !!mySave, following: follow?.status === "aceito" };
     },
   });
 
