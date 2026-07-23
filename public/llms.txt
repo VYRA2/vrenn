@@ -1,0 +1,10 @@
+# VRENN
+
+> Rede social de evolução pessoal onde disciplina vira reputação. Registre metas, publique provas, receba reconhecimento.
+
+VRENN é uma plataforma social brasileira para quem quer transformar hábitos e metas pessoais em uma reputação verificável. Usuários criam metas com custódia, publicam provas de progresso, participam de duelos e desafios de equipe, e constroem um histórico auditável de suas conquistas.
+
+## Pages
+
+- [Início](/): Apresentação do VRENN e cadastro.
+- [Entrar / Criar conta](/auth): Login e cadastro na plataforma.
