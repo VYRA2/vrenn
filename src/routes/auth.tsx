@@ -118,10 +118,11 @@ function AuthPage() {
                 onChange={setPassword}
                 placeholder="Senha"
                 rightIcon={
-                  <button type="button" onClick={() => setShowPwd(v => !v)} className="text-muted-foreground">
+                  <button type="button" onClick={() => setShowPwd(v => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="text-muted-foreground">
                     {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 }
+
               />
               <div className="text-right">
                 <button type="button" className="text-xs font-semibold text-primary-light">Esqueci minha senha</button>
@@ -186,10 +187,11 @@ function AuthPage() {
                   onChange={setPassword}
                   placeholder="Crie uma senha forte"
                   rightIcon={
-                    <button type="button" onClick={() => setShowPwd(v => !v)} className="text-muted-foreground">
+                    <button type="button" onClick={() => setShowPwd(v => !v)} aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"} className="text-muted-foreground">
                       {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   }
+
                 />
               </FieldLabel>
               <FieldLabel label="Confirmar senha">
@@ -200,10 +202,11 @@ function AuthPage() {
                   onChange={setConfirm}
                   placeholder="Confirme sua senha"
                   rightIcon={
-                    <button type="button" onClick={() => setShowPwd2(v => !v)} className="text-muted-foreground">
+                    <button type="button" onClick={() => setShowPwd2(v => !v)} aria-label={showPwd2 ? "Ocultar senha" : "Mostrar senha"} className="text-muted-foreground">
                       {showPwd2 ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   }
+
                 />
               </FieldLabel>
               <PrimaryButton loading={loading}>Continuar</PrimaryButton>

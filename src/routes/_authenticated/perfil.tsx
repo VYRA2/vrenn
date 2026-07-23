@@ -105,9 +105,10 @@ function Perfil() {
             if (!profile?.username) return toast.error("Defina um username primeiro");
             navigator.clipboard.writeText(`${window.location.origin}/u/${profile.username}`);
             toast.success("Link do perfil copiado!");
-          }} className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
+          }} aria-label="Compartilhar perfil" className="rounded-full p-2 text-foreground/90"><Share size={20} /></button>
 
-          <Link to="/configuracoes" className="rounded-full p-2 text-foreground/90"><Settings size={20} /></Link>
+          <Link to="/configuracoes" aria-label="Configurações" className="rounded-full p-2 text-foreground/90"><Settings size={20} /></Link>
+
         </div>
       </header>
 
