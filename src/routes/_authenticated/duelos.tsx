@@ -236,8 +236,11 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
   const [prazo, setPrazo] = useState("");
-  const [aposta, setAposta] = useState("");
+  const [valorCustodia, setValorCustodia] = useState("");
   const [oponente, setOponente] = useState("");
+  const [aberto, setAberto] = useState(false);
+  const [frequenciaTipo, setFrequenciaTipo] = useState<"diario"|"semanal"|"total">("total");
+  const [frequenciaQtd, setFrequenciaQtd] = useState(1);
   const [loading, setLoading] = useState(false);
   const findUser = useServerFn(findUserForInvite);
 
@@ -247,53 +250,118 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
     try {
       let opponentId: string | null = null;
       let opponentEmail: string | null = null;
-      if (oponente.trim()) {
+
+      if (!aberto && oponente.trim()) {
         try {
           const u: any = await findUser({ data: { identifier: oponente } });
           opponentId = u.id;
         } catch {
           if (oponente.includes("@")) opponentEmail = oponente;
-          else throw new Error("Oponente não encontrado");
+          else throw new Error("Oponente não encontrado. Verifique o @username ou email.");
         }
       }
+
       const { data: duelo, error } = await (supabase as any).from("duelos").insert({
         challenger_id: userId,
         opponent_id: opponentId,
         opponent_email: opponentEmail,
-        titulo, categoria,
+        titulo,
+        categoria,
         prazo: prazo ? new Date(prazo).toISOString() : null,
-        aposta_creditos: parseInt(aposta) || 0,
+        valor_custodia: parseFloat(valorCustodia) || 0,
+        frequencia_tipo: frequenciaTipo,
+        frequencia_quantidade: frequenciaQtd,
         status: opponentId ? "em_andamento" : "pendente",
       }).select().single();
+
       if (error) throw error;
+
+      // Notificar oponente via rpc (respeita RLS)
       if (opponentId) {
-        await supabase.from("notificacoes").insert({
-          user_id: opponentId,
-          tipo: "desafio_duelo",
-          mensagem: `Você foi desafiado para um duelo: ${titulo}`,
-          link_id: duelo.id,
+        await supabase.rpc("notify" as any, {
+          _user_id: opponentId,
+          _tipo: "desafio_duelo",
+          _mensagem: `Você foi desafiado para um duelo: "${titulo}"`,
+          _link_id: duelo.id,
         });
       }
-      toast.success("Duelo criado!");
+
+      toast.success(aberto ? "Duelo aberto para a comunidade!" : "Duelo criado!");
       onCreated();
-    } catch (e: any) { toast.error(e.message); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={(e)=>e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
+      <div onClick={(e)=>e.stopPropagation()} className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold inline-flex items-center gap-2"><Swords size={18} className="text-primary-light"/> Novo duelo</h3>
+          <h3 className="text-base font-bold inline-flex items-center gap-2">
+            <Swords size={18} className="text-primary-light"/> Novo duelo
+          </h3>
           <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground"><X size={18}/></button>
         </div>
-        <Input label="Título" value={titulo} onChange={setTitulo} placeholder="Ex: Perder 5kg em 30 dias"/>
-        <Input label="Categoria" value={categoria} onChange={setCategoria} placeholder="fitness, estudos…"/>
-        <Input label="Prazo" type="date" value={prazo} onChange={setPrazo}/>
-        <Input label="Aposta em créditos" type="number" value={aposta} onChange={setAposta} placeholder="0"/>
-        <Input label="Oponente (@username ou email)" value={oponente} onChange={setOponente} placeholder="@joao"/>
-        <button onClick={criar} disabled={loading} className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
-          {loading && <Loader2 size={14} className="animate-spin"/>} <Flame size={14}/> Criar duelo
+
+        <Input label="Título do duelo" value={titulo} onChange={setTitulo} placeholder="Ex: Perder 5kg em 30 dias"/>
+        <Input label="Categoria" value={categoria} onChange={setCategoria} placeholder="fitness, estudos, hábitos…"/>
+        <Input label="Prazo final" type="date" value={prazo} onChange={setPrazo}/>
+        <Input label="Valor em custódia (R$)" type="number" value={valorCustodia} onChange={setValorCustodia} placeholder="0.00"/>
+
+        {/* Frequência */}
+        <div>
+          <span className="mb-2 block text-xs font-medium text-muted-foreground">Frequência de check-in</span>
+          <div className="grid grid-cols-3 gap-2">
+            {(["diario","semanal","total"] as const).map((tipo) => {
+              const labels = { diario:"Diário", semanal:"Semanal", total:"Total" };
+              const active = frequenciaTipo === tipo;
+              return (
+                <button key={tipo} onClick={() => { setFrequenciaTipo(tipo); setFrequenciaQtd(1); }}
+                  className={`rounded-xl border p-2 text-xs font-bold transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-background text-muted-foreground"}`}>
+                  {labels[tipo]}
+                </button>
+              );
+            })}
+          </div>
+          {frequenciaTipo !== "total" && (
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+              {Array.from({ length: frequenciaTipo === "diario" ? 5 : 7 }, (_, i) => i + 1).map(n => (
+                <button key={n} onClick={() => setFrequenciaQtd(n)}
+                  className={`h-9 w-9 shrink-0 rounded-xl border text-sm font-bold ${frequenciaQtd === n ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tipo: duelo privado ou aberto */}
+        <div>
+          <span className="mb-2 block text-xs font-medium text-muted-foreground">Quem pode aceitar?</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => setAberto(false)}
+              className={`rounded-xl border p-3 text-left transition-colors ${!aberto ? "border-primary bg-primary/10" : "border-border bg-background"}`}>
+              <div className="text-sm font-bold">👤 Privado</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">Convido alguém específico</div>
+            </button>
+            <button onClick={() => setAberto(true)}
+              className={`rounded-xl border p-3 text-left transition-colors ${aberto ? "border-primary bg-primary/10" : "border-border bg-background"}`}>
+              <div className="text-sm font-bold">🌍 Aberto</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">Qualquer um pode aceitar</div>
+            </button>
+          </div>
+        </div>
+
+        {!aberto && (
+          <Input label="Oponente (@username ou email)" value={oponente} onChange={setOponente} placeholder="@joao ou joao@email.com"/>
+        )}
+
+        <button onClick={criar} disabled={loading}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+          {loading && <Loader2 size={14} className="animate-spin"/>}
+          <Swords size={14}/> {aberto ? "Criar duelo aberto" : "Criar e convidar"}
         </button>
       </div>
     </div>
