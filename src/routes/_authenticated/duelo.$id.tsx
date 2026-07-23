@@ -35,6 +35,8 @@ function DueloDetalhe() {
   const [showCheckin, setShowCheckin] = useState(false);
   const [showJustificar, setShowJustificar] = useState(false);
   const [showEncerrar, setShowEncerrar] = useState(false);
+  const [showConvidarArbitro, setShowConvidarArbitro] = useState(false);
+  const [showArbitroDeclarar, setShowArbitroDeclarar] = useState(false);
 
   const { data: duelo, isLoading } = useQuery({
     queryKey: ["duelo", id],
@@ -110,6 +112,13 @@ function DueloDetalhe() {
   const dias = duelo.prazo ? Math.max(0, Math.ceil((new Date(duelo.prazo).getTime() - Date.now()) / 86400000)) : null;
   const euEliminado = isChallenger ? duelo.challenger_eliminado : duelo.opponent_eliminado;
   const rivalEliminado = isChallenger ? duelo.opponent_eliminado : duelo.challenger_eliminado;
+  const isArbitro = duelo.arbitro_id === user.id;
+  const temArbitro = !!duelo.arbitro_id && duelo.arbitro_status === 'aceito';
+  const usaArbitro = duelo.tipo_validacao === 'foto_arbitro';
+  const podeEncerrarManual = isOwner && duelo.status === 'ativo' && !usaArbitro;
+  const podeConvidarArbitro = isOwner && duelo.status === 'ativo' && usaArbitro && !duelo.arbitro_id;
+  const podeArbitroDeclarar = isArbitro && duelo.arbitro_status === 'aceito' && duelo.status === 'ativo';
+
   const frequenciaLabel = duelo.frequencia_tipo === "diario"
     ? `${duelo.frequencia_quantidade}x por dia`
     : duelo.frequencia_tipo === "semanal"
@@ -193,20 +202,74 @@ function DueloDetalhe() {
           </section>
         )}
 
-        {/* Encerrar duelo — só para o challenger quando duelo está ativo */}
-        {isOwner && duelo.status === "ativo" && (
-          <section className="rounded-2xl border border-primary/40 bg-card p-4 space-y-3">
+        {/* Card árbitro — convidar (criador, foto_arbitro, sem árbitro ainda) */}
+        {podeConvidarArbitro && (
+          <section className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-400 text-lg">⚖️</div>
+              <div className="flex-1">
+                <div className="text-sm font-bold">Árbitro necessário</div>
+                <div className="text-xs text-muted-foreground">Este duelo usa validação por foto + árbitro. Convide alguém de confiança para declarar o resultado.</div>
+              </div>
+            </div>
+            <button onClick={() => setShowConvidarArbitro(true)}
+              className="w-full rounded-xl bg-amber-500/20 border border-amber-500/40 py-2.5 text-sm font-bold text-amber-300">
+              Convidar árbitro ⚖️
+            </button>
+          </section>
+        )}
+
+        {/* Card árbitro — status do convite pendente */}
+        {isOwner && usaArbitro && duelo.arbitro_id && duelo.arbitro_status === 'pendente' && (
+          <section className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">⏳</div>
+            <div className="flex-1">
+              <div className="text-sm font-bold">Aguardando árbitro</div>
+              <div className="text-xs text-muted-foreground">O convite foi enviado. Aguardando aceitação do árbitro.</div>
+            </div>
+          </section>
+        )}
+
+        {/* Card árbitro — árbitro aceito, aguardando declaração */}
+        {isOwner && usaArbitro && temArbitro && duelo.status === 'ativo' && (
+          <section className="rounded-2xl border border-green-500/40 bg-green-500/5 p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/15 text-lg">✅</div>
+            <div className="flex-1">
+              <div className="text-sm font-bold">Árbitro ativo</div>
+              <div className="text-xs text-muted-foreground">O árbitro aceitou o convite e irá declarar o resultado ao final do duelo.</div>
+            </div>
+          </section>
+        )}
+
+        {/* Card árbitro — painel do árbitro para declarar resultado */}
+        {podeArbitroDeclarar && (
+          <section className="rounded-2xl border border-primary/40 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light text-lg">⚖️</div>
+              <div className="flex-1">
+                <div className="text-sm font-bold">Você é o árbitro</div>
+                <div className="text-xs text-muted-foreground">Acompanhe o progresso dos participantes e declare o resultado quando o duelo terminar.</div>
+              </div>
+            </div>
+            <button onClick={() => setShowArbitroDeclarar(true)}
+              className="w-full rounded-xl bg-primary/10 border border-primary/40 py-2.5 text-sm font-bold text-primary-light">
+              Declarar resultado do duelo 🏆
+            </button>
+          </section>
+        )}
+
+        {/* Encerrar manual — apenas QR/geo, sem árbitro */}
+        {podeEncerrarManual && (
+          <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light">🏆</div>
               <div className="flex-1">
                 <div className="text-sm font-bold">Encerrar duelo</div>
-                <div className="text-xs text-muted-foreground">Declare o vencedor e libere as custódias conforme as regras do VRENN.</div>
+                <div className="text-xs text-muted-foreground">O sistema detectou o prazo. Declare o resultado e libere as custódias.</div>
               </div>
             </div>
-            <button
-              onClick={() => setShowEncerrar(true)}
-              className="w-full rounded-xl bg-primary/10 border border-primary/40 py-2.5 text-sm font-bold text-primary-light"
-            >
+            <button onClick={() => setShowEncerrar(true)}
+              className="w-full rounded-xl bg-primary/10 border border-primary/40 py-2.5 text-sm font-bold text-primary-light">
               Declarar resultado 🏆
             </button>
           </section>
@@ -366,6 +429,21 @@ function DueloDetalhe() {
           onSaved={() => { qc.invalidateQueries({ queryKey: ["duelo", id] }); qc.invalidateQueries({ queryKey: ["duelos"] }); setShowEdit(false); }}
         />
       )}
+      {showConvidarArbitro && (
+        <ConvidarArbitroDueloModal
+          dueloId={id}
+          onClose={() => setShowConvidarArbitro(false)}
+          onDone={() => { setShowConvidarArbitro(false); qc.invalidateQueries({ queryKey: ["duelo", id] }); }}
+        />
+      )}
+      {showArbitroDeclarar && (
+        <ArbitroDeclaraResultadoModal
+          duelo={duelo}
+          userId={user.id}
+          onClose={() => setShowArbitroDeclarar(false)}
+          onDone={() => { setShowArbitroDeclarar(false); qc.invalidateQueries({ queryKey: ["duelo", id] }); }}
+        />
+      )}
       {showEncerrar && (
         <EncerrarDueloModal
           duelo={duelo}
@@ -380,6 +458,196 @@ function DueloDetalhe() {
 
       <BottomNav />
     </main>
+  );
+}
+
+function ConvidarArbitroDueloModal({ dueloId, onClose, onDone }: {
+  dueloId: string; onClose: () => void; onDone: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [usuario, setUsuario] = useState<any>(null);
+  const [buscando, setBuscando] = useState(false);
+
+  async function buscar() {
+    if (!username.trim()) return;
+    setBuscando(true);
+    const { data } = await supabase.from("profiles").select("id,nome,username,avatar_url")
+      .eq("username", username.trim().replace("@","")).maybeSingle();
+    setBuscando(false);
+    if (!data) return toast.error("Usuário não encontrado");
+    setUsuario(data);
+  }
+
+  async function convidar() {
+    if (!usuario) return;
+    setLoading(true);
+    const { error } = await supabase.rpc("convidar_arbitro_duelo", {
+      _duelo_id: dueloId,
+      _arbitro_id: usuario.id,
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Convite enviado ao árbitro!");
+    onDone();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 space-y-4 pb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="text-2xl">⚖️</div>
+          <div>
+            <h3 className="text-base font-bold">Convidar árbitro</h3>
+            <p className="text-xs text-muted-foreground">O árbitro acompanha o duelo e declara o vencedor ao final.</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            value={username} onChange={(e) => setUsername(e.target.value)}
+            placeholder="@username do árbitro"
+            className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
+            onKeyDown={(e) => e.key === "Enter" && buscar()}
+          />
+          <button onClick={buscar} disabled={buscando}
+            className="rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary-light disabled:opacity-50">
+            {buscando ? "…" : "Buscar"}
+          </button>
+        </div>
+
+        {usuario && (
+          <div className="rounded-2xl border border-border bg-background p-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-light font-bold text-sm">
+              {usuario.nome?.[0]?.toUpperCase() ?? "?"}
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-bold">{usuario.nome}</div>
+              <div className="text-xs text-muted-foreground">@{usuario.username}</div>
+            </div>
+            <button onClick={convidar} disabled={loading}
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">
+              {loading ? "…" : "Convidar"}
+            </button>
+          </div>
+        )}
+
+        <button onClick={onClose} className="w-full rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground">Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+function ArbitroDeclaraResultadoModal({ duelo, userId, onClose, onDone }: {
+  duelo: any; userId: string; onClose: () => void; onDone: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [resultado, setResultado] = useState<"challenger" | "opponent" | "empate_sucesso" | "empate_sem_sucesso" | null>(null);
+
+  const v = duelo.valor_custodia ?? 0;
+
+  function calcPreview() {
+    if (!resultado) return null;
+    if (resultado === "challenger")       return { challenger: v + v*0.88, opponent: 0,         vrenn: v*0.06, fundo: v*0.06 };
+    if (resultado === "opponent")         return { challenger: 0,          opponent: v + v*0.88, vrenn: v*0.06, fundo: v*0.06 };
+    if (resultado === "empate_sucesso")   return { challenger: v,          opponent: v,           vrenn: 0,      fundo: 0 };
+    return                                       { challenger: 0,          opponent: 0,           vrenn: v*0.25*2, fundo: v*0.75*2 };
+  }
+
+  async function confirmar() {
+    if (!resultado) return toast.error("Selecione o resultado");
+    setLoading(true);
+    try {
+      const { error } = await supabase.rpc("arbitro_declarar_resultado_duelo", {
+        _duelo_id:  duelo.id,
+        _winner_id: resultado === "challenger" ? duelo.challenger_id
+                  : resultado === "opponent"   ? duelo.opponent_id
+                  : null,
+        _empate:   resultado.startsWith("empate"),
+        _sucesso:  resultado === "empate_sucesso",
+      });
+      if (error) throw error;
+      toast.success("Resultado declarado! Custódias liberadas.");
+      onDone();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao declarar resultado");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const preview = calcPreview();
+  const OPCOES = [
+    { id: "challenger", label: `${duelo.challenger?.nome ?? "Challenger"} venceu`, emoji: "🏆",
+      sub: `${duelo.challenger?.nome ?? "Challenger"} completou o objetivo` },
+    { id: "opponent",   label: `${duelo.opponent?.nome ?? "Opponent"} venceu`,   emoji: "🏆",
+      sub: `${duelo.opponent?.nome ?? "Opponent"} completou o objetivo` },
+    { id: "empate_sucesso",     label: "Empate — ambos completaram", emoji: "✨", sub: "Custódias devolvidas integralmente" },
+    { id: "empate_sem_sucesso", label: "Empate — nenhum completou",  emoji: "😓", sub: "Custódias vão para o fundo" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 space-y-4 pb-8 overflow-y-auto" style={{ maxHeight: "90dvh" }}>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="text-2xl">⚖️</div>
+          <div>
+            <h3 className="text-base font-bold">Declarar resultado</h3>
+            <p className="text-xs text-muted-foreground">Você é o árbitro. Sua decisão é final e libera as custódias.</p>
+          </div>
+        </div>
+
+        {/* Progresso dos dois */}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: duelo.challenger?.nome ?? "Challenger", prog: duelo.progresso_challenger ?? 0 },
+            { label: duelo.opponent?.nome ?? "Opponent",     prog: duelo.progresso_opponent ?? 0 },
+          ].map(({ label, prog }) => (
+            <div key={label} className="rounded-xl border border-border bg-background p-3">
+              <div className="text-xs text-muted-foreground truncate">{label}</div>
+              <div className="text-lg font-bold mt-0.5">{prog}%</div>
+              <div className="h-1.5 rounded-full bg-secondary mt-1 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all" style={{ width: `${prog}%` }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          {OPCOES.map((o) => (
+            <button key={o.id} onClick={() => setResultado(o.id as any)}
+              className={`w-full rounded-2xl border p-3.5 text-left flex items-center gap-3 transition-colors ${resultado === o.id ? "border-primary bg-primary/10" : "border-border bg-background"}`}>
+              <span className="text-xl">{o.emoji}</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold">{o.label}</div>
+                <div className="text-xs text-muted-foreground">{o.sub}</div>
+              </div>
+              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${resultado === o.id ? "border-primary bg-primary" : "border-border"}`}>
+                {resultado === o.id && <span className="h-2 w-2 rounded-full bg-white"/>}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {preview && (
+          <div className="rounded-2xl border border-border bg-background p-3 space-y-1.5 text-xs">
+            <div className="font-bold text-primary-light mb-1">Distribuição (R$ {v} cada)</div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{duelo.challenger?.nome ?? "Challenger"}</span><span className="font-bold text-green-400">R$ {preview.challenger.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{duelo.opponent?.nome ?? "Opponent"}</span><span className="font-bold text-green-400">R$ {preview.opponent.toFixed(2)}</span></div>
+            {preview.vrenn > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Taxa VRENN</span><span className="font-bold">R$ {preview.vrenn.toFixed(2)}</span></div>}
+            {preview.fundo > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Fundo temporada</span><span className="font-bold">R$ {preview.fundo.toFixed(2)}</span></div>}
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} disabled={loading} className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground">Cancelar</button>
+          <button onClick={confirmar} disabled={loading || !resultado}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
+            {loading && <Loader2 size={14} className="animate-spin"/>} Confirmar resultado
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -790,6 +1058,7 @@ function JustificarFaltaModal({ dueloId, userId, rivalId, onClose, onDone }: { d
     </div>
   );
 }
+
 
 
 
