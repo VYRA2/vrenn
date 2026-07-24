@@ -73,6 +73,37 @@ function DesafioTemporada() {
     },
   });
 
+  // Última temporada encerrada (para mostrar resultado)
+  const { data: ultimaEncerrada } = useQuery({
+    queryKey: ["temporada-encerrada"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("temporadas")
+        .select("id, numero, titulo, fundo_acumulado, data_fim")
+        .eq("status", "encerrada")
+        .order("data_fim", { ascending: false })
+        .maybeSingle();
+      return data;
+    },
+    enabled: !temporada,
+  });
+
+  // Resultado da última encerrada — top 10
+  const { data: topVencedores } = useQuery({
+    queryKey: ["temporada-resultado", ultimaEncerrada?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("temporada_participantes")
+        .select("user_id, total_checkins, profiles:user_id(nome, username, avatar_url)")
+        .eq("temporada_id", ultimaEncerrada!.id)
+        .eq("status", "concluido")
+        .order("total_checkins", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+    enabled: !!ultimaEncerrada?.id,
+  });
+
   // Minha participação
   const { data: minha, refetch: refetchMinha } = useQuery({
     queryKey: ["temporada-minha", temporada?.id, user.id],
@@ -165,17 +196,62 @@ function DesafioTemporada() {
             <ArrowLeft size={18} />
           </button>
           <h1 className="text-base font-bold">Master Season</h1>
-        </header>
-        <div className="mx-auto max-w-md px-5 mt-16 text-center space-y-4">
-          <Crown size={48} className="mx-auto text-primary-light/30" />
-          <h2 className="text-xl font-bold">Nenhuma temporada ativa</h2>
-          <p className="text-sm text-muted-foreground">A próxima temporada será anunciada em breve. Fique atento às notificações.</p>
           {isAdmin && (
-            <button onClick={() => setShowAdmin(true)} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow">
-              <Crown size={14} /> Criar temporada
+            <button onClick={() => setShowAdmin(true)} className="absolute right-5 flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary-light">
+              <Crown size={16} />
             </button>
           )}
+        </header>
+
+        <div className="mx-auto max-w-md px-4 space-y-4">
+          {ultimaEncerrada ? (
+            <>
+              {/* Resultado da última temporada */}
+              <div className="rounded-3xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-background p-6 text-center">
+                <div className="text-4xl mb-2">🏆</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-yellow-400/70 mb-1">Season {ultimaEncerrada.numero} — Encerrada</div>
+                <h2 className="text-lg font-bold">{ultimaEncerrada.titulo}</h2>
+                <div className="mt-3 text-2xl font-bold text-yellow-400">{formatBRL(ultimaEncerrada.fundo_acumulado ?? 0)}</div>
+                <div className="text-xs text-muted-foreground">distribuídos entre os vencedores</div>
+              </div>
+
+              {/* Top vencedores */}
+              {(topVencedores ?? []).length > 0 && (
+                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                  <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                    <Trophy size={14} className="text-yellow-400" />
+                    <span className="text-sm font-bold">Vencedores da temporada</span>
+                  </div>
+                  {(topVencedores ?? []).map((v: any, i: number) => (
+                    <div key={v.user_id} className="flex items-center gap-3 px-4 py-3 border-b border-border/50 last:border-0">
+                      <span className="w-6 text-center text-sm font-bold text-muted-foreground">{i + 1}</span>
+                      {v.profiles?.avatar_url
+                        ? <img src={v.profiles.avatar_url} className="h-9 w-9 rounded-full object-cover" />
+                        : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-primary text-xs font-bold">{(v.profiles?.nome || "?")[0]}</div>
+                      }
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold truncate">{v.profiles?.nome}</div>
+                        <div className="text-[11px] text-muted-foreground">@{v.profiles?.username}</div>
+                      </div>
+                      <div className="text-xs font-semibold text-accent">{v.total_checkins} check-ins</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-border bg-card p-4 text-center">
+                <p className="text-xs text-muted-foreground">A próxima temporada será anunciada em breve.</p>
+              </div>
+            </>
+          ) : (
+            <div className="mt-16 text-center space-y-4">
+              <Crown size={48} className="mx-auto text-primary-light/30" />
+              <h2 className="text-xl font-bold">Nenhuma temporada ativa</h2>
+              <p className="text-sm text-muted-foreground">A primeira temporada será anunciada em breve. Fique atento às notificações.</p>
+            </div>
+          )}
         </div>
+
         {isAdmin && showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} userId={user.id} onCreated={() => { qc.invalidateQueries({ queryKey: ["temporada-ativa"] }); setShowAdmin(false); }} />}
         <BottomNav />
       </main>
@@ -471,6 +547,56 @@ function CheckinMasterModal({ temporadaId, userId, onClose, onDone }: {
 function AdminPanel({ onClose, userId, temporadaAtiva, onCreated }: {
   onClose: () => void; userId: string; temporadaAtiva?: any; onCreated: () => void;
 }) {
+  const qc = useQueryClient();
+  const [aba, setAba] = useState<"criar"|"gerenciar">(temporadaAtiva ? "gerenciar" : "criar");
+  const [encerrando, setEncerrando] = useState(false);
+  const [ativando, setAtivando] = useState(false);
+
+  // Gerenciar temporada ativa
+  async function ativarInscricoes() {
+    if (!temporadaAtiva) return;
+    setAtivando(true);
+    try {
+      await (supabase as any).from("temporadas")
+        .update({ status: "inscricoes_abertas" })
+        .eq("id", temporadaAtiva.id);
+      toast.success("Inscrições abertas!");
+      qc.invalidateQueries({ queryKey: ["temporada-ativa"] });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAtivando(false); }
+  }
+
+  async function ativarTemporada() {
+    if (!temporadaAtiva) return;
+    setAtivando(true);
+    try {
+      await (supabase as any).from("temporadas")
+        .update({ status: "ativa" })
+        .eq("id", temporadaAtiva.id);
+      toast.success("Temporada ativada — check-ins liberados!");
+      qc.invalidateQueries({ queryKey: ["temporada-ativa"] });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAtivando(false); }
+  }
+
+  async function encerrarManual() {
+    if (!temporadaAtiva) return;
+    if (!confirm(`Encerrar "${temporadaAtiva.titulo}" agora? O prêmio será distribuído automaticamente.`)) return;
+    setEncerrando(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("encerrar_temporada_manual", {
+        p_temporada_id: temporadaAtiva.id,
+        p_admin_id: userId,
+      });
+      if (error) throw error;
+      toast.success(`Temporada encerrada! ${data.vencedores} vencedor(es), prêmio: R$ ${data.fundo_distribuido}`);
+      qc.invalidateQueries({ queryKey: ["temporada-ativa"] });
+      onClose();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setEncerrando(false); }
+  }
+
+  // States do formulário de criação
   const [numero, setNumero] = useState(String((temporadaAtiva?.numero ?? 0) + 1));
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -523,9 +649,70 @@ function AdminPanel({ onClose, userId, temporadaAtiva, onCreated }: {
     <div className="fixed inset-0 z-50 flex items-end bg-black/70" onClick={onClose}>
       <div className="w-full max-h-[90vh] overflow-y-auto rounded-t-3xl bg-background p-6 space-y-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold flex items-center gap-2"><Crown size={16} className="text-yellow-400" /> Nova temporada</h3>
+          <h3 className="text-base font-bold flex items-center gap-2"><Crown size={16} className="text-yellow-400" /> Painel Admin</h3>
           <button onClick={onClose}><X size={18} /></button>
         </div>
+
+        {/* Abas */}
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => setAba("criar")}
+            className={`rounded-xl border py-2 text-xs font-bold ${aba === "criar" ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+            + Criar temporada
+          </button>
+          {temporadaAtiva && (
+            <button onClick={() => setAba("gerenciar")}
+              className={`rounded-xl border py-2 text-xs font-bold ${aba === "gerenciar" ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+              ⚙️ Gerenciar ativa
+            </button>
+          )}
+        </div>
+
+        {/* Painel de gerenciamento */}
+        {aba === "gerenciar" && temporadaAtiva && (
+          <div className="space-y-3">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <div className="text-xs text-muted-foreground mb-1">Season {temporadaAtiva.numero}</div>
+              <div className="text-sm font-bold">{temporadaAtiva.titulo}</div>
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/30 px-3 py-1 text-[10px] font-bold text-primary-light uppercase tracking-wider">
+                {temporadaAtiva.status === "rascunho" ? "Rascunho"
+                  : temporadaAtiva.status === "inscricoes_abertas" ? "Inscrições abertas"
+                  : temporadaAtiva.status === "ativa" ? "Em andamento"
+                  : "Encerrada"}
+              </div>
+            </div>
+
+            {temporadaAtiva.status === "rascunho" && (
+              <button onClick={ativarInscricoes} disabled={ativando}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-primary bg-primary/10 py-3 text-sm font-bold text-primary-light disabled:opacity-60">
+                {ativando && <Loader2 size={14} className="animate-spin" />}
+                📢 Abrir inscrições
+              </button>
+            )}
+
+            {temporadaAtiva.status === "inscricoes_abertas" && (
+              <button onClick={ativarTemporada} disabled={ativando}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+                {ativando && <Loader2 size={14} className="animate-spin" />}
+                🚀 Iniciar temporada (liberar check-ins)
+              </button>
+            )}
+
+            {(temporadaAtiva.status === "ativa" || temporadaAtiva.status === "inscricoes_abertas") && (
+              <button onClick={encerrarManual} disabled={encerrando}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 py-3 text-sm font-bold text-destructive disabled:opacity-60">
+                {encerrando && <Loader2 size={14} className="animate-spin" />}
+                🏁 Encerrar e distribuir prêmio agora
+              </button>
+            )}
+
+            <p className="text-[10px] text-muted-foreground text-center">
+              O encerramento automático acontece às 00h20 do dia seguinte ao prazo final.
+            </p>
+          </div>
+        )}
+
+        {/* Formulário de criação */}
+        {aba === "criar" && (<>
 
         <AField label="Número da season" value={numero} onChange={setNumero} type="number" />
         <AField label="Título" value={titulo} onChange={setTitulo} placeholder="Ex: Season 1 — 30 Dias de Movimento" />
@@ -607,6 +794,7 @@ function AdminPanel({ onClose, userId, temporadaAtiva, onCreated }: {
           {loading && <Loader2 size={14} className="animate-spin" />}
           <Crown size={14} /> Criar Season {numero}
         </button>
+        </>)}
       </div>
     </div>
   );
