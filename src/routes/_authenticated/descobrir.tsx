@@ -248,7 +248,7 @@ function DescobrirPage() {
 
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Destaques da comunidade</h3>
-          <button onClick={() => toast("Em breve")} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todos <ArrowRight size={12} /></button>
+          <button onClick={() => navigate({ to: "/feed", search: { tab: "destaques" } as any })} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todos <ArrowRight size={12} /></button>
         </div>
         <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2">
           {(destaques ?? []).length === 0 && (
