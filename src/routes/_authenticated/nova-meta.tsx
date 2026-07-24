@@ -125,8 +125,7 @@ function NovaMeta() {
             <div className="rounded-2xl border border-border bg-card p-4">
               <h3 className="text-sm font-bold inline-flex items-center gap-2"><Lock size={14} className="text-primary-light"/> Em jogo (custódia)</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                Esse valor fica guardado enquanto você cumpre. Se concluir, recebe de volta.
-                Se abandonar, você decide o destino. Valor simbólico por ora.
+                Esse valor fica em custódia enquanto você cumpre. Se concluir, 97% volta para você (3% taxa VRENN). Se falhar, 75% vai para o fundo da temporada ativa e 25% para o VRENN.
               </p>
               <div className="mt-3 relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary-light">R$</span>
@@ -306,3 +305,4 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
