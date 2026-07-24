@@ -54,18 +54,29 @@ No seu perfil, conquistas desbloqueadas aparecem coloridas. No perfil de outras 
   {
     emoji: "⚔️",
     titulo: "Como funciona o duelo",
-    conteudo: `No duelo, dois usuários se desafiam com um valor em custódia. Cada um coloca o mesmo valor. Ao final do prazo, quem cumpriu a meta e teve mais progresso vence e recebe a maior parte do valor total. Uma parte vai para o VRENN e outra para o fundo Desafio Master.
+    conteudo: `No duelo, dois usuários se desafiam com um valor em custódia. Cada um coloca o mesmo valor. Ao final do prazo, o resultado segue estas regras:
 
-Durante o duelo, você pode fazer check-ins para registrar progresso. Se a frequência for diária, quem não fizer check-in no dia pode justificar a falta — o oponente aprova ou recusa. Se não justificar e o oponente recusar, você é eliminado da disputa (mas pode continuar fazendo check-ins, só não concorre mais ao prêmio).`,
+• Vitória normal: o vencedor recebe 100% da própria custódia + 88% da custódia do rival. Os 12% restantes da custódia do perdedor são divididos em 6% para o VRENN e 6% para o fundo da temporada ativa.
+• Empate com sucesso (ambos ≥ 100% de progresso): cada um recebe 100% da própria custódia de volta. Sem taxas.
+• Empate sem sucesso (ambos < 100%): cada um perde tudo. 75% de cada custódia vai para o fundo da temporada e 25% para o VRENN.
+
+Durante o duelo, você pode fazer check-ins para registrar progresso. Se a frequência for diária, quem não fizer check-in no dia pode justificar a falta — o oponente aprova ou recusa. Se não justificar e o oponente recusar, você é eliminado da disputa (mas pode continuar fazendo check-ins, só não concorre mais ao prêmio).
+
+Quando o tipo de validação for por foto + árbitro, o resultado é declarado pelo árbitro escolhido pelo criador do duelo — não automaticamente.`,
   },
   {
     emoji: "👥",
     titulo: "Como funcionam os desafios de equipe",
-    conteudo: `Desafios de equipe são criados por um admin e abertos para os membros entrarem. Cada participante coloca um valor em custódia.
+    conteudo: `Desafios de equipe são criados por um admin e abertos para os membros entrarem. Cada participante coloca um valor em custódia. O resultado individual segue estas regras:
 
-Se a frequência for diária, quem não fizer check-in pode pedir justificativa — o admin aprova ou recusa. O motivo da justificativa fica visível para todos da equipe.
+• Concluiu o desafio: recebe 97% da custódia de volta. 3% vai para o VRENN.
+• Falhou ou foi eliminado: perde o valor total. 75% vai para o pool de prêmios do desafio (distribuído entre os vencedores ao final), 12,5% vai para o fundo da temporada ativa e 12,5% para o VRENN.
 
-Quem for eliminado por falta pode continuar fazendo check-ins, mas não concorre ao prêmio final. Os valores de quem foi eliminado vão para o fundo do prêmio dos que completaram.`,
+Se ninguém concluir o desafio, o pool de prêmios inteiro escoa para o fundo da temporada global — não fica "órfão".
+
+O criador define como o prêmio é distribuído entre os vencedores (proporcional, igualitário ou personalizado), quantas posições são premiadas e o critério de ranking (mais check-ins, maior progresso, maior streak ou primeiro a concluir).
+
+Se a frequência for diária, quem não fizer check-in pode justificar a falta — o admin aprova ou recusa. O motivo fica visível para todos da equipe.`,
   },
   {
     emoji: "⚠️",
@@ -83,11 +94,20 @@ Em desafios de equipe: o admin da equipe aprova ou recusa. O motivo fica visíve
     titulo: "O que acontece com meu dinheiro",
     conteudo: `Seu valor em custódia fica bloqueado enquanto a meta ou desafio está ativo. Ele não sai da sua carteira VRENN — fica reservado.
 
-Se você cumprir: o valor é desbloqueado e volta para sua carteira ao final.
+Meta solo:
+• Concluída → 97% de volta para você, 3% para o VRENN.
+• Falhada → 0% de volta. 75% vai para o fundo da temporada ativa, 25% para o VRENN.
 
-Se você não cumprir (meta falhada, eliminado, duelo perdido): uma parte vai para o VRENN (taxa da plataforma) e o restante vai para o fundo de premiação de quem cumpriu.
+Duelo:
+• Vitória → você recebe 100% próprio + 88% do rival. 6% do rival vai para o fundo da temporada e 6% para o VRENN.
+• Empate com sucesso → 100% devolvido para cada um, sem taxas.
+• Empate sem sucesso → 75% de cada um vai para o fundo da temporada, 25% para o VRENN.
 
-Em duelos: além da taxa do VRENN, parte vai para o fundo Desafio Master — que é o fundo comunitário da temporada ativa.`,
+Desafio de equipe:
+• Concluiu → 97% de volta, 3% para o VRENN.
+• Falhou/eliminado → 75% vai para o pool de prêmios do desafio, 12,5% para o fundo da temporada e 12,5% para o VRENN.
+
+O fundo da temporada alimenta o prêmio do VRENN Master Season — a competição sazonal da plataforma.`,
   },
   {
     emoji: "📋",
@@ -181,3 +201,4 @@ function ComoFunciona() {
     </main>
   );
 }
+
