@@ -338,6 +338,33 @@ function EquipeProfile() {
             ) : (
               <Shield size={64} className="text-primary-light drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]" fill="currentColor" fillOpacity={0.25} />
             )}
+            {(souAdmin || souCriador) && (
+              <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-black/50 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity">
+                <Camera size={22} className="text-white drop-shadow" />
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (!["image/jpeg","image/png","image/webp"].includes(file.type)) { toast.error("Use JPG, PNG ou WebP"); return; }
+                  if (file.size > 10 * 1024 * 1024) { toast.error("Máximo 10MB"); return; }
+                  setBusy(true);
+                  try {
+                    const ext = file.name.split(".").pop();
+                    const path = `equipes/${id}-${Date.now()}.${ext}`;
+                    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+                    if (upErr) throw upErr;
+                    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+                    await salvarEdicao({ avatar_url: pub.publicUrl });
+                  } catch (err: any) {
+                    toast.error(err.message ?? "Erro ao enviar foto");
+                  } finally { setBusy(false); }
+                }} />
+              </label>
+            )}
+            {busy && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">
+                <Loader2 size={24} className="animate-spin text-white" />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0 pt-2">
             <div className="flex items-center gap-2">
@@ -352,6 +379,43 @@ function EquipeProfile() {
             </div>
           </div>
         </section>
+
+        {/* Administradores */}
+        {(() => {
+          const admins = (membros ?? []).filter((m: any) => m.papel === "admin" || m.user_id === equipe.criador_id);
+          if (!admins.length) return null;
+          return (
+            <div className="rounded-2xl border border-border bg-card p-4 space-y-3 mt-4">
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-primary-light" />
+                <span className="text-xs font-bold uppercase tracking-wider text-primary-light">
+                  {admins.length === 1 ? "Administrador" : "Administradores"}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {admins.map((m: any) => (
+                  <div key={m.user_id} className="flex items-center gap-3">
+                    {m.profiles?.avatar_url ? (
+                      <img src={m.profiles.avatar_url} className="h-9 w-9 rounded-full object-cover border border-primary/40" />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 bg-primary/15 text-sm font-bold text-primary-light">
+                        {(m.profiles?.nome ?? "?")[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold truncate">{m.profiles?.nome ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground truncate">@{m.profiles?.username ?? "—"}</div>
+                    </div>
+                    <span className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary-light">
+                      <BadgeCheck size={11} />
+                      {m.user_id === equipe.criador_id ? "Criador" : "Admin"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Tabs */}
         <div className="mt-6 flex gap-4 overflow-x-auto border-b border-border -mx-5 px-5 pb-0.5">
@@ -1183,4 +1247,5 @@ function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone
     </div>
   );
 }
+
 
