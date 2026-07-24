@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
-import { ArrowLeft, Info, Crown, Flame, Gem, ChevronRight, ChevronDown, Trophy } from "lucide-react";
+import { ArrowLeft, Info, Crown, Flame, Gem, ChevronRight, ChevronDown, Trophy, Users, Target, Swords } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/ranking")({
@@ -38,6 +38,89 @@ function Ranking() {
       return ids as string[];
     },
     enabled: scope === "seguidores" || scope === "amigos",
+  });
+
+  // Ranking de equipes (só ativo quando scope === "equipes")
+  const { data: equipeRanking, isLoading: equipeLoading } = useQuery({
+    queryKey: ["ranking-equipes", periodo],
+    queryFn: async () => {
+      const agora = new Date();
+      let desde: string | null = null;
+      if (periodo === "semanal") {
+        const d = new Date(agora); d.setDate(d.getDate() - 7);
+        desde = d.toISOString();
+      } else if (periodo === "mensal") {
+        desde = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
+      }
+
+      // Buscar todas as equipes com contagem de membros
+      const { data: equipes } = await supabase
+        .from("equipes")
+        .select("id, nome, avatar_url, categoria, created_at");
+
+      if (!equipes?.length) return [];
+
+      const equipeIds = equipes.map((e: any) => e.id);
+
+      // Membros por equipe
+      const { data: membros } = await supabase
+        .from("equipe_membros")
+        .select("equipe_id")
+        .in("equipe_id", equipeIds);
+
+      // Check-ins de desafio por equipe (via desafios_equipe)
+      let checkinQ = supabase
+        .from("checkins_desafio_equipe")
+        .select("desafio_id, desafios_equipe!inner(equipe_id)");
+      if (desde) checkinQ = (checkinQ as any).gte("created_at", desde);
+      const { data: checkins } = await checkinQ as any;
+
+      // Desafios criados por equipe
+      let desafioQ = supabase
+        .from("desafios_equipe")
+        .select("equipe_id")
+        .in("equipe_id", equipeIds);
+      if (desde) desafioQ = (desafioQ as any).gte("created_at", desde);
+      const { data: desafios } = await desafioQ;
+
+      // Agregar por equipe
+      const membroCount: Record<string, number> = {};
+      const checkinCount: Record<string, number> = {};
+      const desafioCount: Record<string, number> = {};
+
+      for (const m of membros ?? []) {
+        membroCount[m.equipe_id] = (membroCount[m.equipe_id] ?? 0) + 1;
+      }
+      for (const c of checkins ?? []) {
+        const eid = (c as any).desafios_equipe?.equipe_id;
+        if (eid) checkinCount[eid] = (checkinCount[eid] ?? 0) + 1;
+      }
+      for (const d of desafios ?? []) {
+        desafioCount[d.equipe_id] = (desafioCount[d.equipe_id] ?? 0) + 1;
+      }
+
+      // Normalizar métricas (0-100) e calcular score
+      const maxMembros  = Math.max(1, ...Object.values(membroCount));
+      const maxCheckins = Math.max(1, ...Object.values(checkinCount));
+      const maxDesafios = Math.max(1, ...Object.values(desafioCount));
+
+      return equipes
+        .map((e: any) => {
+          const m = membroCount[e.id]  ?? 0;
+          const c = checkinCount[e.id] ?? 0;
+          const d = desafioCount[e.id] ?? 0;
+          const score = Math.round(
+            (m / maxMembros)  * 40 +
+            (c / maxCheckins) * 30 +
+            (d / maxDesafios) * 20
+            // 10% reservado para posts de equipe (futuro)
+          );
+          return { ...e, membros: m, checkins: c, desafios: d, score };
+        })
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 50);
+    },
+    enabled: scope === "equipes",
   });
 
   const { data: all, isLoading } = useQuery({
@@ -102,11 +185,13 @@ function Ranking() {
     enabled: periodo === "tudo" || !!followIds || (scope !== "seguidores" && scope !== "amigos"),
   });
 
-  const list = all ?? [];
+  const isEquipes = scope === "equipes";
+  const list = isEquipes ? (equipeRanking ?? []) : (all ?? []);
   const top3 = list.slice(0, 3);
   const rest = list.slice(3, 10);
-  const myIndex = list.findIndex((p: any) => p.id === user.id);
+  const myIndex = isEquipes ? -1 : list.findIndex((p: any) => p.id === user.id);
   const me = myIndex >= 0 ? list[myIndex] : null;
+  const loading = isEquipes ? equipeLoading : isLoading;
 
   const periodoLabel = periodo === "semanal" ? "Esta semana" : periodo === "mensal" ? "Este mês" : "Todos os tempos";
 
@@ -174,7 +259,7 @@ function Ranking() {
         </div>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <div className="mx-auto max-w-md px-5 mt-10 text-center text-sm text-muted-foreground">Carregando ranking…</div>
       ) : list.length === 0 ? (
         <div className="mx-auto max-w-md px-5 mt-10 rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -186,9 +271,9 @@ function Ranking() {
           {top3.length > 0 && (
             <div className="mx-auto max-w-md px-5 mt-10">
               <div className="grid grid-cols-3 items-end gap-3">
-                {top3[1] ? <PodiumCard user={top3[1]} place={2} /> : <div />}
-                {top3[0] ? <PodiumCard user={top3[0]} place={1} /> : <div />}
-                {top3[2] ? <PodiumCard user={top3[2]} place={3} /> : <div />}
+                {top3[1] ? (isEquipes ? <EquipePodiumCard equipe={top3[1]} place={2} /> : <PodiumCard user={top3[1]} place={2} />) : <div />}
+                {top3[0] ? (isEquipes ? <EquipePodiumCard equipe={top3[0]} place={1} /> : <PodiumCard user={top3[0]} place={1} />) : <div />}
+                {top3[2] ? (isEquipes ? <EquipePodiumCard equipe={top3[2]} place={3} /> : <PodiumCard user={top3[2]} place={3} />) : <div />}
               </div>
             </div>
           )}
@@ -197,8 +282,10 @@ function Ranking() {
           <div className="mx-auto max-w-md px-5 mt-8">
             {rest.length > 0 && (
               <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-                {rest.map((p: any, i: number) => (
-                  <RankRow key={p.id} user={p} place={i + 4} />
+                {rest.map((e: any, i: number) => (
+                  isEquipes
+                    ? <EquipeRankRow key={e.id} equipe={e} place={i + 4} />
+                    : <RankRow key={e.id} user={e} place={i + 4} />
                 ))}
               </div>
             )}
@@ -304,6 +391,80 @@ function RankRow({ user, place }: { user: any; place: number }) {
   );
 }
 
+function EquipePodiumCard({ equipe, place }: { equipe: any; place: 1 | 2 | 3 }) {
+  const cfg = {
+    1: { ring: "#FBBF24", badge: "bg-amber-400 text-amber-950", border: "border-amber-400/60", cardBg: "bg-gradient-to-b from-amber-500/15 to-amber-500/5", elev: "mb-4" },
+    2: { ring: "#CBD5E1", badge: "bg-slate-300 text-slate-900", border: "border-slate-400/40", cardBg: "bg-card", elev: "" },
+    3: { ring: "#D97706", badge: "bg-amber-700 text-amber-50", border: "border-amber-700/50", cardBg: "bg-card", elev: "" },
+  }[place];
+
+  return (
+    <div className={`relative flex flex-col items-center rounded-2xl border ${cfg.border} ${cfg.cardBg} px-3 pt-8 pb-4 ${cfg.elev}`}>
+      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+        {place === 1 ? (
+          <div className="relative">
+            <Crown size={20} className="absolute -top-3 left-1/2 -translate-x-1/2 text-amber-400 fill-amber-400" />
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${cfg.badge}`}>{place}</span>
+          </div>
+        ) : (
+          <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${cfg.badge}`}>{place}</span>
+        )}
+      </div>
+
+      <div className="rounded-full p-[3px]" style={{ background: cfg.ring }}>
+        {equipe.avatar_url ? (
+          <img src={equipe.avatar_url} className="h-16 w-16 rounded-full object-cover border-2 border-background" />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-background bg-primary/20 text-2xl">
+            🏅
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 text-center w-full min-w-0">
+        <div className="text-sm font-bold truncate">{equipe.nome}</div>
+        <div className="text-[10px] text-muted-foreground truncate">{equipe.categoria}</div>
+        <div className="mt-2 inline-flex items-baseline gap-1">
+          <Trophy size={12} className="text-primary-light self-center" />
+          <span className="text-sm font-bold text-primary-light">{equipe.score}</span>
+          <span className="text-[10px] text-primary-light">pts</span>
+        </div>
+        <div className="mt-1 flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-0.5"><Users size={10}/> {equipe.membros}</span>
+          <span className="flex items-center gap-0.5"><Swords size={10}/> {equipe.desafios}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EquipeRankRow({ equipe, place }: { equipe: any; place: number }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className="w-5 text-center text-sm font-semibold text-muted-foreground">{place}</span>
+      {equipe.avatar_url ? (
+        <img src={equipe.avatar_url} className="h-9 w-9 rounded-full object-cover" />
+      ) : (
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-base">🏅</div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold truncate">{equipe.nome}</div>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+          <span className="flex items-center gap-0.5"><Users size={10}/> {equipe.membros} membros</span>
+          <span className="flex items-center gap-0.5"><Target size={10}/> {equipe.checkins} check-ins</span>
+          <span className="flex items-center gap-0.5"><Swords size={10}/> {equipe.desafios} desafios</span>
+        </div>
+      </div>
+      <div className="inline-flex items-baseline gap-1">
+        <Trophy size={13} className="text-primary-light self-center" />
+        <span className="text-sm font-bold">{equipe.score}</span>
+      </div>
+      <ChevronRight size={16} className="text-muted-foreground" />
+    </div>
+  );
+}
+
 function formatPts(n: number) {
   return n.toLocaleString("pt-BR");
 }
+
