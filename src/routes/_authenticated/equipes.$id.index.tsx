@@ -1160,8 +1160,33 @@ function DesafioDetalhesSheet({ desafio, onClose }: { desafio: any; onClose: () 
         </div>
         {desafio.regras && (
           <div className="mt-4 rounded-2xl border border-border bg-background p-3">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Regras</div>
-            <p className="text-xs leading-relaxed">{desafio.regras}</p>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Regras</div>
+            {typeof desafio.regras === "string" ? (
+              <p className="text-xs leading-relaxed">{desafio.regras}</p>
+            ) : (
+              <ul className="space-y-1 text-xs leading-relaxed">
+                {Object.entries(desafio.regras as Record<string, unknown>)
+                  .filter(([k, v]) => {
+                    if (k === "personalizadas") return Array.isArray(v) && v.length > 0;
+                    if (k === "consequencias") return typeof v === "string" && v.trim().length > 0;
+                    return v === true;
+                  })
+                  .map(([k, v]) => {
+                    const labels: Record<string, string> = {
+                      foco_total: "Foco total",
+                      comprovacao: "Comprovação obrigatória",
+                      etica: "Respeito e ética",
+                      conclusao: "Conclusão ao final do período",
+                      consequencias: "Consequências",
+                      personalizadas: "Regras personalizadas",
+                    };
+                    const label = labels[k] ?? k;
+                    if (k === "consequencias") return <li key={k}>• {label}: {String(v)}</li>;
+                    if (k === "personalizadas") return <li key={k}>• {label}: {(v as string[]).join(", ")}</li>;
+                    return <li key={k}>• {label}</li>;
+                  })}
+              </ul>
+            )}
           </div>
         )}
       </div>
