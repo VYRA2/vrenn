@@ -546,5 +546,6 @@ const CONQUISTAS_CATALOGO = [
   { slug: "prata_pura",         emoji: "💎", label: "Prata Pura",    color: "#C0C0C0" },
   { slug: "ouro_solido",        emoji: "💎", label: "Ouro Sólido",   color: "#FFD700" },
   { slug: "diamante",           emoji: "💎", label: "Diamante",      color: "#B9F2FF" },
-  { slug: "lenda",              emoji: "👑", label: "Lenda",         color: "#7B2EFF" },
+  { slug: "lenda",              emoji: "👑", label: "Lenda",          color: "#7B2EFF" },
+  { slug: "master_concluido",   emoji: "🏆", label: "Master Season",  color: "#FFD700" },
 ] as const;
