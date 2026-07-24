@@ -422,6 +422,7 @@ const TODAS_CONQUISTAS = [
   { slug: "ouro_solido",      emoji: "💎", label: "Ouro Sólido", sub: "Nível Ouro", color: "#FFD700" },
   { slug: "diamante",         emoji: "💎", label: "Diamante", sub: "Nível Diamante", color: "#B9F2FF" },
   { slug: "lenda",            emoji: "👑", label: "Lenda", sub: "Nível Lenda", color: "#7B2EFF" },
+  { slug: "master_concluido", emoji: "🏆", label: "Master Season", sub: "Concluiu o VRENN Master Season", color: "#FFD700" },
 ] as const;
 
 function BigStat({ value, label, accent, info }: { value: number | string; label: string; accent?: boolean; info?: boolean }) {
