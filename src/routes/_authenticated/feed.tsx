@@ -14,7 +14,10 @@ import { toast } from "sonner";
 type Tab = "feed" | "seguindo" | "destaques" | "comunidades";
 
 export const Route = createFileRoute("/_authenticated/feed")({
-  validateSearch: (s: Record<string, unknown>) => ({ publish: s.publish ? 1 : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    publish: s.publish ? 1 : undefined,
+    tab: (["feed","seguindo","destaques","comunidades"].includes(s.tab as string) ? s.tab : undefined) as Tab | undefined,
+  }),
   component: Feed,
 });
 
@@ -23,7 +26,7 @@ function Feed() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>("feed");
+  const [tab, setTab] = useState<Tab>(search.tab ?? "feed");
   const [showPublish, setShowPublish] = useState(false);
 
   useEffect(() => {
