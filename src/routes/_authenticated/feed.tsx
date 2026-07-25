@@ -41,42 +41,51 @@ function Feed() {
     },
   });
 
-  const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ["feed-posts", tab, user.id],
-    queryFn: async () => {
-      let query = supabase
-        .from("posts")
-        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, likes_count, comments_count, profiles:user_id (nome, username, avatar_url), metas:meta_id (titulo, status, progresso)")
-        .order("created_at", { ascending: false })
-        .limit(30);
+  const qc = useQueryClient();
 
-      if (tab === "seguindo") {
-        const { data: f } = await supabase.from("follows").select("following_id").eq("follower_id", user.id).eq("status", "aceito");
-        const ids = (f ?? []).map((x: any) => x.following_id);
-        if (!ids.length) return [];
-        query = query.in("user_id", ids);
-      } else if (tab === "destaques") {
-        const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
-        query = query.gte("created_at", since);
-      } else if (tab === "comunidades") {
-        const { data: eq } = await supabase.from("equipe_membros").select("equipe_id").eq("user_id", user.id);
-        const eqIds = (eq ?? []).map((x: any) => x.equipe_id);
-        if (!eqIds.length) return [];
-        const { data: mem } = await supabase.from("equipe_membros").select("user_id").in("equipe_id", eqIds);
-        const uids = Array.from(new Set((mem ?? []).map((x: any) => x.user_id)));
-        query = query.in("user_id", uids);
-      }
-      const { data } = await query;
-      const list = data ?? [];
-      // Destaques: ordenar por score (likes_count + comments_count) — sem queries extras
-      if (tab === "destaques" && list.length) {
-        return [...list].sort((a: any, b: any) =>
-          ((b.likes_count ?? 0) + (b.comments_count ?? 0)) - ((a.likes_count ?? 0) + (a.comments_count ?? 0))
-        );
-      }
-      return list;
+  const { data: posts, isLoading, refetch } = useQuery({
+    queryKey: ["feed-posts", user.id],
+    queryFn: async () => {
+      // Feed: apenas os meus posts + posts de quem eu sigo (status aceito)
+      const { data: follows } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id)
+        .eq("status", "aceito");
+
+      const followingIds = (follows ?? []).map((x: any) => x.following_id);
+      const authorIds = [...followingIds, user.id]; // inclui meus próprios posts
+
+      const { data } = await supabase
+        .from("posts")
+        .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, likes_count, comments_count, profiles:user_id (nome, username, avatar_url, perfil_publico), metas:meta_id (titulo, status, progresso)")
+        .in("user_id", authorIds)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      return data ?? [];
     },
   });
+
+  // Realtime — atualiza feed quando novo post é inserido por alguém que sigo
+  const channelRef = useRef<any>(null);
+  useEffect(() => {
+    const channel = supabase
+      .channel("feed-realtime")
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "posts",
+      }, () => {
+        refetch();
+      })
+      .subscribe();
+
+    channelRef.current = channel;
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user.id]);
 
 
   const { data: me } = useQuery({
@@ -484,3 +493,4 @@ function formatWhen(iso: string) {
   if (d < 7) return `${d}d`;
   return new Date(iso).toLocaleDateString("pt-BR");
 }
+
