@@ -694,7 +694,7 @@ function EncerrarDueloModal({ duelo, userId, onClose, onDone }: {
         resultado === "rival_venceu"       ? (isChallenger ? duelo.opponent_id : duelo.challenger_id) :
         null;
 
-      const { error } = await supabase.rpc("resolve_duelo_custodia", {
+      const { error } = await supabase.rpc("arbitro_declarar_resultado_duelo", {
         _duelo_id:   duelo.id,
         _winner_id:  winnerId,
         _empate:     resultado.startsWith("empate"),
