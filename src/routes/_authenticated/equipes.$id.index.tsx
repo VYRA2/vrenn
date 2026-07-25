@@ -94,6 +94,17 @@ function EquipeProfile() {
     },
   });
 
+  const criadorInMembros = (membros ?? []).some((m: any) => m.user_id === equipe?.criador_id);
+  const { data: criadorProfile } = useQuery({
+    queryKey: ["equipe-criador-profile", equipe?.criador_id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("profiles").select("nome, username, avatar_url").eq("id", equipe.criador_id).maybeSingle();
+      return data;
+    },
+    enabled: !!equipe?.criador_id && !criadorInMembros,
+  });
+
   const { data: desafios, isLoading: loadingDesafios } = useQuery({
     queryKey: ["equipe-desafios", id],
     queryFn: async () => {
@@ -207,10 +218,24 @@ function EquipeProfile() {
   }
 
   async function entrarNoDesafio(desafio: any) {
-    if (jaParticipa(desafio.id)) return;
     if (desafio.status !== "ativo") return toast.error("Este desafio não está mais aberto para entradas.");
     setEntrando(desafio.id);
     try {
+      // Verificar participação diretamente no banco (mais confiável que o cache local)
+      const { data: jaExiste } = await (supabase as any)
+        .from("desafio_equipe_participantes")
+        .select("id")
+        .eq("desafio_id", desafio.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (jaExiste) {
+        toast("Você já está participando deste desafio!");
+        setEntrando(null);
+        refetchParticipacoes();
+        return;
+      }
+
       const entrada = Number(desafio.valor_entrada ?? 0);
 
       // 1. Verifica e trava saldo se houver valor de entrada
@@ -238,7 +263,14 @@ function EquipeProfile() {
         progresso: 0,
       });
       if (insErr) {
-        // Desfaz o lock se insert falhou
+        // Se for duplicate key, significa que já participava — só atualiza cache
+        if (insErr.code === "23505") {
+          toast("Você já está participando deste desafio!");
+          refetchParticipacoes();
+          setEntrando(null);
+          return;
+        }
+        // Desfaz o lock se insert falhou por outro motivo
         if (entrada > 0) {
           const { data: wallet } = await (supabase as any)
             .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
@@ -272,15 +304,28 @@ function EquipeProfile() {
   const souCriador = equipe.criador_id === user.id;
   const souMembro = (membros ?? []).some((m: any) => m.user_id === user.id);
 
-  async function salvarEdicao(patch: { nome?: string; descricao?: string; avatar_url?: string; categoria?: string }, fecharModal = true) {
+  async function salvarEdicao(patch: { nome?: string; descricao?: string; avatar_url?: string; categoria?: string }) {
     setBusy(true);
     const { error } = await (supabase as any).from("equipes").update(patch).eq("id", id);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Equipe atualizada");
-    if (fecharModal) setShowEdit(false);
-    qc.invalidateQueries({ queryKey: ["equipe", id] });
-    qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
+    setShowEdit(false);
+    await qc.invalidateQueries({ queryKey: ["equipe", id] });
+    await qc.refetchQueries({ queryKey: ["equipe", id] });
+  }
+
+  async function togglePapelAdmin(m: any) {
+    if (!souCriador) return toast.error("Apenas o criador pode gerenciar admins");
+    if (m.user_id === equipe.criador_id) return;
+    const novo = m.papel === "admin" ? "membro" : "admin";
+    const { error } = await (supabase as any)
+      .from("equipe_membros").update({ papel: novo })
+      .eq("equipe_id", id).eq("user_id", m.user_id);
+    if (error) return toast.error(error.message);
+    toast.success(novo === "admin" ? "Promovido a admin" : "Rebaixado a membro");
+    await qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
+    await qc.refetchQueries({ queryKey: ["equipe-membros", id] });
   }
 
   async function excluirEquipe() {
@@ -342,7 +387,7 @@ function EquipeProfile() {
             {(souAdmin || souCriador) && (
               <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-black/50 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity">
                 <Camera size={22} className="text-white drop-shadow" />
-                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   if (!["image/jpeg","image/png","image/webp"].includes(file.type)) { toast.error("Use JPG, PNG ou WebP"); return; }
@@ -353,11 +398,12 @@ function EquipeProfile() {
                     const path = `equipes/${id}-${Date.now()}.${ext}`;
                     const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
                     if (upErr) throw upErr;
-                    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-                    await salvarEdicao({ avatar_url: pub.publicUrl }, false);
+                    const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+                    if (sErr || !signed) throw sErr ?? new Error("Falha ao gerar URL");
+                    await salvarEdicao({ avatar_url: signed.signedUrl });
                   } catch (err: any) {
                     toast.error(err.message ?? "Erro ao enviar foto");
-                  } finally { setBusy(false); }
+                  } finally { setBusy(false); e.target.value = ""; }
                 }} />
               </label>
             )}
@@ -383,24 +429,17 @@ function EquipeProfile() {
 
         {/* Administradores */}
         {(() => {
-          // Admins: membros com papel admin + criador (mesmo que não esteja em equipe_membros)
-          const membrosAdmins = (membros ?? []).filter((m: any) => m.papel === "admin" || m.user_id === equipe.criador_id);
-          const criadorJaMembro = (membros ?? []).some((m: any) => m.user_id === equipe.criador_id);
-
-          // Buscar perfil do criador da lista de membros (se disponível) ou usar nome da equipe
-          const admins = membrosAdmins.length > 0 ? membrosAdmins : [];
-
-          // Se criador não está nos membros, mostrar card minimal com user_id
-          const mostrarCriadorSolo = !criadorJaMembro && equipe.criador_id;
-
-          if (!admins.length && !mostrarCriadorSolo) return null;
-
+          const admins: any[] = (membros ?? []).filter((m: any) => m.papel === "admin" || m.user_id === equipe.criador_id);
+          if (!criadorInMembros && criadorProfile) {
+            admins.unshift({ user_id: equipe.criador_id, papel: "criador", profiles: criadorProfile });
+          }
+          if (!admins.length) return null;
           return (
             <div className="rounded-2xl border border-border bg-card p-4 space-y-3 mt-4">
               <div className="flex items-center gap-2">
                 <Shield size={14} className="text-primary-light" />
                 <span className="text-xs font-bold uppercase tracking-wider text-primary-light">
-                  {(admins.length + (mostrarCriadorSolo ? 1 : 0)) === 1 ? "Administrador" : "Administradores"}
+                  {admins.length === 1 ? "Administrador" : "Administradores"}
                 </span>
               </div>
               <div className="space-y-2">
@@ -421,27 +460,18 @@ function EquipeProfile() {
                       <BadgeCheck size={11} />
                       {m.user_id === equipe.criador_id ? "Criador" : "Admin"}
                     </span>
+                    {souCriador && m.user_id !== equipe.criador_id && m.papel === "admin" && (
+                      <button onClick={() => togglePapelAdmin(m)} className="rounded-full border border-border px-2 py-1 text-[10px] text-muted-foreground hover:text-rose-400 hover:border-rose-400/40">
+                        Rebaixar
+                      </button>
+                    )}
                   </div>
                 ))}
-                {mostrarCriadorSolo && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 bg-primary/15 text-sm font-bold text-primary-light">
-                      C
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold truncate">Criador da equipe</div>
-                      <div className="text-xs text-muted-foreground truncate">Informações não disponíveis</div>
-                    </div>
-                    <span className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary-light">
-                      <BadgeCheck size={11} />
-                      Criador
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           );
         })()}
+
 
         {/* Tabs */}
         <div className="mt-6 flex gap-4 overflow-x-auto border-b border-border -mx-5 px-5 pb-0.5">
@@ -576,6 +606,14 @@ function EquipeProfile() {
                     <div className="mt-2 text-[11px] font-bold truncate">{m.profiles?.nome ?? "—"}</div>
                     <div className="text-[10px] text-muted-foreground truncate">@{m.profiles?.username ?? "—"}</div>
                     {m.papel === "admin" && <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent">Admin</div>}
+                    {souCriador && m.user_id !== equipe.criador_id && m.papel !== "admin" && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePapelAdmin(m); }}
+                        className="mt-1 w-full rounded-full border border-primary/40 bg-primary/10 px-1.5 py-1 text-[9px] font-bold text-primary-light hover:bg-primary/20"
+                      >
+                        + Admin
+                      </button>
+                    )}
                   </Link>
                 ))}
               </div>
@@ -773,7 +811,12 @@ function EquipeProfile() {
       )}
 
       {desafioDetalhes && (
-        <DesafioDetalhesSheet desafio={desafioDetalhes} onClose={() => setDesafioDetalhes(null)} />
+        <DesafioDetalhesSheet
+          desafio={desafioDetalhes}
+          onClose={() => setDesafioDetalhes(null)}
+          userId={user.id}
+          onCheckin={() => setDesafioCheckin(desafioDetalhes)}
+        />
       )}
 
       {/* Modal justificar falta no desafio de equipe */}
@@ -1165,7 +1208,7 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
   );
 }
 
-function DesafioDetalhesSheet({ desafio, onClose }: { desafio: any; onClose: () => void }) {
+function DesafioDetalhesSheet({ desafio, onClose, userId, onCheckin }: { desafio: any; onClose: () => void; userId: string; onCheckin: () => void; }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -1214,6 +1257,31 @@ function DesafioDetalhesSheet({ desafio, onClose }: { desafio: any; onClose: () 
               </ul>
             )}
           </div>
+        )}
+        {/* Frequência */}
+        {desafio.frequencia_tipo && (
+          <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-2">
+            <span className="text-lg">🔥</span>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-primary-light/70">Frequência obrigatória</div>
+              <div className="text-sm font-bold text-primary-light">
+                {desafio.frequencia_tipo === "diario"
+                  ? `${desafio.frequencia_quantidade}x por dia`
+                  : desafio.frequencia_tipo === "semanal"
+                  ? `${desafio.frequencia_quantidade}x por semana`
+                  : `${desafio.frequencia_quantidade} check-ins no total`}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Botão check-in */}
+        {desafio.status === "ativo" && (
+          <button
+            onClick={() => { onClose(); onCheckin(); }}
+            className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow"
+          >
+            <Camera size={16} /> Fazer check-in
+          </button>
         )}
       </div>
     </div>
@@ -1298,6 +1366,5 @@ function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone
     </div>
   );
 }
-
 
 
