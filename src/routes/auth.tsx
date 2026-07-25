@@ -75,15 +75,15 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Conta criada! Bem-vindo ao VRENN.");
-    if (dest !== "/feed") window.location.href = dest; else navigate({ to: "/feed" });
+    toast.success("Conta criada! Vamos configurar seu perfil.");
+    navigate({ to: "/onboarding" });
   }
 
   async function handleGoogle() {
-    const redirect_uri = `${window.location.origin}${dest}`;
+    // Redireciona sempre para /auth/callback que verifica se é novo usuário
+    const redirect_uri = `${window.location.origin}/auth/callback?next=${encodeURIComponent(dest)}`;
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
     if (r.error) return toast.error("Erro no login com Google");
-    if (!r.redirected) window.location.href = dest;
   }
 
   return (
@@ -334,3 +334,4 @@ function AppleIcon() {
 function FacebookIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 5 3.7 9.1 8.4 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7C18.3 21.1 22 17 22 12z"/></svg>;
 }
+
