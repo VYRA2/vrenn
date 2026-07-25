@@ -54,7 +54,7 @@ function DescobrirPage() {
         const { data } = await supabase.from("metas").select("id, titulo, categoria, progresso, user_id, profiles:user_id(nome, username, avatar_url)").ilike("titulo", term).limit(20);
         return data ?? [];
       }
-      const { data } = await supabase.from("profiles").select("id, nome, username, avatar_url").or(`nome.ilike.${term},username.ilike.${term}`).neq("id", user.id).limit(20);
+      const { data } = await supabase.from("profiles").select("id, nome, username, avatar_url, perfil_publico").or(`nome.ilike.${term},username.ilike.${term}`).neq("id", user.id).limit(20);
       return data ?? [];
     },
   });
@@ -91,8 +91,13 @@ function DescobrirPage() {
       if (!top.length) return [];
       const ids = top.map(([id]) => id);
       const [{ data: profs }, { data: lastPosts }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, username, avatar_url").in("id", ids),
-        supabase.from("posts").select("user_id, media_url, tipo, created_at").in("user_id", ids).not("media_url", "is", null).eq("tipo", "video").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, nome, username, avatar_url, perfil_publico").in("id", ids).eq("perfil_publico", true),
+        supabase.from("posts")
+          .select("user_id, media_url, tipo, created_at, profiles:user_id(perfil_publico)")
+          .in("user_id", ids)
+          .not("media_url", "is", null)
+          .eq("tipo", "video")
+          .order("created_at", { ascending: false }),
       ]);
       const lastByUser = new Map<string, any>();
       (lastPosts ?? []).forEach((p: any) => { if (!lastByUser.has(p.user_id) && p.media_url) lastByUser.set(p.user_id, { url: p.media_url, tipo: p.tipo }); });
@@ -418,3 +423,4 @@ function PessoaRow({ pessoa, userId }: { pessoa: any; userId: string }) {
     </div>
   );
 }
+
