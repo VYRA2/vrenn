@@ -195,7 +195,7 @@ function DueloAtivoCard({ duelo, userId }: { duelo: any; userId: string }) {
       </div>
       <div className="mt-3 flex items-center justify-between text-xs">
         <div><div className="font-bold text-primary-light">Você</div></div>
-        <div className="text-muted-foreground">{duelo.aposta_creditos>0 && `${duelo.aposta_creditos} créditos em jogo`}</div>
+        <div className="text-muted-foreground">{duelo.valor_custodia>0 && `R$ ${Number(duelo.valor_custodia).toFixed(2)} em custódia`}</div>
         <div><div className="font-bold">{rival?.nome ?? "Rival"}</div></div>
       </div>
       <div className="mt-3">
@@ -461,3 +461,4 @@ function DueloAbertoCard({ duelo, userId, aceitando, onAceitar }: {
     </div>
   );
 }
+
