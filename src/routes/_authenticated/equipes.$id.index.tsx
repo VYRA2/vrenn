@@ -366,7 +366,7 @@ function EquipeProfile() {
             {(souAdmin || souCriador) && (
               <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-black/50 opacity-0 hover:opacity-100 active:opacity-100 transition-opacity">
                 <Camera size={22} className="text-white drop-shadow" />
-                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   if (!["image/jpeg","image/png","image/webp"].includes(file.type)) { toast.error("Use JPG, PNG ou WebP"); return; }
@@ -377,11 +377,12 @@ function EquipeProfile() {
                     const path = `equipes/${id}-${Date.now()}.${ext}`;
                     const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
                     if (upErr) throw upErr;
-                    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-                    await salvarEdicao({ avatar_url: pub.publicUrl });
+                    const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+                    if (sErr || !signed) throw sErr ?? new Error("Falha ao gerar URL");
+                    await salvarEdicao({ avatar_url: signed.signedUrl });
                   } catch (err: any) {
                     toast.error(err.message ?? "Erro ao enviar foto");
-                  } finally { setBusy(false); }
+                  } finally { setBusy(false); e.target.value = ""; }
                 }} />
               </label>
             )}
