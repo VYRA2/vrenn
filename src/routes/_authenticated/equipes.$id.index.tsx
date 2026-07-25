@@ -585,6 +585,14 @@ function EquipeProfile() {
                     <div className="mt-2 text-[11px] font-bold truncate">{m.profiles?.nome ?? "—"}</div>
                     <div className="text-[10px] text-muted-foreground truncate">@{m.profiles?.username ?? "—"}</div>
                     {m.papel === "admin" && <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent">Admin</div>}
+                    {souCriador && m.user_id !== equipe.criador_id && m.papel !== "admin" && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePapelAdmin(m); }}
+                        className="mt-1 w-full rounded-full border border-primary/40 bg-primary/10 px-1.5 py-1 text-[9px] font-bold text-primary-light hover:bg-primary/20"
+                      >
+                        + Admin
+                      </button>
+                    )}
                   </Link>
                 ))}
               </div>
