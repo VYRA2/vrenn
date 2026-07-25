@@ -12,7 +12,7 @@ const SECOES = [
     titulo: "O que é o VRENN?",
     conteudo: `O VRENN é uma plataforma de desafios reais com compromisso financeiro. Você define uma meta, coloca um valor em custódia e comprova seu progresso com check-ins. Se cumprir, recebe de volta. Se não cumprir, o valor vai para o fundo de premiação de quem cumpriu.
 
-O VRENN não é um app de apostas — é uma ferramenta de comprometimento. O dinheiro é seu, colocado em custódia para aumentar sua disciplina.`,
+O VRENN não é um app de jogos ou sorte — é uma ferramenta de comprometimento. O dinheiro é seu, colocado em custódia para aumentar sua disciplina.`,
   },
   {
     emoji: "⭐",
@@ -201,4 +201,5 @@ function ComoFunciona() {
     </main>
   );
 }
+
 
