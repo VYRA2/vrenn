@@ -408,7 +408,10 @@ function EquipeProfile() {
 
         {/* Administradores */}
         {(() => {
-          const admins = (membros ?? []).filter((m: any) => m.papel === "admin" || m.user_id === equipe.criador_id);
+          const admins: any[] = (membros ?? []).filter((m: any) => m.papel === "admin" || m.user_id === equipe.criador_id);
+          if (!criadorInMembros && criadorProfile) {
+            admins.unshift({ user_id: equipe.criador_id, papel: "criador", profiles: criadorProfile });
+          }
           if (!admins.length) return null;
           return (
             <div className="rounded-2xl border border-border bg-card p-4 space-y-3 mt-4">
@@ -436,12 +439,18 @@ function EquipeProfile() {
                       <BadgeCheck size={11} />
                       {m.user_id === equipe.criador_id ? "Criador" : "Admin"}
                     </span>
+                    {souCriador && m.user_id !== equipe.criador_id && m.papel === "admin" && (
+                      <button onClick={() => togglePapelAdmin(m)} className="rounded-full border border-border px-2 py-1 text-[10px] text-muted-foreground hover:text-rose-400 hover:border-rose-400/40">
+                        Rebaixar
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           );
         })()}
+
 
         {/* Tabs */}
         <div className="mt-6 flex gap-4 overflow-x-auto border-b border-border -mx-5 px-5 pb-0.5">
