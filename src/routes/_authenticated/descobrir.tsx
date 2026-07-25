@@ -104,6 +104,19 @@ function DescobrirPage() {
     },
   });
 
+  const { data: temporadaAtiva } = useQuery({
+    queryKey: ["temporada-ativa-descobrir"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("temporadas")
+        .select("id, numero, titulo, fundo_acumulado, data_fim, status")
+        .in("status", ["inscricoes_abertas", "ativa"])
+        .order("data_inicio", { ascending: false })
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const { data: comunidades } = useQuery({
     queryKey: ["descobrir-comunidades"],
     queryFn: async () => {
@@ -230,9 +243,23 @@ function DescobrirPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-primary-light">Desafio Final da Temporada</p>
               <h2 className="mt-2 text-3xl font-black leading-none">DESAFIO DA</h2>
               <h2 className="text-3xl font-black leading-none bg-gradient-to-r from-primary-light to-primary bg-clip-text text-transparent">MASTER</h2>
-              <p className="mt-3 text-xs text-muted-foreground">O maior desafio individual do ano. Mostre sua disciplina.</p>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-primary bg-primary/20 px-4 py-2 text-xs font-bold text-primary-light">
-                Ver valores acumulados <ArrowRight size={14} />
+              {temporadaAtiva?.titulo && (
+                <p className="mt-1 text-xs text-primary-light/70 font-semibold">Season {temporadaAtiva.numero} — {temporadaAtiva.titulo}</p>
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">O maior desafio individual do ano. Mostre sua disciplina.</p>
+
+              {/* Fundo acumulado em destaque */}
+              {temporadaAtiva?.fundo_acumulado > 0 && (
+                <div className="mt-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400/70">Fundo acumulado</div>
+                  <div className="text-xl font-black text-yellow-400">
+                    {Number(temporadaAtiva.fundo_acumulado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-primary bg-primary/20 px-4 py-2 text-xs font-bold text-primary-light">
+                {temporadaAtiva ? "Participar agora" : "Ver regulamento"} <ArrowRight size={14} />
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
