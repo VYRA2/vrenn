@@ -290,7 +290,21 @@ function EquipeProfile() {
     if (error) return toast.error(error.message);
     toast.success("Equipe atualizada");
     setShowEdit(false);
-    qc.invalidateQueries({ queryKey: ["equipe", id] });
+    await qc.invalidateQueries({ queryKey: ["equipe", id] });
+    await qc.refetchQueries({ queryKey: ["equipe", id] });
+  }
+
+  async function togglePapelAdmin(m: any) {
+    if (!souCriador) return toast.error("Apenas o criador pode gerenciar admins");
+    if (m.user_id === equipe.criador_id) return;
+    const novo = m.papel === "admin" ? "membro" : "admin";
+    const { error } = await (supabase as any)
+      .from("equipe_membros").update({ papel: novo })
+      .eq("equipe_id", id).eq("user_id", m.user_id);
+    if (error) return toast.error(error.message);
+    toast.success(novo === "admin" ? "Promovido a admin" : "Rebaixado a membro");
+    await qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
+    await qc.refetchQueries({ queryKey: ["equipe-membros", id] });
   }
 
   async function excluirEquipe() {
