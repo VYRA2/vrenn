@@ -23,7 +23,8 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
   const [metas, setMetas] = useState<any[]>([]);
   const [loadingMetas, setLoadingMetas] = useState(true);
   const [saving, setSaving] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -45,11 +46,8 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
   const suggested = activeMeta?.categoria ? SUGGESTIONS[activeMeta.categoria.toLowerCase()] ?? ["#disciplina", "#constancia"] : ["#disciplina", "#constancia"];
 
   function pick(source: "camera" | "gallery") {
-    if (!fileRef.current) return;
-    fileRef.current.setAttribute("accept", "image/*,video/*");
-    if (source === "camera") fileRef.current.setAttribute("capture", "environment");
-    else fileRef.current.removeAttribute("capture");
-    fileRef.current.click();
+    if (source === "camera") cameraRef.current?.click();
+    else galleryRef.current?.click();
   }
 
   async function compressImage(input: File): Promise<File> {
@@ -119,7 +117,10 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
           <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground"><X size={18} /></button>
         </div>
 
-        <input ref={fileRef} type="file" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {/* Input câmera — abre câmera nativa com opção de foto ou vídeo */}
+        <input ref={cameraRef} type="file" accept="image/*,video/*" capture="environment" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {/* Input galeria — abre galeria do dispositivo */}
+        <input ref={galleryRef} type="file" accept="image/*,video/*" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
 
         {loadingMetas ? (
           <div className="flex items-center justify-center py-10 text-muted-foreground">
