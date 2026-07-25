@@ -33,6 +33,9 @@ function OnboardingPage() {
   const [nivelPerfil, setNivelPerfil] = useState<string | null>(null);
   const [missao, setMissao] = useState("");
   const [username, setUsername] = useState("");
+  const [usernameTaken, setUsernameTaken] = useState(false);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [sugestoes, setSugestoes] = useState<string[]>([]);
   const [perfilPublico, setPerfilPublico] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -45,6 +48,31 @@ function OnboardingPage() {
       if (p?.username) setUsername(p.username);
     })();
   }, []);
+
+  function gerarSugestoes(base: string): string[] {
+    const b = base.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const num = Math.floor(Math.random() * 900) + 100;
+    return [
+      `${b}_${num}`,
+      `${b}.vrenn`,
+      `${b}${new Date().getFullYear()}`,
+      `_${b}_`,
+    ].slice(0, 3);
+  }
+
+  async function verificarUsername(u: string) {
+    if (u.length < 3) { setUsernameTaken(false); setSugestoes([]); return; }
+    setUsernameChecking(true);
+    const { data } = await supabase.from("profiles").select("id").eq("username", u).maybeSingle();
+    setUsernameChecking(false);
+    if (data) {
+      setUsernameTaken(true);
+      setSugestoes(gerarSugestoes(u));
+    } else {
+      setUsernameTaken(false);
+      setSugestoes([]);
+    }
+  }
 
   function toggleCat(id: string) {
     setCategorias((prev) => {
@@ -169,11 +197,37 @@ function OnboardingPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Username</label>
-                <input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase())}
-                  className="mt-1.5 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
-                />
+                <div className="relative mt-1.5">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">@</span>
+                  <input
+                    value={username}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^a-zA-Z0-9_.]/g, "").toLowerCase();
+                      setUsername(val);
+                      verificarUsername(val);
+                    }}
+                    className={`w-full rounded-2xl border bg-card py-3 pl-7 pr-10 text-sm outline-none transition-colors ${usernameTaken ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"}`}
+                    placeholder="seuusername"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs">
+                    {usernameChecking ? <Loader2 size={14} className="animate-spin text-muted-foreground" /> :
+                     username.length >= 3 && !usernameTaken ? <span className="text-green-400">✓</span> : null}
+                  </span>
+                </div>
+                {usernameTaken && (
+                  <div className="mt-2 space-y-1.5">
+                    <p className="text-xs text-destructive">@{username} já está em uso. Sugestões:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {sugestoes.map((s) => (
+                        <button key={s} onClick={() => { setUsername(s); setUsernameTaken(false); setSugestoes([]); }}
+                          className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-bold text-primary-light">
+                          @{s}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Ou escolha um username diferente acima.</p>
+                  </div>
+                )}
               </div>
               <label className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer">
                 <input
@@ -191,7 +245,7 @@ function OnboardingPage() {
 
             <button
               onClick={finalizar}
-              disabled={saving || !username.trim()}
+              disabled={saving || !username.trim() || usernameTaken || usernameChecking}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <>Entrar no VRENN <ArrowRight size={16} /></>}
@@ -202,3 +256,4 @@ function OnboardingPage() {
     </main>
   );
 }
+
