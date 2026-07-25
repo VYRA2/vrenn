@@ -94,6 +94,17 @@ function EquipeProfile() {
     },
   });
 
+  const criadorInMembros = (membros ?? []).some((m: any) => m.user_id === equipe?.criador_id);
+  const { data: criadorProfile } = useQuery({
+    queryKey: ["equipe-criador-profile", equipe?.criador_id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("profiles").select("nome, username, avatar_url").eq("id", equipe.criador_id).maybeSingle();
+      return data;
+    },
+    enabled: !!equipe?.criador_id && !criadorInMembros,
+  });
+
   const { data: desafios, isLoading: loadingDesafios } = useQuery({
     queryKey: ["equipe-desafios", id],
     queryFn: async () => {
