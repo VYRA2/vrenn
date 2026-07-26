@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
+import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -402,6 +403,8 @@ function DueloDetalhe() {
         <CheckinDueloModal
           dueloId={id}
           userId={user.id}
+          tipoValidacao={duelo.tipo_validacao ?? "foto_arbitro"}
+          local={local}
           onClose={() => setShowCheckin(false)}
           onDone={() => {
             qc.invalidateQueries({ queryKey: ["duelo-checkin-hoje", id, user.id] });
@@ -907,12 +910,48 @@ function InfoBox({ icon: Icon, label, value }: { icon: any; label: string; value
 }
 
 // ─── Check-in do Duelo ───────────────────────────────────────────────────────
-function CheckinDueloModal({ dueloId, userId, onClose, onDone }: { dueloId: string; userId: string; onClose: () => void; onDone: () => void }) {
+function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onDone }: { dueloId: string; userId: string; tipoValidacao: string; local: any; onClose: () => void; onDone: () => void }) {
   const [mensagem, setMensagem] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const fileRef = { current: null as HTMLInputElement | null };
+
+  // ─── QR Code: escaneia obrigatoriamente antes de registrar ───
+  if (tipoValidacao === "qrcode") {
+    if (!local?.qrcode_token) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold">Check-in por QR Code</h3>
+              <button onClick={onClose}><X size={18} /></button>
+            </div>
+            <p className="text-xs text-muted-foreground">Nenhum local vinculado a este duelo.</p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <QrScanner
+        title={`Check-in — ${local.nome}`}
+        helper={`Escaneie o QR Code fixado em ${local.nome}.`}
+        expectedToken={local.qrcode_token}
+        onCancel={onClose}
+        onValid={async (raw) => {
+          const { error } = await supabase.from("checkins").insert({
+            duelo_id: dueloId,
+            user_id: userId,
+            meta_id: null,
+            validado: true,
+            mensagem: `Check-in validado por QR Code em ${local.nome}.`,
+          } as any);
+          if (error) throw error;
+          toast.success("Check-in validado por QR Code!");
+          onDone();
+        }}
+      />
+    );
+  }
 
   function pickFile() {
     const input = document.createElement("input");

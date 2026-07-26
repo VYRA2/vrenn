@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
+import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera, MessageSquare,
@@ -1138,6 +1139,29 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const { data: local } = useQuery({
+    queryKey: ["desafio-local-scan", desafio.local_id],
+    queryFn: async () => {
+      if (!desafio.local_id) return null;
+      const { data } = await supabase.from("locais_validacao").select("id, nome, qrcode_token").eq("id", desafio.local_id).maybeSingle();
+      return data;
+    },
+    enabled: desafio.tipo_validacao === "qrcode" && !!desafio.local_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  async function registrarQr(_raw: string) {
+    const { error } = await (supabase as any).from("checkins_desafio_equipe").insert({
+      desafio_id: desafio.id,
+      user_id: userId,
+      mensagem: `Check-in validado por QR Code em ${local?.nome ?? "local"}.`,
+      foto_url: null,
+    });
+    if (error) throw error;
+    toast.success("Check-in validado por QR Code!");
+    onCreated();
+  }
+
   function pickFile(f: File | null) {
     setFile(f);
     setPreview(f ? URL.createObjectURL(f) : null);
@@ -1172,8 +1196,37 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     }
   }
 
+  // ─── QR Code: exige leitura da câmera ───
+  if (desafio.tipo_validacao === "qrcode") {
+    if (!desafio.local_id || !local?.qrcode_token) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold">Check-in por QR Code</h3>
+              <button onClick={onClose}><X size={18} /></button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {desafio.local_id ? "Carregando QR Code do local…" : "Nenhum local vinculado a este desafio."}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <QrScanner
+        title={`Check-in — ${desafio.titulo}`}
+        helper={`Escaneie o QR Code fixado em ${local.nome}.`}
+        expectedToken={local.qrcode_token}
+        onCancel={onClose}
+        onValid={registrarQr}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold">Check-in — {desafio.titulo}</h3>
