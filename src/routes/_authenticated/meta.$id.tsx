@@ -977,7 +977,7 @@ function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreat
           <Camera size={15} /> Câmera
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             capture="environment"
             className="hidden"
             onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
@@ -987,7 +987,7 @@ function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreat
           <ImageIcon size={15} /> Galeria
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             className="hidden"
             onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
           />
