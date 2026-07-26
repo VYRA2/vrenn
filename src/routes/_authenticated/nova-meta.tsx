@@ -56,8 +56,9 @@ function NovaMeta() {
   });
 
   function proximoStep() {
-    if (step === 3 && tipoValidacao !== "foto_arbitro" && !localId) {
-      return toast.error("Selecione ou cadastre um local");
+    // Geolocalização usa coordenadas em tempo real — não precisa de local cadastrado
+    if (step === 3 && tipoValidacao === "qrcode" && !localId) {
+      return toast.error("Selecione ou cadastre um local para QR Code");
     }
     setStep(step + 1);
   }
@@ -76,7 +77,7 @@ function NovaMeta() {
       prazo: prazo ? new Date(prazo).toISOString() : null,
       valor_custodia: valor,
       tipo_validacao: tipoValidacao,
-      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+      local_id: tipoValidacao === "qrcode" ? localId : null,
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
     } as any).select().single();
@@ -305,4 +306,5 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
 
