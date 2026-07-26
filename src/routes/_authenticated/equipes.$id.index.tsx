@@ -1139,6 +1139,30 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const { data: local } = useQuery({
+    queryKey: ["desafio-local-scan", desafio.local_id],
+    queryFn: async () => {
+      if (!desafio.local_id) return null;
+      const { data } = await supabase.from("locais_validacao").select("id, nome, qrcode_token").eq("id", desafio.local_id).maybeSingle();
+      return data;
+    },
+    enabled: desafio.tipo_validacao === "qrcode" && !!desafio.local_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  async function registrarQr(raw: string) {
+    const { error } = await (supabase as any).from("checkins_desafio_equipe").insert({
+      desafio_id: desafio.id,
+      user_id: userId,
+      mensagem: `Check-in validado por QR Code em ${local?.nome ?? "local"}.`,
+      foto_url: null,
+      qrcode_lido: raw,
+    });
+    if (error) throw error;
+    toast.success("Check-in validado por QR Code!");
+    onCreated();
+  }
+
   function pickFile(f: File | null) {
     setFile(f);
     setPreview(f ? URL.createObjectURL(f) : null);
