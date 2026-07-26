@@ -120,6 +120,48 @@ function Notificacoes() {
                         <button onClick={() => responder(n, false)} className="rounded-xl border border-border py-2 text-xs font-bold text-muted-foreground">Recusar</button>
                       </div>
                     )}
+                    {isFollowRequest && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <button
+                          onClick={async () => {
+                            const match = n.mensagem?.match(/@([a-zA-Z0-9_.]+)/);
+                            const senderUsername = match?.[1];
+                            if (!senderUsername) return;
+                            const { data: sender } = await supabase.from("profiles").select("id").eq("username", senderUsername).maybeSingle();
+                            if (!sender) return toast.error("Usuário não encontrado");
+                            await supabase.from("follows").update({ status: "aceito" }).eq("follower_id", sender.id).eq("following_id", user.id).eq("status", "pendente");
+                            await supabase.rpc("notify", {
+                              _user_id: sender.id,
+                              _tipo: "follow_request",
+                              _mensagem: "Sua solicitação de seguir foi aceita! 🎉",
+                              _link_id: null,
+                            });
+                            await supabase.from("notificacoes").update({ lida: true }).eq("id", n.id);
+                            toast.success("Solicitação aceita!");
+                            refetch();
+                          }}
+                          className="rounded-xl bg-gradient-primary py-2 text-xs font-bold text-primary-foreground"
+                        >
+                          ✓ Aceitar
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const match = n.mensagem?.match(/@([a-zA-Z0-9_.]+)/);
+                            const senderUsername = match?.[1];
+                            if (!senderUsername) return;
+                            const { data: sender } = await supabase.from("profiles").select("id").eq("username", senderUsername).maybeSingle();
+                            if (!sender) return;
+                            await supabase.from("follows").delete().eq("follower_id", sender.id).eq("following_id", user.id).eq("status", "pendente");
+                            await supabase.from("notificacoes").update({ lida: true }).eq("id", n.id);
+                            toast.success("Solicitação recusada");
+                            refetch();
+                          }}
+                          className="rounded-xl border border-border py-2 text-xs font-bold text-muted-foreground"
+                        >
+                          ✕ Recusar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
 
@@ -164,6 +206,7 @@ function groupByDay(items: any[]) {
   }
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v.length));
 }
+
 
 
 
