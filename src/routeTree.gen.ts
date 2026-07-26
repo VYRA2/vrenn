@@ -28,6 +28,7 @@ import { Route as AuthenticatedDesafioTemporadaRouteImport } from './routes/_aut
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedComoFuncionaRouteImport } from './routes/_authenticated/como-funciona'
 import { Route as AuthenticatedBuscaRouteImport } from './routes/_authenticated/busca'
+import { Route as AuthenticatedArbitroRouteImport } from './routes/_authenticated/arbitro'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedWalletIndexRouteImport } from './routes/_authenticated/wallet.index'
@@ -148,6 +149,11 @@ const AuthenticatedComoFuncionaRoute =
 const AuthenticatedBuscaRoute = AuthenticatedBuscaRouteImport.update({
   id: '/busca',
   path: '/busca',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedArbitroRoute = AuthenticatedArbitroRouteImport.update({
+  id: '/arbitro',
+  path: '/arbitro',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/arbitro': typeof AuthenticatedArbitroRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/arbitro': typeof AuthenticatedArbitroRoute
   '/busca': typeof AuthenticatedBuscaRoute
   '/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/arbitro': typeof AuthenticatedArbitroRoute
   '/_authenticated/busca': typeof AuthenticatedBuscaRoute
   '/_authenticated/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/arbitro'
     | '/busca'
     | '/como-funciona'
     | '/configuracoes'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/arbitro'
     | '/busca'
     | '/como-funciona'
     | '/configuracoes'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/arbitro'
     | '/_authenticated/busca'
     | '/_authenticated/como-funciona'
     | '/_authenticated/configuracoes'
@@ -696,6 +708,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuscaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arbitro': {
+      id: '/_authenticated/arbitro'
+      path: '/arbitro'
+      fullPath: '/arbitro'
+      preLoaderRoute: typeof AuthenticatedArbitroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -861,6 +880,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedArbitroRoute: typeof AuthenticatedArbitroRoute
   AuthenticatedBuscaRoute: typeof AuthenticatedBuscaRoute
   AuthenticatedComoFuncionaRoute: typeof AuthenticatedComoFuncionaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -896,6 +916,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedArbitroRoute: AuthenticatedArbitroRoute,
   AuthenticatedBuscaRoute: AuthenticatedBuscaRoute,
   AuthenticatedComoFuncionaRoute: AuthenticatedComoFuncionaRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,

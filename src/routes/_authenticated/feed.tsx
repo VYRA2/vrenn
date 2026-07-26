@@ -41,7 +41,6 @@ function Feed() {
     },
   });
 
-  const qc = useQueryClient();
 
   const { data: posts, isLoading, refetch } = useQuery({
     queryKey: ["feed-posts", user.id],
