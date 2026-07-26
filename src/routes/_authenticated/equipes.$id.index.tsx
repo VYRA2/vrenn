@@ -213,6 +213,8 @@ function EquipeProfile() {
   const ativos = (desafios ?? []).filter((d: any) => d.status === "ativo").length;
   const concluidos = (desafios ?? []).filter((d: any) => d.status === "concluido").length;
   const souAdmin = (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "admin");
+  const souCoadmin = (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "co_admin");
+  const temCoadmin = (membros ?? []).some((m: any) => m.papel === "co_admin");
 
   function jaParticipa(desafioId: string) {
     return (participacoes ?? []).some((p: any) => p.desafio_id === desafioId);
@@ -607,12 +609,40 @@ function EquipeProfile() {
                     <div className="mt-2 text-[11px] font-bold truncate">{m.profiles?.nome ?? "—"}</div>
                     <div className="text-[10px] text-muted-foreground truncate">@{m.profiles?.username ?? "—"}</div>
                     {m.papel === "admin" && <div className="mt-1 rounded-full border border-accent/40 px-1.5 py-0.5 text-[9px] text-accent">Admin</div>}
-                    {souCriador && m.user_id !== equipe.criador_id && m.papel !== "admin" && (
+                    {(souCriador || souAdmin) && m.user_id !== equipe.criador_id && m.papel === "membro" && (
+                      <div className="mt-1 flex flex-col gap-0.5">
+                        <button
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePapelAdmin(m); }}
+                          className="w-full rounded-full border border-primary/40 bg-primary/10 px-1.5 py-1 text-[9px] font-bold text-primary-light"
+                        >
+                          + Admin
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const { error } = await supabase.rpc("promover_coadmin_equipe", { _equipe_id: id, _user_id: m.user_id });
+                            if (error) return toast.error(error.message);
+                            toast.success("Co-admin promovido! ⚖️");
+                            qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
+                          }}
+                          className="w-full rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-1 text-[9px] font-bold text-amber-400"
+                        >
+                          ⚖️ Co-admin
+                        </button>
+                      </div>
+                    )}
+                    {(souCriador || souAdmin) && m.papel === "co_admin" && (
                       <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePapelAdmin(m); }}
-                        className="mt-1 w-full rounded-full border border-primary/40 bg-primary/10 px-1.5 py-1 text-[9px] font-bold text-primary-light hover:bg-primary/20"
+                        onClick={async (e) => {
+                          e.preventDefault(); e.stopPropagation();
+                          const { error } = await supabase.rpc("rebaixar_coadmin_equipe", { _equipe_id: id, _user_id: m.user_id });
+                          if (error) return toast.error(error.message);
+                          toast.success("Co-admin removido");
+                          qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
+                        }}
+                        className="mt-1 w-full rounded-full border border-border px-1.5 py-1 text-[9px] font-bold text-muted-foreground"
                       >
-                        + Admin
+                        Remover co-admin
                       </button>
                     )}
                   </Link>
@@ -835,11 +865,14 @@ function EquipeProfile() {
       )}
 
       {/* Painel de justificativas pendentes para admin */}
-      {souAdmin && (justificativasPendentes ?? []).length > 0 && (
+      {(souAdmin || souCoadmin) && (justificativasPendentes ?? []).length > 0 && (
         <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto max-w-md px-4">
           <div className="rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-4 space-y-3 shadow-xl">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-yellow-500">⏳ Justificativas pendentes ({(justificativasPendentes ?? []).length})</span>
+              {!temCoadmin && souAdmin && (
+                <span className="text-[10px] text-amber-400">⚠️ Sem co-admin — sua decisão é final</span>
+              )}
             </div>
             {(justificativasPendentes ?? []).slice(0, 3).map((j: any) => (
               <div key={j.id} className="rounded-xl bg-background border border-border p-3 space-y-2">
@@ -1419,5 +1452,6 @@ function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone
     </div>
   );
 }
+
 
 
