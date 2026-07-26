@@ -90,7 +90,8 @@ function MetaDetail() {
   const { data: valorCustodia } = useQuery({
     queryKey: ["meta-valor-custodia", id],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_meta_valor_custodia", { _meta_id: id });
+      // valor_custodia já vem na query principal — evitar RPC extra que pode não existir
+      const { data } = await supabase.from("metas").select("valor_custodia").eq("id", id).maybeSingle();
       return Number(data ?? 0);
     },
   });
@@ -972,8 +973,18 @@ function CheckinFotoArbitro({ metaId, userId, acceptedArbitros, onClose, onCreat
         </div>
       )}
       <div className="flex items-center gap-2">
-        <label className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
-          <Camera size={16} /> {file ? "Trocar foto" : "Adicionar foto"}
+        <label className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-primary-light cursor-pointer">
+          <Camera size={15} /> Câmera
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <label className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-semibold text-muted-foreground cursor-pointer">
+          <ImageIcon size={15} /> Galeria
           <input
             type="file"
             accept="image/*"
@@ -1409,3 +1420,4 @@ function JustificarFaltaMetaModal({ metaId, userId, onClose, onDone }: {
     </div>
   );
 }
+
