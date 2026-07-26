@@ -41,21 +41,43 @@ function Notificacoes() {
 
   async function responder(notif: any, aceitar: boolean) {
     if (!notif.link_id) return;
-    const status = aceitar ? "aceito" : "recusado";
-    const { data: arb, error } = await supabase.from("arbitros").update({ status }).eq("id", notif.link_id).select("*, metas:meta_id (user_id, titulo)").maybeSingle();
-    if (error) return toast.error(error.message);
     await supabase.from("notificacoes").update({ lida: true }).eq("id", notif.id);
-    if (arb?.metas) {
-      await supabase.rpc("notify", {
-        _user_id: (arb.metas as any).user_id,
-        _tipo: aceitar ? "arbitro_aceitou" : "arbitro_recusou",
-        _mensagem: aceitar
-          ? `Seu convite para árbitro foi aceito.`
-          : `Seu convite para árbitro foi recusado.`,
-        _link_id: arb.meta_id,
+
+    // Verificar se é duelo ou meta
+    const { data: duelo } = await supabase.from("duelos").select("id").eq("id", notif.link_id).maybeSingle();
+
+    if (duelo) {
+      // Árbitro de duelo → usar RPC que sorteia novo se recusar
+      const { error } = await supabase.rpc("responder_convite_arbitro_duelo", {
+        _duelo_id: notif.link_id,
+        _aceitar: aceitar,
       });
+      if (error) return toast.error(error.message);
+      toast.success(aceitar ? "Arbitragem aceita! +5 pts ⚖️" : "Convite recusado — outro árbitro será sorteado");
+    } else {
+      // Árbitro de meta solo
+      const { data: arb } = await supabase.from("arbitros")
+        .select("*, metas:meta_id(user_id, titulo)")
+        .eq("meta_id", notif.link_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!arb) return toast.error("Convite não encontrado");
+      await supabase.from("arbitros").update({ status: aceitar ? "aceito" : "recusado" }).eq("id", arb.id);
+      if (arb?.metas) {
+        await supabase.rpc("notify", {
+          _user_id: (arb.metas as any).user_id,
+          _tipo: aceitar ? "arbitro_aceitou" : "arbitro_recusou",
+          _mensagem: aceitar
+            ? "Seu árbitro aceitou o convite! ⚖️"
+            : "Seu árbitro recusou. O sistema irá sugerir outro automaticamente.",
+          _link_id: arb.meta_id,
+        });
+      }
+      if (!aceitar) {
+        await supabase.rpc("sortear_arbitro_meta", { _meta_id: notif.link_id });
+      }
+      toast.success(aceitar ? "Arbitragem aceita! +5 pts ⚖️" : "Convite recusado");
     }
-    toast.success(aceitar ? "Convite aceito!" : "Convite recusado");
     qc.invalidateQueries({ queryKey: ["notifs", user.id] });
   }
 
@@ -206,6 +228,7 @@ function groupByDay(items: any[]) {
   }
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v.length));
 }
+
 
 
 
