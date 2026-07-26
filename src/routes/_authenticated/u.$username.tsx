@@ -29,7 +29,7 @@ function PerfilPublico() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, nome, username, avatar_url, bio, missao, nivel, created_at")
+        .select("id, nome, username, avatar_url, bio, missao, nivel, created_at, perfil_publico")
         .eq("username", username)
         .maybeSingle();
       return data;
@@ -123,11 +123,26 @@ function PerfilPublico() {
     if (!targetId) return;
     if (follow) {
       await supabase.from("follows").delete().eq("id", follow.id);
+      toast.success(solicitacaoPendente ? "Solicitação cancelada" : "Deixou de seguir");
     } else {
+      const followStatus = isPrivado ? "pendente" : "aceito";
       const { error } = await supabase.from("follows").insert({
-        follower_id: user.id, following_id: targetId, status: "aceito",
+        follower_id: user.id,
+        following_id: targetId,
+        status: followStatus,
       });
       if (error && !error.message.includes("duplicate")) return toast.error(error.message);
+      if (isPrivado) {
+        await supabase.rpc("notify", {
+          _user_id: targetId,
+          _tipo: "follow_request",
+          _mensagem: `@${profile?.username ?? "alguém"} quer te seguir. Aceite ou recuse nas notificações.`,
+          _link_id: null,
+        });
+        toast.success("Solicitação enviada!");
+      } else {
+        toast.success("Seguindo!");
+      }
     }
     refetchFollow();
     qc.invalidateQueries({ queryKey: ["public-counters", targetId] });
@@ -148,6 +163,9 @@ function PerfilPublico() {
 
   const initial = (profile?.nome ?? "?")[0]?.toUpperCase();
   const seguindoNow = follow?.status === "aceito";
+  const solicitacaoPendente = follow?.status === "pendente";
+  const isPrivado = profile?.perfil_publico === false;
+  const podeVerConteudo = !isPrivado || seguindoNow;
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
@@ -216,10 +234,12 @@ function PerfilPublico() {
               className={`h-11 flex-1 rounded-2xl border text-sm font-bold transition-colors ${
                 seguindoNow
                   ? "border-primary bg-primary text-primary-foreground"
+                  : solicitacaoPendente
+                  ? "border-border bg-card text-muted-foreground"
                   : "border-primary bg-transparent text-primary-light"
               }`}
             >
-              {seguindoNow ? "Seguindo" : "Seguir"}
+              {seguindoNow ? "✓ Seguindo" : solicitacaoPendente ? "⏳ Solicitado" : isPrivado ? "🔒 Solicitar" : "Seguir"}
             </button>
             <button
               onClick={async () => {
@@ -247,6 +267,27 @@ function PerfilPublico() {
               Mensagem
             </button>
           </section>
+
+          {/* Perfil privado bloqueado */}
+          {isPrivado && !podeVerConteudo && (
+            <div className="mt-8 flex flex-col items-center gap-4 py-8 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-border bg-card text-4xl">🔒</div>
+              <div>
+                <div className="text-base font-bold">Perfil privado</div>
+                <div className="mt-1 text-sm text-muted-foreground max-w-xs">
+                  Siga {profile.nome?.split(" ")[0] ?? "@" + profile.username} para ver as publicações, metas e conquistas.
+                </div>
+              </div>
+              {solicitacaoPendente && (
+                <div className="rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+                  Sua solicitação está pendente de aprovação.
+                </div>
+              )}
+            </div>
+          )}
+
+          {podeVerConteudo && (
+            <>
 
           {/* Missão */}
           {profile.missao && (
@@ -456,6 +497,9 @@ function PerfilPublico() {
         </div>
       )}
 
+            </>
+          )}
+
       <BottomNav />
     </main>
   );
@@ -549,3 +593,4 @@ const CONQUISTAS_CATALOGO = [
   { slug: "lenda",              emoji: "👑", label: "Lenda",          color: "#7B2EFF" },
   { slug: "master_concluido",   emoji: "🏆", label: "Master Season",  color: "#FFD700" },
 ] as const;
+
