@@ -1197,8 +1197,37 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     }
   }
 
+  // ─── QR Code: exige leitura da câmera ───
+  if (desafio.tipo_validacao === "qrcode") {
+    if (!desafio.local_id || !local?.qrcode_token) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold">Check-in por QR Code</h3>
+              <button onClick={onClose}><X size={18} /></button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {desafio.local_id ? "Carregando QR Code do local…" : "Nenhum local vinculado a este desafio."}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <QrScanner
+        title={`Check-in — ${desafio.titulo}`}
+        helper={`Escaneie o QR Code fixado em ${local.nome}.`}
+        expectedToken={local.qrcode_token}
+        onCancel={onClose}
+        onValid={registrarQr}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl border border-border bg-card p-5 space-y-3 animate-in slide-in-from-bottom">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold">Check-in — {desafio.titulo}</h3>
