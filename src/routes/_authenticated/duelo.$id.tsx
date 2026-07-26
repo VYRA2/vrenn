@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
+import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { toast } from "sonner";
 import { useState } from "react";
