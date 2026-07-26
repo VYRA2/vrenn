@@ -1150,13 +1150,12 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     staleTime: 5 * 60 * 1000,
   });
 
-  async function registrarQr(raw: string) {
+  async function registrarQr(_raw: string) {
     const { error } = await (supabase as any).from("checkins_desafio_equipe").insert({
       desafio_id: desafio.id,
       user_id: userId,
       mensagem: `Check-in validado por QR Code em ${local?.nome ?? "local"}.`,
       foto_url: null,
-      qrcode_lido: raw,
     });
     if (error) throw error;
     toast.success("Check-in validado por QR Code!");
