@@ -942,7 +942,7 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
             duelo_id: dueloId,
             user_id: userId,
             meta_id: null,
-            qrcode_lido: raw,
+            validado: true,
             mensagem: `Check-in validado por QR Code em ${local.nome}.`,
           } as any);
           if (error) throw error;
