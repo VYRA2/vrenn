@@ -268,6 +268,32 @@ export default function ArbitroCentral() {
   );
 }
 
+// ── Contador regressivo de prazo ─────────────────────────────────
+function PrazoArbitro({ createdAt }: { createdAt: string }) {
+  const prazoMs = new Date(createdAt).getTime() + 24 * 60 * 60 * 1000;
+  const agora = Date.now();
+  const restanteMs = prazoMs - agora;
+
+  if (restanteMs <= 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive">
+        <AlertTriangle size={10} /> Prazo expirado — será auto-aprovado
+      </span>
+    );
+  }
+
+  const horas = Math.floor(restanteMs / (1000 * 60 * 60));
+  const minutos = Math.floor((restanteMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  const cor = horas < 4 ? "text-destructive" : horas < 12 ? "text-amber-400" : "text-muted-foreground";
+
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${cor}`}>
+      <Clock size={10} /> {horas}h {minutos}min restantes para validar
+    </span>
+  );
+}
+
 // ── Card de check-in para o árbitro validar ──────────────────────
 function ArbitroCheckinCard({ checkin, userId, onDone }: any) {
   const [comentario, setComentario] = useState("");
@@ -281,28 +307,13 @@ function ArbitroCheckinCard({ checkin, userId, onDone }: any) {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.from("checkin_validacoes").upsert({
-        checkin_id: checkin.id,
-        arbitro_id: userId,
-        status,
-        comentario: comentario || null,
-      }, { onConflict: "checkin_id,arbitro_id" });
-      if (error) throw error;
-
-      if (status === "validado") {
-        await supabase.from("checkins").update({ validado: true }).eq("id", checkin.id);
-      }
-
-      await supabase.rpc("notify", {
-        _user_id: checkin.user_id,
-        _tipo: status === "validado" ? "checkin_validado" : "checkin_questionado",
-        _mensagem: status === "validado"
-          ? "Seu check-in foi aprovado pelo árbitro ✓"
-          : `Seu check-in foi questionado pelo árbitro: ${comentario}`,
-        _link_id: checkin.meta_id,
+      const { error } = await supabase.rpc("arbitro_validar_checkin", {
+        _checkin_id: checkin.id,
+        _status: status,
+        _comentario: comentario || null,
       });
-
-      toast.success(status === "validado" ? "Check-in aprovado!" : "Check-in questionado");
+      if (error) throw error;
+      toast.success(status === "validado" ? "Check-in aprovado! +3 pts de reputação ⚖️" : "Check-in questionado");
       onDone();
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao validar");
@@ -332,6 +343,7 @@ function ArbitroCheckinCard({ checkin, userId, onDone }: any) {
             <Clock size={10} />
             {new Date(checkin.created_at).toLocaleString("pt-BR")}
           </div>
+          <PrazoArbitro createdAt={checkin.created_at} />
         </div>
         <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full shrink-0">
           <AlertTriangle size={10} /> Pendente
@@ -401,7 +413,7 @@ function ArbitroDueloCard({ duelo, userId, onDone }: any) {
         _sucesso:  resultado === "empate_sucesso",
       });
       if (error) throw error;
-      toast.success("Resultado declarado! Custódias liberadas.");
+      toast.success("Resultado declarado! +20 pts de reputação de árbitro ⚖️");
       onDone();
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao declarar resultado");
@@ -489,3 +501,4 @@ function ArbitroDueloCard({ duelo, userId, onDone }: any) {
     </div>
   );
 }
+
