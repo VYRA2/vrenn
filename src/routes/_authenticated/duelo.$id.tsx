@@ -403,6 +403,8 @@ function DueloDetalhe() {
         <CheckinDueloModal
           dueloId={id}
           userId={user.id}
+          tipoValidacao={duelo.tipo_validacao ?? "foto_arbitro"}
+          local={local}
           onClose={() => setShowCheckin(false)}
           onDone={() => {
             qc.invalidateQueries({ queryKey: ["duelo-checkin-hoje", id, user.id] });
