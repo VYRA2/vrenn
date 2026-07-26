@@ -49,15 +49,16 @@ function OnboardingPage() {
     })();
   }, []);
 
-  function gerarSugestoes(base: string): string[] {
+  async function gerarSugestoes(base: string): Promise<string[]> {
     const b = base.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const num = Math.floor(Math.random() * 900) + 100;
-    return [
-      `${b}_${num}`,
-      `${b}.vrenn`,
-      `${b}${new Date().getFullYear()}`,
-      `_${b}_`,
-    ].slice(0, 3);
+    const candidatos = [b, `${b}2`, `${b}3`, `${b}.vrenn`, `${b}${new Date().getFullYear()}`];
+    const sugs: string[] = [];
+    for (const c of candidatos) {
+      if (sugs.length >= 3) break;
+      const { data } = await supabase.from("profiles").select("id").eq("username", c).maybeSingle();
+      if (!data) sugs.push(c); // disponível
+    }
+    return sugs;
   }
 
   async function verificarUsername(u: string) {
@@ -67,7 +68,7 @@ function OnboardingPage() {
     setUsernameChecking(false);
     if (data) {
       setUsernameTaken(true);
-      setSugestoes(gerarSugestoes(u));
+      setSugestoes(await gerarSugestoes(u));
     } else {
       setUsernameTaken(false);
       setSugestoes([]);
