@@ -222,17 +222,24 @@ function EquipeProfile() {
 
   async function entrarNoDesafio(desafio: any) {
     if (desafio.status !== "ativo") return toast.error("Este desafio não está mais aberto para entradas.");
+
+    // FIX: verificar no cache local antes de qualquer request
+    const jaParticipa = (participacoes ?? []).some((p: any) => p.desafio_id === desafio.id);
+    if (jaParticipa) {
+      toast("Você já está participando deste desafio!");
+      return;
+    }
+
     setEntrando(desafio.id);
     try {
-      // Verificar participação diretamente no banco (mais confiável que o cache local)
-      const { data: jaExiste } = await (supabase as any)
+      // Dupla verificação no banco (contorna cache stale)
+      const { count } = await (supabase as any)
         .from("desafio_equipe_participantes")
-        .select("id")
+        .select("id", { count: "exact", head: true })
         .eq("desafio_id", desafio.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
 
-      if (jaExiste) {
+      if (count && count > 0) {
         toast("Você já está participando deste desafio!");
         setEntrando(null);
         refetchParticipacoes();
@@ -258,15 +265,15 @@ function EquipeProfile() {
         if (lockErr) throw new Error(lockErr.message);
       }
 
-      // 2. Insere participação
-      const { error: insErr } = await (supabase as any).from("desafio_equipe_participantes").insert({
+      // 2. Insere participação com ON CONFLICT — idempotente
+      const { error: insErr } = await (supabase as any).from("desafio_equipe_participantes").upsert({
         desafio_id: desafio.id,
         user_id: user.id,
         status: "em_andamento",
         progresso: 0,
-      });
+      }, { onConflict: "desafio_id,user_id", ignoreDuplicates: true });
       if (insErr) {
-        // Se for duplicate key, significa que já participava — só atualiza cache
+        // Se ainda der duplicate key por algum motivo
         if (insErr.code === "23505") {
           toast("Você já está participando deste desafio!");
           refetchParticipacoes();
@@ -1452,6 +1459,7 @@ function JustificarFaltaDesafioModal({ desafio, userId, adminId, onClose, onDone
     </div>
   );
 }
+
 
 
 
