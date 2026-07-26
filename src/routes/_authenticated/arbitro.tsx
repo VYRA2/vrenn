@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/hooks/useSession";
+
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/arbitro")({
 });
 
 export default function ArbitroCentral() {
-  const { user } = useSession();
+  const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"pendentes" | "historico">("pendentes");
 

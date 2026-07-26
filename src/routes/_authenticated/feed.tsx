@@ -8,7 +8,7 @@ import { CommentsModal } from "@/components/CommentsModal";
 import { shareToInstagram } from "@/lib/shareToInstagram";
 
 import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type Tab = "feed" | "seguindo" | "destaques" | "comunidades";
