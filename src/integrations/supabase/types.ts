@@ -388,6 +388,7 @@ export type Database = {
           premio_acumulado: number
           regras: Json
           status: string
+          subcategoria: string | null
           tipo_validacao: string
           titulo: string
           valor_entrada: number
@@ -410,6 +411,7 @@ export type Database = {
           premio_acumulado?: number
           regras?: Json
           status?: string
+          subcategoria?: string | null
           tipo_validacao?: string
           titulo: string
           valor_entrada?: number
@@ -432,6 +434,7 @@ export type Database = {
           premio_acumulado?: number
           regras?: Json
           status?: string
+          subcategoria?: string | null
           tipo_validacao?: string
           titulo?: string
           valor_entrada?: number
@@ -475,6 +478,7 @@ export type Database = {
           progresso_challenger: number | null
           progresso_opponent: number | null
           status: string
+          subcategoria: string | null
           titulo: string
           valor_custodia: number | null
           winner_id: string | null
@@ -500,6 +504,7 @@ export type Database = {
           progresso_challenger?: number | null
           progresso_opponent?: number | null
           status?: string
+          subcategoria?: string | null
           titulo: string
           valor_custodia?: number | null
           winner_id?: string | null
@@ -525,6 +530,7 @@ export type Database = {
           progresso_challenger?: number | null
           progresso_opponent?: number | null
           status?: string
+          subcategoria?: string | null
           titulo?: string
           valor_custodia?: number | null
           winner_id?: string | null
@@ -898,6 +904,7 @@ export type Database = {
           prazo: string | null
           progresso: number
           status: string
+          subcategoria: string | null
           tipo_validacao: string
           titulo: string
           user_id: string
@@ -919,6 +926,7 @@ export type Database = {
           prazo?: string | null
           progresso?: number
           status?: string
+          subcategoria?: string | null
           tipo_validacao?: string
           titulo: string
           user_id: string
@@ -940,6 +948,7 @@ export type Database = {
           prazo?: string | null
           progresso?: number
           status?: string
+          subcategoria?: string | null
           tipo_validacao?: string
           titulo?: string
           user_id?: string
