@@ -160,7 +160,7 @@ function Notificacoes() {
                               _user_id: sender.id,
                               _tipo: "follow_request",
                               _mensagem: "Sua solicitação de seguir foi aceita! 🎉",
-                              _link_id: null,
+                              _link_id: undefined,
                             });
                             await supabase.from("notificacoes").update({ lida: true }).eq("id", n.id);
                             toast.success("Solicitação aceita!");
