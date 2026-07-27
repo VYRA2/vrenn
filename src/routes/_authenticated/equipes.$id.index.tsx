@@ -954,6 +954,7 @@ function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy:
   const [nome, setNome] = useState(equipe.nome ?? "");
   const [descricao, setDescricao] = useState(equipe.descricao ?? "");
   const [categoria, setCategoria] = useState(equipe.categoria ?? "");
+  const [publica, setPublica] = useState<boolean>(equipe.publica ?? true);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(equipe.avatar_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -978,7 +979,7 @@ function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy:
       avatar_url = data.publicUrl;
     }
     setUploading(false);
-    onSave({ nome: nome.trim(), descricao: descricao.trim() || null, avatar_url, categoria: categoria.trim() || null });
+    onSave({ nome: nome.trim(), descricao: descricao.trim() || null, avatar_url, categoria: categoria.trim() || null, publica });
   }
 
   const isBusy = busy || uploading;
@@ -1019,6 +1020,26 @@ function EditEquipeModal({ equipe, busy, onClose, onSave }: { equipe: any; busy:
           <span className="text-muted-foreground">Categoria</span>
           <input value={categoria} onChange={(e) => setCategoria(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary" />
         </label>
+        {/* Visibilidade */}
+        <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold flex items-center gap-1.5">
+                {publica ? <><BadgeCheck size={14} className="text-primary-light" /> Equipe pública</> : <><Lock size={14} className="text-muted-foreground" /> Equipe privada</>}
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {publica ? "Qualquer pessoa pode entrar sem aprovação" : "Entrada por solicitação — admin aprova"}
+              </div>
+            </div>
+            <button
+              onClick={() => setPublica((v) => !v)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${publica ? "bg-primary" : "bg-secondary"}`}
+            >
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${publica ? "translate-x-5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+        </div>
+
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} disabled={isBusy} className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold disabled:opacity-60">Cancelar</button>
           <button onClick={salvar} disabled={isBusy || !nome.trim()} className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60 inline-flex items-center justify-center gap-2">
