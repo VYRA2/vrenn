@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { QrCode, MapPin, Shield, Search, Plus, Crosshair, Loader2, Minus, Camera } from "lucide-react";
+import { QrCode, MapPin, Shield, Search, Plus, Crosshair, Loader2, Minus, Camera, Activity } from "lucide-react";
+import { subcategoriaSuportaStrava } from "@/lib/categorias";
 
-export type TipoValidacao = "qrcode" | "geolocalizacao" | "foto_arbitro";
+export type TipoValidacao = "qrcode" | "geolocalizacao" | "foto_arbitro" | "strava";
 type ValStep = "metodo" | "buscar" | "cadastrar";
 
 interface ValidacaoStepProps {
@@ -13,9 +15,26 @@ interface ValidacaoStepProps {
   localId: string | null;
   onChangeLocalId: (id: string | null) => void;
   userId: string;
+  subcategoria?: string | null;
 }
 
-export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLocalId, userId }: ValidacaoStepProps) {
+export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLocalId, userId, subcategoria }: ValidacaoStepProps) {
+  const stravaOk = subcategoriaSuportaStrava(subcategoria);
+
+  // Se o usuário havia escolhido Strava mas trocou de subcategoria para uma não-Strava, volta para qrcode.
+  useEffect(() => {
+    if (tipoValidacao === "strava" && !stravaOk) onChangeTipo("qrcode");
+  }, [stravaOk, tipoValidacao, onChangeTipo]);
+
+  const { data: stravaConn } = useQuery({
+    queryKey: ["strava-conexao", userId],
+    queryFn: async () => {
+      const { data } = await supabase.from("strava_connections").select("athlete_name").eq("user_id", userId).maybeSingle();
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+
   const [valStep, setValStep] = useState<ValStep>("metodo");
   const [localNome, setLocalNome] = useState("");
   const [localQrToken, setLocalQrToken] = useState<string | null>(null);
@@ -172,12 +191,42 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
         desc="Envie uma foto do progresso e um árbitro convidado valida cada check-in."
       />
 
-      {tipoValidacao !== "foto_arbitro" && (
+      {stravaOk && (
+        <MetodoCard
+          active={tipoValidacao === "strava"}
+          onClick={() => { onChangeTipo("strava"); onChangeLocalId(null); setLocalNome(""); }}
+          icon={<Activity size={22} className="text-[#FC4C02]" />}
+          title="Strava (automático)"
+          desc="A atividade registrada no seu Strava valida o check-in automaticamente (30 min + 500 m)."
+        />
+      )}
+
+      {tipoValidacao === "strava" && (
+        <div className="rounded-2xl border border-[#FC4C02]/30 bg-[#FC4C02]/5 p-4 text-xs space-y-2">
+          {stravaConn?.athlete_name ? (
+            <>
+              <div className="font-bold text-[#FC4C02]">Strava conectado</div>
+              <div className="text-muted-foreground">Atleta: {stravaConn.athlete_name}</div>
+            </>
+          ) : (
+            <>
+              <div className="font-bold text-[#FC4C02]">Strava não conectado</div>
+              <p className="text-muted-foreground">Conecte sua conta para validar check-ins automaticamente.</p>
+              <Link to="/strava-connect" className="inline-flex items-center gap-1 text-[#FC4C02] font-semibold underline">
+                Conectar Strava
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+
+      {(tipoValidacao === "qrcode" || tipoValidacao === "geolocalizacao") && (
         <button onClick={() => setValStep("buscar")} className="w-full rounded-xl border border-border bg-card p-3 text-left text-sm">
           <div className="text-xs text-muted-foreground">Local selecionado</div>
           <div className="mt-1 font-semibold truncate">{localNome || (localId ? "Local escolhido" : "Nenhum — toque para escolher")}</div>
         </button>
       )}
+
 
       {tipoValidacao === "qrcode" && localId && localQrToken && (
         <div className="rounded-2xl border border-border bg-card p-4 text-center space-y-2">

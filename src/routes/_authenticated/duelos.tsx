@@ -5,9 +5,11 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { BottomNav } from "@/components/BottomNav";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
 import { toast } from "sonner";
 import { ArrowLeft, Info, Swords, Trophy, Users, Loader2, X, Flame } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+
 
 export const Route = createFileRoute("/_authenticated/duelos")({
   component: Duelos,
@@ -235,6 +237,7 @@ function Avatar({ profile, ring }: { profile: any; ring?: boolean }) {
 function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onClose: ()=>void; onCreated: ()=>void }) {
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [prazo, setPrazo] = useState("");
   const [valorCustodia, setValorCustodia] = useState("");
   const [oponente, setOponente] = useState("");
@@ -267,6 +270,7 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         opponent_email: opponentEmail,
         titulo,
         categoria,
+        subcategoria,
         prazo: prazo ? new Date(prazo).toISOString() : null,
         valor_custodia: parseFloat(valorCustodia) || 0,
         frequencia_tipo: frequenciaTipo,
@@ -306,7 +310,8 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         </div>
 
         <Input label="Título do duelo" value={titulo} onChange={setTitulo} placeholder="Ex: Perder 5kg em 30 dias"/>
-        <Input label="Categoria" value={categoria} onChange={setCategoria} placeholder="fitness, estudos, hábitos…"/>
+        <Input label="Categoria" value={categoria} onChange={(v: string) => { setCategoria(v); setSubcategoria(null); }} placeholder="fitness, estudos, hábitos…"/>
+        <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
         <Input label="Prazo final" type="date" value={prazo} onChange={setPrazo}/>
         <Input label="Valor em custódia (R$)" type="number" value={valorCustodia} onChange={setValorCustodia} placeholder="0.00"/>
 

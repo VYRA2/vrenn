@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar, Award, BarChart2, Star } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/desafio/novo")({
   component: NovoDesafio,
@@ -31,6 +32,7 @@ function NovoDesafio() {
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("saude");
+  const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [duracao, setDuracao] = useState(30);
   const [valor, setValor] = useState("50,00");
   const [premiacao, setPremiacao] = useState("");
@@ -71,6 +73,7 @@ function NovoDesafio() {
       titulo: titulo.trim(),
       descricao: descricao.trim(),
       categoria,
+      subcategoria,
       duracao_dias: duracao,
       data_inicio: inicio.toISOString().slice(0, 10),
       data_fim: fim.toISOString().slice(0, 10),
@@ -145,12 +148,14 @@ function NovoDesafio() {
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Categoria">
-                <Select value={categoria} onChange={setCategoria} options={CATEGORIAS.map(c => ({ value: c, label: c[0].toUpperCase()+c.slice(1) }))} />
+                <Select value={categoria} onChange={(v) => { setCategoria(v); setSubcategoria(null); }} options={CATEGORIAS.map(c => ({ value: c, label: c[0].toUpperCase()+c.slice(1) }))} />
               </Field>
               <Field label="Duração">
                 <Select value={String(duracao)} onChange={(v) => setDuracao(Number(v))} options={DURACOES.map(d => ({ value: String(d), label: `${d} dias` }))} sub={`${fmt(inicio)} até ${fmt(fim)}`} />
               </Field>
             </div>
+
+            <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
 
             <div className="rounded-2xl border border-border bg-card">
               <div className="p-4 flex items-start gap-3 border-b border-border">
@@ -309,6 +314,7 @@ function NovoDesafio() {
               localId={localId}
               onChangeLocalId={setLocalId}
               userId={user.id}
+              subcategoria={subcategoria}
             />
 
             {/* Frequência de check-in */}

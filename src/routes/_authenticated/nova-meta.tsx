@@ -6,10 +6,13 @@ import { toast } from "sonner";
 import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
+import { labelSubcategoria } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/nova-meta")({
   component: NovaMeta,
 });
+
 
 const CATEGORIAS = [
   { id: "fitness", label: "Fitness", icon: Dumbbell },
@@ -28,6 +31,7 @@ function NovaMeta() {
   const [loading, setLoading] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [descricao, setDescricao] = useState("");
   const [motivacao, setMotivacao] = useState("");
   const [prazo, setPrazo] = useState("");
@@ -72,6 +76,7 @@ function NovaMeta() {
       user_id: user.id,
       titulo,
       categoria,
+      subcategoria,
       descricao,
       motivacao,
       prazo: prazo ? new Date(prazo).toISOString() : null,
@@ -108,7 +113,7 @@ function NovaMeta() {
                 {CATEGORIAS.map(({ id, label, icon: Icon }) => {
                   const active = categoria === id;
                   return (
-                    <button type="button" key={id} onClick={() => setCategoria(id)} className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                    <button type="button" key={id} onClick={() => { setCategoria(id); setSubcategoria(null); }} className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
                       <Icon size={20} />
                       <span className="text-xs font-medium">{label}</span>
                     </button>
@@ -116,6 +121,7 @@ function NovaMeta() {
                 })}
               </div>
             </div>
+            <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
             <Textarea label="Descrição" value={descricao} onChange={setDescricao} placeholder="O que você vai fazer?" />
             <Textarea label="O que está em jogo? (privado, só você vê)" value={motivacao} onChange={setMotivacao} placeholder="Ex: Perco R$200, faço 100 flexões em público, raspo o cabelo…" />
           </div>
@@ -149,6 +155,7 @@ function NovaMeta() {
               localId={localId}
               onChangeLocalId={setLocalId}
               userId={user.id}
+              subcategoria={subcategoria}
             />
           </div>
         )}
@@ -222,9 +229,15 @@ function NovaMeta() {
             <h3 className="text-sm font-bold">Revisar</h3>
             <ReviewRow label="Título" value={titulo || "—"} />
             <ReviewRow label="Categoria" value={CATEGORIAS.find(c => c.id === categoria)?.label ?? "—"} />
+            {subcategoria && <ReviewRow label="Modalidade" value={labelSubcategoria(categoria, subcategoria)} />}
             <ReviewRow label="Descrição" value={descricao || "—"} />
             <ReviewRow label="Em jogo" value={valorCustodia ? `R$ ${valorCustodia}` : "—"} />
-            <ReviewRow label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
+            <ReviewRow label="Validação" value={
+              tipoValidacao === "qrcode" ? "QR Code" :
+              tipoValidacao === "geolocalizacao" ? "Geolocalização" :
+              tipoValidacao === "strava" ? "Strava (automático)" :
+              "Foto + Árbitro"
+            } />
             <ReviewRow label="Prazo" value={prazo || "Sem prazo"} />
             <ReviewRow label="Frequência" value={
               frequenciaTipo === "diario" ? `${frequenciaQtd}x por dia` :
