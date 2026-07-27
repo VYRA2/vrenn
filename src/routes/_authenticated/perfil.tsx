@@ -71,7 +71,9 @@ function Perfil() {
   });
 
   // Dados de árbitro
-  const { data: arbitroData } = useQuery({
+  const [showTermoArbitro, setShowTermoArbitro] = useState(false);
+  const [showDesativarArbitro, setShowDesativarArbitro] = useState(false);
+  const { data: arbitroData, refetch: refetchArbitro } = useQuery({
     queryKey: ["perfil-arbitro", user.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -83,15 +85,37 @@ function Perfil() {
     },
   });
 
-  async function toggleAceitaArbitro() {
-    const atual = arbitroData?.aceita_ser_arbitro ?? false;
+  async function ativarArbitro() {
     const { error } = await supabase
       .from("profiles")
-      .update({ aceita_ser_arbitro: !atual })
+      .update({ aceita_ser_arbitro: true })
       .eq("id", user.id);
     if (error) return toast.error(error.message);
-    toast.success(!atual ? "Você agora pode ser sorteado como árbitro!" : "Você não será mais sorteado como árbitro.");
+    toast.success("Você agora pode ser sorteado como árbitro!");
     refetchProfile();
+    refetchArbitro();
+    setShowTermoArbitro(false);
+  }
+
+  async function desativarArbitro() {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ aceita_ser_arbitro: false })
+      .eq("id", user.id);
+    if (error) return toast.error(error.message);
+    toast.success("Você não será mais sorteado como árbitro.");
+    refetchProfile();
+    refetchArbitro();
+    setShowDesativarArbitro(false);
+  }
+
+  function handleToggleArbitro() {
+    const ativo = arbitroData?.aceita_ser_arbitro ?? false;
+    if (!ativo) {
+      setShowTermoArbitro(true); // Mostrar termos antes de ativar
+    } else {
+      setShowDesativarArbitro(true); // Confirmar antes de desativar
+    }
   }
 
   const { data: conquistasDesbloqueadas } = useQuery({
@@ -340,7 +364,7 @@ function Perfil() {
                 <div className="text-xs text-muted-foreground mt-0.5">Você pode ser sorteado para validar metas e duelos de outros usuários</div>
               </div>
               <button
-                onClick={toggleAceitaArbitro}
+                onClick={handleToggleArbitro}
                 className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${arbitroData?.aceita_ser_arbitro ? "bg-primary" : "bg-secondary"}`}
               >
                 <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${arbitroData?.aceita_ser_arbitro ? "translate-x-5" : "translate-x-0.5"}`} />
