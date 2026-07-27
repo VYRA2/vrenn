@@ -8,6 +8,7 @@ import { VyraLogo } from "@/components/VyraLogo";
 import {
   Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut, X,
+  Shield, Star,
 } from "lucide-react";
 
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
@@ -68,6 +69,30 @@ function Perfil() {
       };
     },
   });
+
+  // Dados de árbitro
+  const { data: arbitroData } = useQuery({
+    queryKey: ["perfil-arbitro", user.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("reputacao_arbitro, arbitragens_concluidas, arbitragens_ativas, aceita_ser_arbitro")
+        .eq("id", user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  async function toggleAceitaArbitro() {
+    const atual = arbitroData?.aceita_ser_arbitro ?? false;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ aceita_ser_arbitro: !atual })
+      .eq("id", user.id);
+    if (error) return toast.error(error.message);
+    toast.success(!atual ? "Você agora pode ser sorteado como árbitro!" : "Você não será mais sorteado como árbitro.");
+    refetchProfile();
+  }
 
   const { data: conquistasDesbloqueadas } = useQuery({
     queryKey: ["conquistas", user.id],
@@ -297,6 +322,68 @@ function Perfil() {
               Nenhuma meta ativa. <span className="text-primary-light font-semibold">Criar uma agora</span>
             </Link>
           )}
+        </section>
+
+        {/* Árbitro */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold flex items-center gap-2"><Shield size={14} className="text-primary-light" /> Árbitro</h2>
+            {(arbitroData?.arbitragens_concluidas ?? 0) > 0 && (
+              <Link to="/arbitro" className="text-xs font-semibold text-primary-light">Ver painel →</Link>
+            )}
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-4">
+            {/* Opt-in */}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-bold">Aceito ser árbitro</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Você pode ser sorteado para validar metas e duelos de outros usuários</div>
+              </div>
+              <button
+                onClick={toggleAceitaArbitro}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${arbitroData?.aceita_ser_arbitro ? "bg-primary" : "bg-secondary"}`}
+              >
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${arbitroData?.aceita_ser_arbitro ? "translate-x-5" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+
+            {/* Vantagens */}
+            <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Vantagens de ser árbitro</div>
+              {[
+                { icon: "⚖️", text: "+3 pts de reputação por check-in validado" },
+                { icon: "🏆", text: "+20 pts por resultado de duelo declarado" },
+                { icon: "🛡️", text: "Badge exclusivo de árbitro no perfil" },
+                { icon: "📊", text: "Reputação de árbitro separada da reputação geral" },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="text-base">{icon}</span>
+                  <span>{text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Rep. árbitro", value: arbitroData?.reputacao_arbitro ?? 0 },
+                { label: "Concluídas", value: arbitroData?.arbitragens_concluidas ?? 0 },
+                { label: "Ativas agora", value: arbitroData?.arbitragens_ativas ?? 0 },
+              ].map(({ label, value }) => (
+                <div key={label} className="rounded-xl border border-border bg-background p-2 text-center">
+                  <div className="text-lg font-bold text-primary-light">{value}</div>
+                  <div className="text-[10px] text-muted-foreground">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Link painel se tiver ativo */}
+            {(arbitroData?.arbitragens_ativas ?? 0) > 0 && (
+              <Link to="/arbitro" className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-2.5 text-xs font-bold text-primary-light">
+                <Shield size={14} /> Acessar painel do árbitro →
+              </Link>
+            )}
+          </div>
         </section>
 
         {/* Resumo de atividade */}
