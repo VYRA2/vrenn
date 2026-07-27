@@ -86,12 +86,15 @@ function EquipeProfile() {
   const { data: membros, isLoading: loadingMembros } = useQuery({
     queryKey: ["equipe-membros", id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("equipe_membros")
-        .select("user_id, papel, created_at, profiles:user_id (nome, username, avatar_url)")
-        .eq("equipe_id", id)
-        .order("created_at", { ascending: true });
-      return data ?? [];
+      const { data, error } = await (supabase as any).rpc("get_equipe_membros", { p_equipe_id: id });
+      if (error) throw error;
+      // Normalizar para o mesmo formato que o resto do componente espera
+      return (data ?? []).map((m: any) => ({
+        user_id: m.user_id,
+        papel: m.papel,
+        created_at: m.created_at,
+        profiles: { nome: m.nome, username: m.username, avatar_url: m.avatar_url },
+      }));
     },
   });
 
