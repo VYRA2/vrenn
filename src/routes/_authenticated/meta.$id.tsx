@@ -1357,6 +1357,135 @@ function EmJogoPrivado({ metaId }: { metaId: string }) {
 }
 
 // ─── Justificar Falta na Meta Solo ───────────────────────────────────────────
+function StravaCheckinModal({ metaId, userId, onClose, onCreated }: any) {
+  const [loading, setLoading] = useState(false);
+  const [buscando, setBuscando] = useState(false);
+  const [resultado, setResultado] = useState<any>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Pegar posição atual
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => setPos(null),
+        { timeout: 10000 }
+      );
+    }
+  }, []);
+
+  async function validar() {
+    setBuscando(true);
+    setErro(null);
+    setResultado(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-validate-checkin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          meta_id: metaId,
+          lat_checkin: pos?.lat ?? null,
+          lng_checkin: pos?.lng ?? null,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setResultado(data);
+    } catch (e: any) {
+      setErro(e.message ?? "Erro ao validar com Strava");
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 space-y-4 pb-8"
+        style={{ maxHeight: "90dvh" }}>
+
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FC4C02]/15 text-2xl">🚴</div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold">Validar com Strava</h3>
+            <p className="text-xs text-muted-foreground">Sua atividade mais recente será verificada</p>
+          </div>
+        </div>
+
+        {/* Posição GPS */}
+        <div className={`rounded-xl border p-3 flex items-center gap-2 text-xs ${pos ? "border-green-500/30 bg-green-500/5" : "border-border bg-card"}`}>
+          {pos
+            ? <><span className="text-green-400">📍</span><span className="text-green-400 font-bold">Localização capturada</span></>
+            : <><span className="text-muted-foreground">📍</span><span className="text-muted-foreground">Capturando localização...</span></>
+          }
+        </div>
+
+        {/* Regras */}
+        {!resultado && !erro && (
+          <div className="rounded-2xl border border-border bg-background p-3 space-y-2 text-xs">
+            <div className="font-bold text-primary-light mb-1">O que será validado</div>
+            <div className="flex items-start gap-2"><span>⏱️</span><span>Atividade iniciada há no máximo <strong>30 minutos</strong></span></div>
+            <div className="flex items-start gap-2"><span>📍</span><span>Início da atividade a no máximo <strong>500 metros</strong> daqui</span></div>
+            <div className="flex items-start gap-2"><span>🏃</span><span>Qualquer tipo de atividade registrada no Strava</span></div>
+          </div>
+        )}
+
+        {/* Resultado */}
+        {resultado && (
+          <div className={`rounded-2xl border p-4 space-y-2 ${resultado.valido ? "border-green-500/40 bg-green-500/5" : "border-destructive/40 bg-destructive/5"}`}>
+            <div className={`text-sm font-bold flex items-center gap-2 ${resultado.valido ? "text-green-400" : "text-destructive"}`}>
+              {resultado.valido ? "✅ Atividade validada!" : "❌ Validação falhou"}
+            </div>
+            {resultado.atividade && (
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <div><strong className="text-foreground">{resultado.atividade.nome}</strong> · {resultado.atividade.tipo}</div>
+                <div>🏃 {resultado.atividade.distancia_km}km · ⏱️ {resultado.atividade.duracao_min}min</div>
+                {resultado.atividade.distancia_checkin_metros !== null && (
+                  <div>📍 {resultado.atividade.distancia_checkin_metros}m do local de check-in</div>
+                )}
+              </div>
+            )}
+            {resultado.motivo && !resultado.valido && (
+              <div className="text-xs text-destructive">{resultado.motivo}</div>
+            )}
+          </div>
+        )}
+
+        {erro && (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+            {erro === "Strava não conectado"
+              ? <><strong>Strava não conectado.</strong> Vá em Configurações → Conectar Strava.</>
+              : erro
+            }
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted-foreground">
+            Cancelar
+          </button>
+          {resultado?.valido ? (
+            <button onClick={onCreated} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-bold text-white">
+              ✓ Confirmar
+            </button>
+          ) : (
+            <button onClick={validar} disabled={buscando}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#FC4C02] py-3 text-sm font-bold text-white disabled:opacity-50">
+              {buscando ? <><Loader2 size={14} className="animate-spin" /> Verificando...</> : "Buscar atividade"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function JustificarFaltaMetaModal({ metaId, userId, onClose, onDone }: {
   metaId: string; userId: string; onClose: () => void; onDone: () => void;
 }) {
@@ -1416,4 +1545,5 @@ function JustificarFaltaMetaModal({ metaId, userId, onClose, onDone }: {
     </div>
   );
 }
+
 
