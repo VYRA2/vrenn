@@ -76,7 +76,7 @@ function Notificacoes() {
         });
       }
       if (!aceitar) {
-        await supabase.rpc("sortear_arbitro_meta", { _meta_id: notif.link_id });
+        await supabase.rpc("sortear_arbitro_meta" as any, { _meta_id: notif.link_id });
       }
       toast.success(aceitar ? "Arbitragem aceita! +5 pts ⚖️" : "Convite recusado");
     }
