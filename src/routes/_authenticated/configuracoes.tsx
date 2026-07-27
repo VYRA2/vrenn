@@ -69,13 +69,17 @@ function Configuracoes() {
         </Section>
 
         <Section title="PREFERÊNCIAS">
-          <Row icon={<Bell size={18}/>} label="Notificações" onClick={() => navigate({ to: "/notificacoes" })}/>
+          <Row icon={<Bell size={18}/>} label="Notificações" onClick={() => navigate({ to: "/notificacoes" })}
+        />
+        <Row icon={<Activity size={18} className="text-[#FC4C02]"/>} label="Conectar Strava" sublabel="Valide atividades físicas automaticamente" onClick={() => navigate({ to: "/strava-connect" })}/>
           <Row icon={<Globe size={18}/>} label="Idioma" right={<span className="text-xs text-muted-foreground">Português</span>}/>
           <Row icon={<Ruler size={18}/>} label="Unidades" right={<span className="text-xs text-muted-foreground">{profile?.unidades ?? "kg"}</span>}/>
         </Section>
 
         <Section title="GERAL">
-          <Row icon={<HelpCircle size={18}/>} label="Central de ajuda" onClick={() => navigate({ to: "/como-funciona" })} />
+          <Row icon={<HelpCircle size={18}/>} label="Política de Privacidade" onClick={() => navigate({ to: "/politica-privacidade" })}
+        />
+        <Row icon={<HelpCircle size={18}/>} label="Central de ajuda" onClick={() => navigate({ to: "/como-funciona" })} />
           <Row icon={<FileText size={18}/>} label="Termos de uso"/>
           <Row icon={<Shield size={18}/>} label="Política de privacidade"/>
           <Row icon={<Info size={18}/>} label="Sobre o VRENN" right={<span className="text-xs text-muted-foreground">v1.0</span>}/>
