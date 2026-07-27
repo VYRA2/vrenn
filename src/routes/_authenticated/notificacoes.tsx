@@ -60,7 +60,8 @@ function Notificacoes() {
       const { data: arb } = await supabase.from("arbitros")
         .select("*, metas:meta_id(user_id, titulo)")
         .eq("meta_id", notif.link_id)
-        .eq("user_id", user.id)
+        .eq("arbitro_id", user.id)
+
         .maybeSingle();
       if (!arb) return toast.error("Convite não encontrado");
       await supabase.from("arbitros").update({ status: aceitar ? "aceito" : "recusado" }).eq("id", arb.id);
