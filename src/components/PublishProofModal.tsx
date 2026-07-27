@@ -25,6 +25,7 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
   const [saving, setSaving] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const videoCameraRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -44,11 +45,6 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
 
   const activeMeta = metas.find((m) => m.id === metaId);
   const suggested = activeMeta?.categoria ? SUGGESTIONS[activeMeta.categoria.toLowerCase()] ?? ["#disciplina", "#constancia"] : ["#disciplina", "#constancia"];
-
-  function pick(source: "camera" | "gallery") {
-    if (source === "camera") cameraRef.current?.click();
-    else galleryRef.current?.click();
-  }
 
   async function compressImage(input: File): Promise<File> {
     if (!input.type.startsWith("image")) return input;
@@ -117,10 +113,12 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
           <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground"><X size={18} /></button>
         </div>
 
-        {/* Input câmera — abre câmera nativa com opção de foto ou vídeo */}
-        <input ref={cameraRef} type="file" accept="image/*,video/*" capture="environment" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        {/* Input galeria — abre galeria do dispositivo */}
+        {/* Câmera — só foto, com capture (funciona no Chrome Android) */}
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {/* Galeria — foto ou vídeo sem capture */}
         <input ref={galleryRef} type="file" accept="image/*,video/*" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {/* Vídeo câmera — capture de vídeo separado */}
+        <input ref={videoCameraRef} type="file" accept="video/*" capture="environment" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
 
         {loadingMetas ? (
           <div className="flex items-center justify-center py-10 text-muted-foreground">
@@ -152,19 +150,21 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
             <button onClick={() => setFile(null)} className="absolute top-2 right-2 rounded-full bg-black/60 p-1.5 text-white"><X size={16} /></button>
           </div>
         ) : (
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <button onClick={() => pick("camera")} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-6 text-sm font-semibold text-foreground hover:border-primary/50">
-              <Camera size={22} className="text-primary-light" />
-              <span>Câmera</span>
-              <span className="text-[10px] text-muted-foreground font-normal">Foto ou vídeo</span>
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            <button onClick={() => cameraRef.current?.click()} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-5 text-sm font-semibold text-foreground hover:border-primary/50">
+              <Camera size={20} className="text-primary-light" />
+              <span className="text-xs">Foto</span>
+              <span className="text-[10px] text-muted-foreground font-normal">Câmera</span>
             </button>
-            <button onClick={() => pick("gallery")} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-6 text-sm font-semibold text-foreground hover:border-primary/50">
-              <div className="flex items-center gap-1.5">
-                <ImageIcon size={20} className="text-primary-light" />
-                <Video size={20} className="text-primary-light" />
-              </div>
-              <span>Galeria</span>
-              <span className="text-[10px] text-muted-foreground font-normal">Foto ou vídeo</span>
+            <button onClick={() => videoCameraRef.current?.click()} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-5 text-sm font-semibold text-foreground hover:border-primary/50">
+              <Video size={20} className="text-primary-light" />
+              <span className="text-xs">Vídeo</span>
+              <span className="text-[10px] text-muted-foreground font-normal">Câmera</span>
+            </button>
+            <button onClick={() => galleryRef.current?.click()} className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-background py-5 text-sm font-semibold text-foreground hover:border-primary/50">
+              <ImageIcon size={20} className="text-primary-light" />
+              <span className="text-xs">Galeria</span>
+              <span className="text-[10px] text-muted-foreground font-normal">Foto/vídeo</span>
             </button>
           </div>
         )}
