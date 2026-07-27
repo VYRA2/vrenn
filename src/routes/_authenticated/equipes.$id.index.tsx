@@ -212,8 +212,6 @@ function EquipeProfile() {
   const totalEmJogo = (desafios ?? []).reduce((s: number, d: any) => s + Number(d.valor_entrada ?? 0), 0);
   const ativos = (desafios ?? []).filter((d: any) => d.status === "ativo").length;
   const concluidos = (desafios ?? []).filter((d: any) => d.status === "concluido").length;
-  const souAdmin = (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "admin");
-  const souCoadmin = (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "co_admin");
   const temCoadmin = (membros ?? []).some((m: any) => m.papel === "co_admin");
 
   function jaParticipa(desafioId: string) {
@@ -312,7 +310,10 @@ function EquipeProfile() {
   }
 
   const souCriador = equipe.criador_id === user.id;
-  const souMembro = (membros ?? []).some((m: any) => m.user_id === user.id);
+  const [entrei, setEntrei] = useState(false);
+  const souMembro = entrei || (membros ?? []).some((m: any) => m.user_id === user.id);
+  const souAdmin = souMembro && (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "admin");
+  const souCoadmin = souMembro && (membros ?? []).some((m: any) => m.user_id === user.id && m.papel === "co_admin");
 
   async function salvarEdicao(patch: { nome?: string; descricao?: string; avatar_url?: string; categoria?: string }) {
     setBusy(true);
@@ -791,6 +792,7 @@ function EquipeProfile() {
               equipe={equipe}
               userId={user.id}
               onEntrou={async () => {
+                setEntrei(true);
                 await qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
                 await qc.refetchQueries({ queryKey: ["equipe-membros", id] });
               }}
