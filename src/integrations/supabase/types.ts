@@ -1731,6 +1731,16 @@ export type Database = {
           streak_dias: number
         }[]
       }
+      get_my_temporada_participacao: {
+        Args: { _temporada_id: string }
+        Returns: {
+          faltas: number
+          motivo_eliminacao: string
+          taxa_paga: number
+          termo_aceito_em: string
+          valor_custodia: number
+        }[]
+      }
       get_public_profile_stats: {
         Args: { _user_id: string }
         Returns: {
