@@ -73,6 +73,7 @@ function NovoDesafio() {
       titulo: titulo.trim(),
       descricao: descricao.trim(),
       categoria,
+      subcategoria,
       duracao_dias: duracao,
       data_inicio: inicio.toISOString().slice(0, 10),
       data_fim: fim.toISOString().slice(0, 10),
