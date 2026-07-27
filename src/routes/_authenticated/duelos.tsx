@@ -270,6 +270,7 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         opponent_email: opponentEmail,
         titulo,
         categoria,
+        subcategoria,
         prazo: prazo ? new Date(prazo).toISOString() : null,
         valor_custodia: parseFloat(valorCustodia) || 0,
         frequencia_tipo: frequenciaTipo,
