@@ -497,8 +497,7 @@ function PerfilPublico() {
         </div>
       )}
 
-            </>
-          )}
+
 
       <BottomNav />
     </main>
