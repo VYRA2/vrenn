@@ -131,19 +131,28 @@ serve(async (req) => {
 
     const valido = erros.length === 0;
 
-    // Se válido, registrar o check-in validado
+    // Se válido, registrar o check-in validado na tabela adequada
     if (valido) {
-      await supabase.from("checkins").insert({
-        user_id: user.id,
-        meta_id,
-        tipo: "strava",
-        strava_activity_id: String(atividade.id),
-        latitude: lat_checkin ?? atividade.start_latlng?.[0],
-        longitude: lng_checkin ?? atividade.start_latlng?.[1],
-        validado: true,
-        mensagem: `Atividade Strava: ${atividade.name} (${(atividade.distance / 1000).toFixed(1)}km, ${Math.round(atividade.moving_time / 60)}min)`,
-      });
+      const msg = `Atividade Strava: ${atividade.name} (${(atividade.distance / 1000).toFixed(1)}km, ${Math.round(atividade.moving_time / 60)}min)`;
+      if (desafio_id) {
+        await supabase.from("checkins_desafio_equipe").insert({
+          desafio_id,
+          user_id: user.id,
+          mensagem: msg,
+          foto_url: null,
+        });
+      } else {
+        await supabase.from("checkins").insert({
+          user_id: user.id,
+          meta_id: meta_id ?? null,
+          duelo_id: duelo_id ?? null,
+          wearable_activity_id: String(atividade.id),
+          validado: true,
+          mensagem: msg,
+        });
+      }
     }
+
 
     return new Response(JSON.stringify({
       valido,
