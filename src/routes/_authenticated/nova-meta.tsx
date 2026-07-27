@@ -31,6 +31,7 @@ function NovaMeta() {
   const [loading, setLoading] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [descricao, setDescricao] = useState("");
   const [motivacao, setMotivacao] = useState("");
   const [prazo, setPrazo] = useState("");
