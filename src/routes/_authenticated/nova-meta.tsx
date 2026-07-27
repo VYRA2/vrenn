@@ -113,7 +113,7 @@ function NovaMeta() {
                 {CATEGORIAS.map(({ id, label, icon: Icon }) => {
                   const active = categoria === id;
                   return (
-                    <button type="button" key={id} onClick={() => setCategoria(id)} className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                    <button type="button" key={id} onClick={() => { setCategoria(id); setSubcategoria(null); }} className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 transition-colors ${active ? "border-primary bg-primary/10 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
                       <Icon size={20} />
                       <span className="text-xs font-medium">{label}</span>
                     </button>
@@ -121,6 +121,7 @@ function NovaMeta() {
                 })}
               </div>
             </div>
+            <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
             <Textarea label="Descrição" value={descricao} onChange={setDescricao} placeholder="O que você vai fazer?" />
             <Textarea label="O que está em jogo? (privado, só você vê)" value={motivacao} onChange={setMotivacao} placeholder="Ex: Perco R$200, faço 100 flexões em público, raspo o cabelo…" />
           </div>
