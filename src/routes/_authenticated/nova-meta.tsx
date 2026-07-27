@@ -229,9 +229,15 @@ function NovaMeta() {
             <h3 className="text-sm font-bold">Revisar</h3>
             <ReviewRow label="Título" value={titulo || "—"} />
             <ReviewRow label="Categoria" value={CATEGORIAS.find(c => c.id === categoria)?.label ?? "—"} />
+            {subcategoria && <ReviewRow label="Modalidade" value={labelSubcategoria(categoria, subcategoria)} />}
             <ReviewRow label="Descrição" value={descricao || "—"} />
             <ReviewRow label="Em jogo" value={valorCustodia ? `R$ ${valorCustodia}` : "—"} />
-            <ReviewRow label="Validação" value={tipoValidacao === "qrcode" ? "QR Code" : tipoValidacao === "geolocalizacao" ? "Geolocalização" : "Foto + Árbitro"} />
+            <ReviewRow label="Validação" value={
+              tipoValidacao === "qrcode" ? "QR Code" :
+              tipoValidacao === "geolocalizacao" ? "Geolocalização" :
+              tipoValidacao === "strava" ? "Strava (automático)" :
+              "Foto + Árbitro"
+            } />
             <ReviewRow label="Prazo" value={prazo || "Sem prazo"} />
             <ReviewRow label="Frequência" value={
               frequenciaTipo === "diario" ? `${frequenciaQtd}x por dia` :
