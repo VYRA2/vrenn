@@ -148,12 +148,14 @@ function NovoDesafio() {
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Categoria">
-                <Select value={categoria} onChange={setCategoria} options={CATEGORIAS.map(c => ({ value: c, label: c[0].toUpperCase()+c.slice(1) }))} />
+                <Select value={categoria} onChange={(v) => { setCategoria(v); setSubcategoria(null); }} options={CATEGORIAS.map(c => ({ value: c, label: c[0].toUpperCase()+c.slice(1) }))} />
               </Field>
               <Field label="Duração">
                 <Select value={String(duracao)} onChange={(v) => setDuracao(Number(v))} options={DURACOES.map(d => ({ value: String(d), label: `${d} dias` }))} sub={`${fmt(inicio)} até ${fmt(fim)}`} />
               </Field>
             </div>
+
+            <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
 
             <div className="rounded-2xl border border-border bg-card">
               <div className="p-4 flex items-start gap-3 border-b border-border">
