@@ -163,6 +163,7 @@ function PerfilPublico() {
 
   const initial = (profile?.nome ?? "?")[0]?.toUpperCase();
   const seguindoNow = follow?.status === "aceito";
+  const [showDesafiar, setShowDesafiar] = useState(false);
   const solicitacaoPendente = follow?.status === "pendente";
   const isPrivado = profile?.perfil_publico === false;
   const podeVerConteudo = !isPrivado || seguindoNow;
@@ -240,6 +241,13 @@ function PerfilPublico() {
               }`}
             >
               {seguindoNow ? "✓ Seguindo" : solicitacaoPendente ? "⏳ Solicitado" : isPrivado ? "🔒 Solicitar" : "Seguir"}
+            </button>
+            <button
+              onClick={() => setShowDesafiar(true)}
+              className="h-11 w-11 shrink-0 inline-flex items-center justify-center rounded-2xl border border-primary/40 bg-primary/10 text-primary-light hover:bg-primary/20 transition-colors"
+              title="Desafiar para duelo"
+            >
+              <Swords size={18} />
             </button>
             <button
               onClick={async () => {
@@ -598,4 +606,5 @@ const CONQUISTAS_CATALOGO = [
   { slug: "lenda",              emoji: "👑", label: "Lenda",          color: "#7B2EFF" },
   { slug: "master_concluido",   emoji: "🏆", label: "Master Season",  color: "#FFD700" },
 ] as const;
+
 
