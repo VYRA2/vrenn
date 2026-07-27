@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import {
   ArrowLeft, MoreHorizontal, CheckCircle2, Zap, Calendar,
   Target, Flame, Trophy, Grid3x3, Video, MessageCircle, Layers, Heart,
-, Loader2, X } from "lucide-react";
+Loader2, X } from "lucide-react";
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 import { toast } from "sonner";
 import { useState } from "react";
