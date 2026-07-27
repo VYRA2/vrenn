@@ -15,7 +15,9 @@ function DepositPix() {
   const [cpf, setCpf] = useState("");
   const [cpfSalvo, setCpfSalvo] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ pixCode: string; pixQrCodeImage: string } | null>(null);
+  const [result, setResult] = useState<{ pixCode: string; pixQrCodeImage: string; paymentId: string } | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [polling, setPolling] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -28,6 +30,40 @@ function DepositPix() {
     const d = v.replace(/\D/g, "").slice(0, 11);
     return d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   }
+
+  // Polling para verificar confirmação do PIX
+  useEffect(() => {
+    if (!result?.paymentId || confirmed) return;
+    setPolling(true);
+    let attempts = 0;
+    const maxAttempts = 20; // 10 minutos (20 x 30s)
+
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const token = session.session?.access_token;
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-payment-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paymentId: result.paymentId }),
+        });
+        const data = await res.json();
+        if (data.confirmed) {
+          setConfirmed(true);
+          setPolling(false);
+          clearInterval(interval);
+          toast.success("💰 Depósito confirmado! Saldo atualizado.");
+        }
+      } catch (_) {}
+      if (attempts >= maxAttempts) {
+        setPolling(false);
+        clearInterval(interval);
+      }
+    }, 30000); // verifica a cada 30s
+
+    return () => clearInterval(interval);
+  }, [result?.paymentId, confirmed]);
 
   async function generate() {
     const value = Number(amount.replace(",", "."));
@@ -53,7 +89,7 @@ function DepositPix() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Falha ao gerar PIX");
-      setResult({ pixCode: data.pixCode, pixQrCodeImage: data.pixQrCodeImage });
+      setResult({ pixCode: data.pixCode, pixQrCodeImage: data.pixQrCodeImage, paymentId: data.paymentId });
       setCpfSalvo(true);
       toast.success("PIX gerado!");
     } catch (e) {
@@ -152,12 +188,20 @@ function DepositPix() {
               </div>
             </div>
 
-            <div className="flex gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-3">
-              <Info size={18} className="mt-0.5 shrink-0 text-primary-light" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Após o pagamento, seu saldo será atualizado automaticamente em até 1 minuto.
-              </p>
-            </div>
+            {confirmed ? (
+              <div className="flex gap-3 rounded-2xl border border-green-500/40 bg-green-500/10 p-3">
+                <span className="text-xl">✅</span>
+                <p className="text-sm font-bold text-green-400">Depósito confirmado! Seu saldo foi atualizado.</p>
+              </div>
+            ) : (
+              <div className="flex gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-3">
+                <Info size={18} className="mt-0.5 shrink-0 text-primary-light" />
+                <div className="text-xs text-muted-foreground leading-relaxed">
+                  <p>Após o pagamento, aguarde até 1 minuto para o saldo ser atualizado.</p>
+                  {polling && <p className="mt-1 text-primary-light font-semibold animate-pulse">⏳ Verificando pagamento…</p>}
+                </div>
+              </div>
+            )}
           </>
         )}
 
