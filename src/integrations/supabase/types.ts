@@ -457,6 +457,7 @@ export type Database = {
         Row: {
           arbitro_id: string | null
           arbitro_status: string | null
+          arbitro_tentativas: number
           categoria: string | null
           challenger_eliminado: boolean | null
           challenger_eliminado_em: string | null
@@ -481,6 +482,7 @@ export type Database = {
         Insert: {
           arbitro_id?: string | null
           arbitro_status?: string | null
+          arbitro_tentativas?: number
           categoria?: string | null
           challenger_eliminado?: boolean | null
           challenger_eliminado_em?: string | null
@@ -505,6 +507,7 @@ export type Database = {
         Update: {
           arbitro_id?: string | null
           arbitro_status?: string | null
+          arbitro_tentativas?: number
           categoria?: string | null
           challenger_eliminado?: boolean | null
           challenger_eliminado_em?: string | null
@@ -677,7 +680,9 @@ export type Database = {
       }
       justificativas_falta: {
         Row: {
+          aprovado_coadmin: boolean | null
           aprovado_por: string | null
+          coadmin_id: string | null
           created_at: string | null
           data_referencia: string
           desafio_id: string | null
@@ -690,7 +695,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aprovado_coadmin?: boolean | null
           aprovado_por?: string | null
+          coadmin_id?: string | null
           created_at?: string | null
           data_referencia: string
           desafio_id?: string | null
@@ -703,7 +710,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aprovado_coadmin?: boolean | null
           aprovado_por?: string | null
+          coadmin_id?: string | null
           created_at?: string | null
           data_referencia?: string
           desafio_id?: string | null
@@ -719,6 +728,13 @@ export type Database = {
           {
             foreignKeyName: "justificativas_falta_aprovado_por_fkey"
             columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justificativas_falta_coadmin_id_fkey"
+            columns: ["coadmin_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1123,6 +1139,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          arbitragens_ativas: number
+          arbitragens_concluidas: number
           asaas_customer_id: string | null
           avatar_url: string | null
           bio: string | null
@@ -1138,12 +1156,15 @@ export type Database = {
           nome: string
           onboarding_done: boolean
           perfil_publico: boolean
+          reputacao_arbitro: number
           reputacao_pts: number
           streak_dias: number
           unidades: string
           username: string
         }
         Insert: {
+          arbitragens_ativas?: number
+          arbitragens_concluidas?: number
           asaas_customer_id?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -1159,12 +1180,15 @@ export type Database = {
           nome: string
           onboarding_done?: boolean
           perfil_publico?: boolean
+          reputacao_arbitro?: number
           reputacao_pts?: number
           streak_dias?: number
           unidades?: string
           username: string
         }
         Update: {
+          arbitragens_ativas?: number
+          arbitragens_concluidas?: number
           asaas_customer_id?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -1180,6 +1204,7 @@ export type Database = {
           nome?: string
           onboarding_done?: boolean
           perfil_publico?: boolean
+          reputacao_arbitro?: number
           reputacao_pts?: number
           streak_dias?: number
           unidades?: string
@@ -1274,6 +1299,194 @@ export type Database = {
             columns: ["story_id"]
             isOneToOne: false
             referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      temporada_checkins: {
+        Row: {
+          created_at: string | null
+          foto_url: string | null
+          id: string
+          mensagem: string | null
+          temporada_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          foto_url?: string | null
+          id?: string
+          mensagem?: string | null
+          temporada_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          foto_url?: string | null
+          id?: string
+          mensagem?: string | null
+          temporada_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporada_checkins_temporada_id_fkey"
+            columns: ["temporada_id"]
+            isOneToOne: false
+            referencedRelation: "temporadas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temporada_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      temporada_participantes: {
+        Row: {
+          created_at: string | null
+          eliminado: boolean
+          eliminado_em: string | null
+          faltas: number
+          id: string
+          motivo_eliminacao: string | null
+          status: string
+          taxa_paga: number
+          temporada_id: string
+          termo_aceito_em: string | null
+          total_checkins: number
+          ultimo_checkin: string | null
+          user_id: string
+          valor_custodia: number
+        }
+        Insert: {
+          created_at?: string | null
+          eliminado?: boolean
+          eliminado_em?: string | null
+          faltas?: number
+          id?: string
+          motivo_eliminacao?: string | null
+          status?: string
+          taxa_paga?: number
+          temporada_id: string
+          termo_aceito_em?: string | null
+          total_checkins?: number
+          ultimo_checkin?: string | null
+          user_id: string
+          valor_custodia?: number
+        }
+        Update: {
+          created_at?: string | null
+          eliminado?: boolean
+          eliminado_em?: string | null
+          faltas?: number
+          id?: string
+          motivo_eliminacao?: string | null
+          status?: string
+          taxa_paga?: number
+          temporada_id?: string
+          termo_aceito_em?: string | null
+          total_checkins?: number
+          ultimo_checkin?: string | null
+          user_id?: string
+          valor_custodia?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporada_participantes_temporada_id_fkey"
+            columns: ["temporada_id"]
+            isOneToOne: false
+            referencedRelation: "temporadas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temporada_participantes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      temporadas: {
+        Row: {
+          created_at: string | null
+          criado_por: string | null
+          data_fim: string
+          data_inicio: string
+          descricao: string | null
+          descricao_premio: string | null
+          frequencia_quantidade: number
+          frequencia_tipo: string
+          fundo_acumulado: number
+          id: string
+          max_participantes: number | null
+          modalidade: string
+          numero: number
+          regulamento: string | null
+          status: string
+          taxa_entrada: number
+          tipo_premio: string
+          titulo: string
+          tolerancia_faltas: number
+          updated_at: string | null
+          valor_premio_externo: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          criado_por?: string | null
+          data_fim: string
+          data_inicio: string
+          descricao?: string | null
+          descricao_premio?: string | null
+          frequencia_quantidade?: number
+          frequencia_tipo?: string
+          fundo_acumulado?: number
+          id?: string
+          max_participantes?: number | null
+          modalidade: string
+          numero: number
+          regulamento?: string | null
+          status?: string
+          taxa_entrada?: number
+          tipo_premio?: string
+          titulo: string
+          tolerancia_faltas?: number
+          updated_at?: string | null
+          valor_premio_externo?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          criado_por?: string | null
+          data_fim?: string
+          data_inicio?: string
+          descricao?: string | null
+          descricao_premio?: string | null
+          frequencia_quantidade?: number
+          frequencia_tipo?: string
+          fundo_acumulado?: number
+          id?: string
+          max_participantes?: number | null
+          modalidade?: string
+          numero?: number
+          regulamento?: string | null
+          status?: string
+          taxa_entrada?: number
+          tipo_premio?: string
+          titulo?: string
+          tolerancia_faltas?: number
+          updated_at?: string | null
+          valor_premio_externo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporadas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1499,6 +1712,11 @@ export type Database = {
         Args: { _duelo_id: string; _progresso: number }
         Returns: undefined
       }
+      encerrar_temporada: { Args: { p_temporada_id: string }; Returns: Json }
+      encerrar_temporada_manual: {
+        Args: { p_admin_id: string; p_temporada_id: string }
+        Returns: Json
+      }
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
       get_meta_valor_destino: { Args: { _meta_id: string }; Returns: string }
@@ -1511,6 +1729,16 @@ export type Database = {
           nivel: number
           reputacao_pts: number
           streak_dias: number
+        }[]
+      }
+      get_my_temporada_participacao: {
+        Args: { _temporada_id: string }
+        Returns: {
+          faltas: number
+          motivo_eliminacao: string
+          taxa_paga: number
+          termo_aceito_em: string
+          valor_custodia: number
         }[]
       }
       get_public_profile_stats: {

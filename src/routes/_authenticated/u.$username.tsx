@@ -494,11 +494,16 @@ function PerfilPublico() {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
       )}
 
-            </>
-          )}
+
+
+
+
+
 
       <BottomNav />
     </main>
