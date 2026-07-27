@@ -155,41 +155,49 @@ function DesafioTemporada() {
     try {
       const taxa = Number(temporada.taxa_entrada ?? 0);
 
-      // 1. Verificar saldo se há taxa
+      // 1. Verificar saldo se há taxa de inscrição
       if (taxa > 0) {
         const { data: wallet } = await (supabase as any)
-          .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
+          .from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
         const saldo = Number(wallet?.balance ?? 0);
         if (saldo < taxa) {
-          toast.error(`Saldo insuficiente. Você tem ${formatBRL(saldo)} e a taxa é ${formatBRL(taxa)}. Deposite antes de entrar.`);
+          toast.error(`Saldo insuficiente. Você tem ${formatBRL(saldo)} e a taxa de inscrição é ${formatBRL(taxa)}. Deposite antes de entrar.`);
           setEntrando(false);
           setShowTermo(false);
           return;
         }
-        // 2. Descontar taxa e travar como custódia
-        const { error: lockErr } = await (supabase as any).from("wallets").update({
+        // 2. Debitar taxa — é receita do VRENN, não volta (nem para vencedores)
+        const { error: debitErr } = await (supabase as any).from("wallets").update({
           balance: saldo - taxa,
-          locked_balance: Number(wallet?.locked_balance ?? 0) + taxa,
         }).eq("user_id", user.id);
-        if (lockErr) throw lockErr;
+        if (debitErr) throw debitErr;
+
+        // 3. Registrar como transação de taxa
+        await (supabase as any).from("transactions").insert({
+          user_id: user.id,
+          amount: taxa,
+          type: "fee",
+          description: `Taxa de inscrição — VRENN Master Season ${temporada.numero}`,
+          reference_id: temporada.id,
+          status: "confirmed",
+        });
       }
 
-      // 3. Inserir participante
+      // 4. Inserir participante — valor_custodia = 0 (taxa não é custódia)
       const { error } = await (supabase as any).from("temporada_participantes").insert({
         temporada_id: temporada.id,
         user_id: user.id,
         taxa_paga: taxa,
-        valor_custodia: taxa,
+        valor_custodia: 0,
         termo_aceito_em: new Date().toISOString(),
       });
       if (error) {
         // Devolver taxa se insert falhou
         if (taxa > 0) {
           const { data: wallet } = await (supabase as any)
-            .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
+            .from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
           await (supabase as any).from("wallets").update({
             balance: Number(wallet?.balance ?? 0) + taxa,
-            locked_balance: Math.max(0, Number(wallet?.locked_balance ?? 0) - taxa),
           }).eq("user_id", user.id);
         }
         throw error;
