@@ -31,13 +31,14 @@ function Notificacoes() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
 
-  const { data: items } = useQuery({
+  const { data: items, refetch } = useQuery({
     queryKey: ["notifs", user.id],
     queryFn: async () => {
       const { data } = await supabase.from("notificacoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       return data ?? [];
     },
   });
+
 
   async function responder(notif: any, aceitar: boolean) {
     if (!notif.link_id) return;
