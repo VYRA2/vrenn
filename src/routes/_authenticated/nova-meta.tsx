@@ -6,10 +6,13 @@ import { toast } from "sonner";
 import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
+import { labelSubcategoria } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/nova-meta")({
   component: NovaMeta,
 });
+
 
 const CATEGORIAS = [
   { id: "fitness", label: "Fitness", icon: Dumbbell },
