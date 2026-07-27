@@ -1,6 +1,6 @@
 
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera, MessageSquare,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
-  Pencil, Trash2, LogOut, X, QrCode, Lock, Heart, DollarSign,
+  Pencil, Trash2, LogOut, X, QrCode, Lock, Heart, DollarSign, Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/")({
@@ -784,17 +784,31 @@ function EquipeProfile() {
 
         {/* Ações */}
         <div className="mt-5 space-y-2">
-          <div className="flex gap-2">
-            <button onClick={convidar} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
-              <UserPlus size={16} /> Convidar
-            </button>
-            <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
-              <Sparkles size={16} /> Criar desafio
-            </button>
-          </div>
-          <button onClick={criarChatEquipe} className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary-light">
-            <MessageSquare size={16} /> Chat da equipe
-          </button>
+          {/* Não-membro: botão solicitar entrada */}
+          {!souMembro && (
+            <SolicitarEntradaBtn equipeId={id} equipe={equipe} userId={user.id} />
+          )}
+
+          {/* Membro: ações disponíveis */}
+          {souMembro && (
+            <>
+              <div className="flex gap-2">
+                {(souAdmin || souCoadmin) && (
+                  <button onClick={convidar} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-primary py-3 text-sm font-bold text-primary-light">
+                    <UserPlus size={16} /> Convidar
+                  </button>
+                )}
+                {(souAdmin || souCoadmin) && (
+                  <button onClick={() => navigate({ to: "/equipes/$id/desafio/novo", params: { id } })} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-glow">
+                    <Sparkles size={16} /> Criar desafio
+                  </button>
+                )}
+              </div>
+              <button onClick={criarChatEquipe} className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary-light">
+                <MessageSquare size={16} /> Chat da equipe
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -1298,6 +1312,77 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
         </button>
       </div>
     </div>
+  );
+}
+
+
+// ── Solicitar entrada em equipe ──────────────────────────────────
+function SolicitarEntradaBtn({ equipeId, equipe, userId }: { equipeId: string; equipe: any; userId: string }) {
+  const [status, setStatus] = useState<"idle"|"pendente"|"enviado">("idle");
+  const [loading, setLoading] = useState(false);
+
+  // Verificar se já tem solicitação pendente
+  useEffect(() => {
+    (supabase as any)
+      .from("equipe_solicitacoes")
+      .select("id, status")
+      .eq("equipe_id", equipeId)
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data?.status === "pendente") setStatus("pendente");
+        if (data?.status === "aceito") setStatus("enviado");
+      });
+  }, [equipeId, userId]);
+
+  async function solicitar() {
+    setLoading(true);
+    try {
+      // Se equipe pública: entra direto
+      if (equipe.publica) {
+        const { error } = await (supabase as any).from("equipe_membros").insert({
+          equipe_id: equipeId,
+          user_id: userId,
+          papel: "membro",
+        });
+        if (error && error.code !== "23505") throw error;
+        toast.success("Você entrou na equipe!");
+        window.location.reload();
+        return;
+      }
+      // Se privada: cria solicitação
+      const { error } = await (supabase as any).from("equipe_solicitacoes").insert({
+        equipe_id: equipeId,
+        user_id: userId,
+        status: "pendente",
+      });
+      if (error && error.code !== "23505") throw error;
+      setStatus("pendente");
+      toast.success("Solicitação enviada! O admin será notificado.");
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao solicitar entrada");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (status === "pendente") {
+    return (
+      <div className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 py-3 text-sm font-bold text-amber-400">
+        <Clock size={16} /> Solicitação pendente
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={solicitar}
+      disabled={loading}
+      className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+    >
+      {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+      {equipe.publica ? "Entrar na equipe" : "Solicitar entrada"}
+    </button>
   );
 }
 
