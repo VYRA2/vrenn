@@ -642,7 +642,7 @@ function EquipeProfile() {
                       <button
                         onClick={async (e) => {
                           e.preventDefault(); e.stopPropagation();
-                          const { error } = await supabase.rpc("rebaixar_coadmin_equipe", { _equipe_id: id, _user_id: m.user_id });
+                          const { error } = await supabase.rpc("rebaixar_coadmin_equipe" as any, { _equipe_id: id, _user_id: m.user_id });
                           if (error) return toast.error(error.message);
                           toast.success("Co-admin removido");
                           qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
