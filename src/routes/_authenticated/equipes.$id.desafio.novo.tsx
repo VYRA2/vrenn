@@ -314,6 +314,7 @@ function NovoDesafio() {
               localId={localId}
               onChangeLocalId={setLocalId}
               userId={user.id}
+              subcategoria={subcategoria}
             />
 
             {/* Frequência de check-in */}
