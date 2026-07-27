@@ -786,7 +786,15 @@ function EquipeProfile() {
         <div className="mt-5 space-y-2">
           {/* Não-membro: botão solicitar entrada */}
           {!souMembro && (
-            <SolicitarEntradaBtn equipeId={id} equipe={equipe} userId={user.id} />
+            <SolicitarEntradaBtn
+              equipeId={id}
+              equipe={equipe}
+              userId={user.id}
+              onEntrou={async () => {
+                await qc.invalidateQueries({ queryKey: ["equipe-membros", id] });
+                await qc.refetchQueries({ queryKey: ["equipe-membros", id] });
+              }}
+            />
           )}
 
           {/* Membro: ações disponíveis */}
@@ -1338,7 +1346,7 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
 
 
 // ── Solicitar entrada em equipe ──────────────────────────────────
-function SolicitarEntradaBtn({ equipeId, equipe, userId }: { equipeId: string; equipe: any; userId: string }) {
+function SolicitarEntradaBtn({ equipeId, equipe, userId, onEntrou }: { equipeId: string; equipe: any; userId: string; onEntrou: () => void }) {
   const [status, setStatus] = useState<"idle"|"pendente"|"enviado">("idle");
   const [loading, setLoading] = useState(false);
 
@@ -1368,7 +1376,7 @@ function SolicitarEntradaBtn({ equipeId, equipe, userId }: { equipeId: string; e
         });
         if (error && error.code !== "23505") throw error;
         toast.success("Você entrou na equipe!");
-        window.location.reload();
+        onEntrou();
         return;
       }
       // Se privada: cria solicitação
