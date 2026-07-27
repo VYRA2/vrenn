@@ -53,37 +53,74 @@ function AuthPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (!email.trim()) return toast.error("Digite seu e-mail");
+    if (!password.trim()) return toast.error("Digite sua senha");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
-    if (error) return toast.error(error.message);
-    if (dest !== "/feed") window.location.href = dest; else navigate({ to: "/feed" });
+    if (error) {
+      if (error.message.includes("Invalid login credentials") || error.message.includes("invalid_credentials")) {
+        return toast.error("E-mail ou senha incorretos");
+      }
+      if (error.message.includes("Email not confirmed")) {
+        return toast.error("Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.");
+      }
+      if (error.message.includes("Too many requests")) {
+        return toast.error("Muitas tentativas. Aguarde alguns minutos.");
+      }
+      return toast.error("Erro ao entrar: " + error.message);
+    }
+    if (data.session) {
+      toast.success("Bem-vindo de volta! 🔥");
+      if (dest !== "/feed") window.location.href = dest; else navigate({ to: "/feed" });
+    }
   }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
-    if (password !== confirm) return toast.error("As senhas não coincidem");
+    if (!nome.trim()) return toast.error("Digite seu nome completo");
+    if (!email.trim()) return toast.error("Digite seu e-mail");
+    if (!username.trim()) return toast.error("Escolha um nome de usuário");
     if (password.length < 6) return toast.error("Senha precisa de no mínimo 6 caracteres");
+    if (password !== confirm) return toast.error("As senhas não coincidem");
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}${dest}`,
-        data: { nome, username },
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+        data: { nome: nome.trim(), username: username.trim().toLowerCase() },
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Conta criada! Vamos configurar seu perfil.");
-    navigate({ to: "/onboarding" });
+    if (error) {
+      if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+        return toast.error("Este e-mail já está cadastrado. Tente fazer login.");
+      }
+      if (error.message.includes("Password should be")) {
+        return toast.error("Senha muito fraca. Use pelo menos 6 caracteres.");
+      }
+      return toast.error("Erro ao criar conta: " + error.message);
+    }
+    // Se session já existe = confirmação de email desabilitada (modo dev/teste)
+    if (data.session) {
+      toast.success("Conta criada! Vamos configurar seu perfil. 🎉");
+      navigate({ to: "/onboarding" });
+    } else {
+      // Confirmação de email habilitada
+      toast.success("Conta criada! Verifique seu e-mail para confirmar o cadastro.");
+      setMode("login");
+    }
   }
 
   async function handleGoogle() {
-    // Redireciona sempre para /auth/callback que verifica se é novo usuário
-    const redirect_uri = `${window.location.origin}/auth/callback?next=${encodeURIComponent(dest)}`;
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
-    if (r.error) return toast.error("Erro no login com Google");
+    try {
+      const redirect_uri = `${window.location.origin}/auth/callback?next=${encodeURIComponent(dest)}`;
+      const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
+      if (r?.error) return toast.error("Erro no login com Google: " + r.error.message);
+    } catch (e: any) {
+      toast.error("Erro ao conectar com Google. Tente novamente.");
+    }
   }
 
   return (
