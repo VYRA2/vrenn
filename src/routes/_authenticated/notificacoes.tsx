@@ -125,6 +125,8 @@ function Notificacoes() {
                 const isEquipeNav = n.tipo === "novo_desafio_equipe" || n.tipo === "equipe_atualizada" || (n.tipo === "justificativa_pendente" && n.mensagem?.includes("equipe"));
                 const isResultadoDuelo = n.tipo === "justificativa_resultado" && n.link_id && !n.mensagem?.includes("equipe");
                 const isResultadoEquipe = n.tipo === "justificativa_resultado" && n.mensagem?.includes("equipe");
+                const isFollowRequest = n.tipo === "follow_request" && !n.lida && n.mensagem?.includes("quer te seguir");
+
 
                 const card = (
                   <div className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
