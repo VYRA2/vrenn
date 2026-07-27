@@ -191,12 +191,42 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
         desc="Envie uma foto do progresso e um árbitro convidado valida cada check-in."
       />
 
-      {tipoValidacao !== "foto_arbitro" && (
+      {stravaOk && (
+        <MetodoCard
+          active={tipoValidacao === "strava"}
+          onClick={() => { onChangeTipo("strava"); onChangeLocalId(null); setLocalNome(""); }}
+          icon={<Activity size={22} className="text-[#FC4C02]" />}
+          title="Strava (automático)"
+          desc="A atividade registrada no seu Strava valida o check-in automaticamente (30 min + 500 m)."
+        />
+      )}
+
+      {tipoValidacao === "strava" && (
+        <div className="rounded-2xl border border-[#FC4C02]/30 bg-[#FC4C02]/5 p-4 text-xs space-y-2">
+          {stravaConn?.athlete_name ? (
+            <>
+              <div className="font-bold text-[#FC4C02]">Strava conectado</div>
+              <div className="text-muted-foreground">Atleta: {stravaConn.athlete_name}</div>
+            </>
+          ) : (
+            <>
+              <div className="font-bold text-[#FC4C02]">Strava não conectado</div>
+              <p className="text-muted-foreground">Conecte sua conta para validar check-ins automaticamente.</p>
+              <Link to="/strava-connect" className="inline-flex items-center gap-1 text-[#FC4C02] font-semibold underline">
+                Conectar Strava
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+
+      {(tipoValidacao === "qrcode" || tipoValidacao === "geolocalizacao") && (
         <button onClick={() => setValStep("buscar")} className="w-full rounded-xl border border-border bg-card p-3 text-left text-sm">
           <div className="text-xs text-muted-foreground">Local selecionado</div>
           <div className="mt-1 font-semibold truncate">{localNome || (localId ? "Local escolhido" : "Nenhum — toque para escolher")}</div>
         </button>
       )}
+
 
       {tipoValidacao === "qrcode" && localId && localQrToken && (
         <div className="rounded-2xl border border-border bg-card p-4 text-center space-y-2">
