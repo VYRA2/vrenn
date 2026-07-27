@@ -76,6 +76,7 @@ function NovaMeta() {
       user_id: user.id,
       titulo,
       categoria,
+      subcategoria,
       descricao,
       motivacao,
       prazo: prazo ? new Date(prazo).toISOString() : null,
