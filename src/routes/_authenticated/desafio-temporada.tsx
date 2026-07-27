@@ -153,15 +153,49 @@ function DesafioTemporada() {
     if (!temporada) return;
     setEntrando(true);
     try {
+      const taxa = Number(temporada.taxa_entrada ?? 0);
+
+      // 1. Verificar saldo se há taxa
+      if (taxa > 0) {
+        const { data: wallet } = await (supabase as any)
+          .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
+        const saldo = Number(wallet?.balance ?? 0);
+        if (saldo < taxa) {
+          toast.error(`Saldo insuficiente. Você tem ${formatBRL(saldo)} e a taxa é ${formatBRL(taxa)}. Deposite antes de entrar.`);
+          setEntrando(false);
+          setShowTermo(false);
+          return;
+        }
+        // 2. Descontar taxa e travar como custódia
+        const { error: lockErr } = await (supabase as any).from("wallets").update({
+          balance: saldo - taxa,
+          locked_balance: Number(wallet?.locked_balance ?? 0) + taxa,
+        }).eq("user_id", user.id);
+        if (lockErr) throw lockErr;
+      }
+
+      // 3. Inserir participante
       const { error } = await (supabase as any).from("temporada_participantes").insert({
         temporada_id: temporada.id,
         user_id: user.id,
-        taxa_paga: temporada.taxa_entrada,
-        valor_custodia: 0,
+        taxa_paga: taxa,
+        valor_custodia: taxa,
         termo_aceito_em: new Date().toISOString(),
       });
-      if (error) throw error;
-      toast.success("Bem-vindo ao VRENN Master Season!");
+      if (error) {
+        // Devolver taxa se insert falhou
+        if (taxa > 0) {
+          const { data: wallet } = await (supabase as any)
+            .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
+          await (supabase as any).from("wallets").update({
+            balance: Number(wallet?.balance ?? 0) + taxa,
+            locked_balance: Math.max(0, Number(wallet?.locked_balance ?? 0) - taxa),
+          }).eq("user_id", user.id);
+        }
+        throw error;
+      }
+
+      toast.success("Bem-vindo ao VRENN Master Season! 🏆");
       refetchMinha();
       qc.invalidateQueries({ queryKey: ["temporada-participantes-count", temporada.id] });
     } catch (e: any) {
