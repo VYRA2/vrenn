@@ -115,17 +115,9 @@ function AuthPage() {
 
   async function handleGoogle() {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/feed`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      });
-      if (error) return toast.error("Erro no login com Google: " + error.message);
+      const redirect_uri = `${window.location.origin}/feed`;
+      const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
+      if (r?.error) return toast.error("Erro no login com Google");
     } catch (e: any) {
       toast.error("Erro ao conectar com Google. Tente novamente.");
     }
