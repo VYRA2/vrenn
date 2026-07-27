@@ -440,6 +440,79 @@ function Perfil() {
         </section>
       </div>
 
+
+      {/* Modal: termos do árbitro */}
+      {showTermoArbitro && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8 max-h-[85vh] overflow-y-auto">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+            <div className="flex items-center gap-2 mb-4">
+              <Shield size={20} className="text-primary-light" />
+              <h3 className="text-lg font-bold">Termos do Árbitro VRENN</h3>
+            </div>
+            <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
+              <p>Ao se tornar árbitro no VRENN, você concorda com as seguintes responsabilidades:</p>
+              <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+                {[
+                  "Você pode ser sorteado aleatoriamente para validar check-ins de metas e declarar resultados de duelos.",
+                  "Ao receber um convite de arbitragem, você tem 24 horas para aceitar ou recusar.",
+                  "Se aceitar, tem prazo para validar cada check-in. A omissão gera penalidade de -2 pts de reputação de árbitro.",
+                  "Árbitros devem agir com imparcialidade. Validações injustificadas podem resultar em suspensão.",
+                  "Como recompensa: +3 pts por check-in validado e +20 pts por resultado de duelo declarado.",
+                  "Você pode desativar o opt-in a qualquer momento. Arbitragens já aceitas continuam até o encerramento.",
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="text-primary-light font-bold shrink-0">{i + 1}.</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground/70">
+                Ao clicar em "Aceitar e ativar", você declara ter lido e concordado com estas condições.
+              </p>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setShowTermoArbitro(false)}
+                className="flex-1 rounded-2xl border border-border py-3 text-sm font-semibold">
+                Cancelar
+              </button>
+              <button onClick={ativarArbitro}
+                className="flex-1 rounded-2xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow inline-flex items-center justify-center gap-2">
+                <Shield size={14} /> Aceitar e ativar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: confirmar desativação */}
+      {showDesativarArbitro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-5">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-5">
+            <h3 className="text-base font-bold mb-2">Desativar opt-in de árbitro?</h3>
+            {(arbitroData?.arbitragens_ativas ?? 0) > 0 ? (
+              <p className="text-sm text-muted-foreground mb-4">
+                Você tem <span className="font-bold text-amber-400">{arbitroData?.arbitragens_ativas} arbitragem(ns) ativa(s)</span>.
+                Você não será mais sorteado, mas precisará concluir as arbitragens já aceitas.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-4">
+                Você não será mais sorteado como árbitro. Pode reativar quando quiser.
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => setShowDesativarArbitro(false)}
+                className="flex-1 rounded-2xl border border-border py-2.5 text-sm font-semibold">
+                Cancelar
+              </button>
+              <button onClick={desativarArbitro}
+                className="flex-1 rounded-2xl bg-destructive/10 border border-destructive/40 py-2.5 text-sm font-bold text-destructive">
+                Desativar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <BottomNav />
 
       {showUsernameModal && (
