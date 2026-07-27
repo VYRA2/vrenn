@@ -31,13 +31,14 @@ function Notificacoes() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
 
-  const { data: items } = useQuery({
+  const { data: items, refetch } = useQuery({
     queryKey: ["notifs", user.id],
     queryFn: async () => {
       const { data } = await supabase.from("notificacoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       return data ?? [];
     },
   });
+
 
   async function responder(notif: any, aceitar: boolean) {
     if (!notif.link_id) return;
@@ -59,7 +60,8 @@ function Notificacoes() {
       const { data: arb } = await supabase.from("arbitros")
         .select("*, metas:meta_id(user_id, titulo)")
         .eq("meta_id", notif.link_id)
-        .eq("user_id", user.id)
+        .eq("arbitro_id", user.id)
+
         .maybeSingle();
       if (!arb) return toast.error("Convite não encontrado");
       await supabase.from("arbitros").update({ status: aceitar ? "aceito" : "recusado" }).eq("id", arb.id);
@@ -74,7 +76,7 @@ function Notificacoes() {
         });
       }
       if (!aceitar) {
-        await supabase.rpc("sortear_arbitro_meta", { _meta_id: notif.link_id });
+        await supabase.rpc("sortear_arbitro_meta" as any, { _meta_id: notif.link_id });
       }
       toast.success(aceitar ? "Arbitragem aceita! +5 pts ⚖️" : "Convite recusado");
     }
@@ -123,6 +125,8 @@ function Notificacoes() {
                 const isEquipeNav = n.tipo === "novo_desafio_equipe" || n.tipo === "equipe_atualizada" || (n.tipo === "justificativa_pendente" && n.mensagem?.includes("equipe"));
                 const isResultadoDuelo = n.tipo === "justificativa_resultado" && n.link_id && !n.mensagem?.includes("equipe");
                 const isResultadoEquipe = n.tipo === "justificativa_resultado" && n.mensagem?.includes("equipe");
+                const isFollowRequest = n.tipo === "follow_request" && !n.lida && n.mensagem?.includes("quer te seguir");
+
 
                 const card = (
                   <div className={`rounded-2xl border border-border bg-card p-3 ${!n.lida ? "ring-1 ring-primary/30" : ""}`}>
@@ -156,7 +160,7 @@ function Notificacoes() {
                               _user_id: sender.id,
                               _tipo: "follow_request",
                               _mensagem: "Sua solicitação de seguir foi aceita! 🎉",
-                              _link_id: null,
+                              _link_id: undefined,
                             });
                             await supabase.from("notificacoes").update({ lida: true }).eq("id", n.id);
                             toast.success("Solicitação aceita!");

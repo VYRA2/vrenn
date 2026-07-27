@@ -137,7 +137,7 @@ function PerfilPublico() {
           _user_id: targetId,
           _tipo: "follow_request",
           _mensagem: `@${profile?.username ?? "alguém"} quer te seguir. Aceite ou recuse nas notificações.`,
-          _link_id: null,
+          _link_id: undefined,
         });
         toast.success("Solicitação enviada!");
       } else {

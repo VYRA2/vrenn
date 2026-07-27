@@ -307,7 +307,7 @@ function ArbitroCheckinCard({ checkin, userId, onDone }: any) {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.rpc("arbitro_validar_checkin", {
+      const { error } = await supabase.rpc("arbitro_validar_checkin" as any, {
         _checkin_id: checkin.id,
         _status: status,
         _comentario: comentario || null,
