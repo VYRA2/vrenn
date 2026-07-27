@@ -310,7 +310,8 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         </div>
 
         <Input label="Título do duelo" value={titulo} onChange={setTitulo} placeholder="Ex: Perder 5kg em 30 dias"/>
-        <Input label="Categoria" value={categoria} onChange={setCategoria} placeholder="fitness, estudos, hábitos…"/>
+        <Input label="Categoria" value={categoria} onChange={(v: string) => { setCategoria(v); setSubcategoria(null); }} placeholder="fitness, estudos, hábitos…"/>
+        <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
         <Input label="Prazo final" type="date" value={prazo} onChange={setPrazo}/>
         <Input label="Valor em custódia (R$)" type="number" value={valorCustodia} onChange={setValorCustodia} placeholder="0.00"/>
 
