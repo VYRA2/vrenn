@@ -494,11 +494,12 @@ function PerfilPublico() {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
       )}
 
-            </>
-          )}
+
 
 
 
