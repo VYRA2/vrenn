@@ -237,6 +237,7 @@ function Avatar({ profile, ring }: { profile: any; ring?: boolean }) {
 function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onClose: ()=>void; onCreated: ()=>void }) {
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
+  const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [prazo, setPrazo] = useState("");
   const [valorCustodia, setValorCustodia] = useState("");
   const [oponente, setOponente] = useState("");
