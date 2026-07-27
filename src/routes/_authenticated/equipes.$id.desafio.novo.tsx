@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar, Award, BarChart2, Star } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/desafio/novo")({
   component: NovoDesafio,
