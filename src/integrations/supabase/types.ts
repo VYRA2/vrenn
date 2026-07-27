@@ -1345,6 +1345,65 @@ export type Database = {
           },
         ]
       }
+      strava_connections: {
+        Row: {
+          access_token: string
+          athlete_id: string
+          athlete_name: string | null
+          athlete_photo: string | null
+          connected_at: string | null
+          expires_at: number
+          id: string
+          refresh_token: string
+          total_atividades: number | null
+          ultima_atividade_em: string | null
+          ultima_atividade_km: number | null
+          ultima_atividade_tipo: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          athlete_id: string
+          athlete_name?: string | null
+          athlete_photo?: string | null
+          connected_at?: string | null
+          expires_at: number
+          id?: string
+          refresh_token: string
+          total_atividades?: number | null
+          ultima_atividade_em?: string | null
+          ultima_atividade_km?: number | null
+          ultima_atividade_tipo?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          athlete_id?: string
+          athlete_name?: string | null
+          athlete_photo?: string | null
+          connected_at?: string | null
+          expires_at?: number
+          id?: string
+          refresh_token?: string
+          total_atividades?: number | null
+          ultima_atividade_em?: string | null
+          ultima_atividade_km?: number | null
+          ultima_atividade_tipo?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strava_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       temporada_checkins: {
         Row: {
           created_at: string | null
@@ -1823,6 +1882,8 @@ export type Database = {
         Args: { _aceitar: boolean; _duelo_id: string }
         Returns: undefined
       }
+      sortear_arbitro_duelo: { Args: { _duelo_id: string }; Returns: undefined }
+      sortear_arbitro_meta: { Args: { _meta_id: string }; Returns: undefined }
       teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
       verificar_temporadas_encerradas: { Args: never; Returns: undefined }
     }
