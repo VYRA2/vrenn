@@ -1717,6 +1717,7 @@ export type Database = {
         Args: { p_admin_id: string; p_temporada_id: string }
         Returns: Json
       }
+      get_local_qrcode_token: { Args: { _local_id: string }; Returns: string }
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
       get_meta_valor_destino: { Args: { _meta_id: string }; Returns: string }
