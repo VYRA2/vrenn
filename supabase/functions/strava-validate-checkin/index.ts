@@ -38,9 +38,11 @@ serve(async (req) => {
     const user = userRes?.user;
     if (!user) return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
 
-    const { meta_id, lat_checkin, lng_checkin, strava_activity_id } = await req.json();
+    const { meta_id, duelo_id, desafio_id, lat_checkin, lng_checkin, strava_activity_id } = await req.json();
 
-    if (!meta_id) return new Response(JSON.stringify({ error: "meta_id obrigatório" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+    if (!meta_id && !duelo_id && !desafio_id) {
+      return new Response(JSON.stringify({ error: "meta_id, duelo_id ou desafio_id obrigatório" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+    }
 
     // Buscar conexão Strava do usuário
     const { data: conexao } = await supabase
