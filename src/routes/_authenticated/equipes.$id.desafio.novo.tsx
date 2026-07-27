@@ -32,6 +32,7 @@ function NovoDesafio() {
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("saude");
+  const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [duracao, setDuracao] = useState(30);
   const [valor, setValor] = useState("50,00");
   const [premiacao, setPremiacao] = useState("");
