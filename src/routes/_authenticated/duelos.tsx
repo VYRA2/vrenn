@@ -5,9 +5,11 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { BottomNav } from "@/components/BottomNav";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
 import { toast } from "sonner";
 import { ArrowLeft, Info, Swords, Trophy, Users, Loader2, X, Flame } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+
 
 export const Route = createFileRoute("/_authenticated/duelos")({
   component: Duelos,
