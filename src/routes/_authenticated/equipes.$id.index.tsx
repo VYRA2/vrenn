@@ -1367,29 +1367,21 @@ function SolicitarEntradaBtn({ equipeId, equipe, userId, onEntrou }: { equipeId:
   async function solicitar() {
     setLoading(true);
     try {
-      // Se equipe pública: entra direto
-      if (equipe.publica) {
-        const { error } = await (supabase as any).from("equipe_membros").insert({
-          equipe_id: equipeId,
-          user_id: userId,
-          papel: "membro",
-        });
-        if (error && error.code !== "23505") throw error;
-        toast.success("Você entrou na equipe!");
-        onEntrou();
-        return;
-      }
-      // Se privada: cria solicitação
-      const { error } = await (supabase as any).from("equipe_solicitacoes").insert({
-        equipe_id: equipeId,
-        user_id: userId,
-        status: "pendente",
+      const { data, error } = await (supabase as any).rpc("entrar_na_equipe", {
+        p_equipe_id: equipeId,
       });
-      if (error && error.code !== "23505") throw error;
-      setStatus("pendente");
-      toast.success("Solicitação enviada! O admin será notificado.");
+      if (error) throw error;
+      if (data?.erro) throw new Error(data.erro);
+
+      if (data?.solicitacao) {
+        setStatus("pendente");
+        toast.success("Solicitação enviada! O admin será notificado.");
+      } else if (data?.entrou || data?.ja_membro) {
+        toast.success(data?.ja_membro ? "Você já é membro desta equipe!" : "Você entrou na equipe!");
+        onEntrou();
+      }
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao solicitar entrada");
+      toast.error(e.message ?? "Erro ao entrar na equipe");
     } finally {
       setLoading(false);
     }
