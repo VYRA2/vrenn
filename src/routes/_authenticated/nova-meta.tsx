@@ -155,6 +155,7 @@ function NovaMeta() {
               localId={localId}
               onChangeLocalId={setLocalId}
               userId={user.id}
+              subcategoria={subcategoria}
             />
           </div>
         )}
