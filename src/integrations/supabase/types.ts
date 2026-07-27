@@ -588,6 +588,45 @@ export type Database = {
           },
         ]
       }
+      equipe_solicitacoes: {
+        Row: {
+          created_at: string | null
+          equipe_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          equipe_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          equipe_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_solicitacoes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipe_solicitacoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipes: {
         Row: {
           avatar_url: string | null
@@ -1139,6 +1178,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          aceita_ser_arbitro: boolean
           arbitragens_ativas: number
           arbitragens_concluidas: number
           asaas_customer_id: string | null
@@ -1163,6 +1203,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          aceita_ser_arbitro?: boolean
           arbitragens_ativas?: number
           arbitragens_concluidas?: number
           asaas_customer_id?: string | null
@@ -1187,6 +1228,7 @@ export type Database = {
           username: string
         }
         Update: {
+          aceita_ser_arbitro?: boolean
           arbitragens_ativas?: number
           arbitragens_concluidas?: number
           asaas_customer_id?: string | null
@@ -1717,6 +1759,18 @@ export type Database = {
         Args: { p_admin_id: string; p_temporada_id: string }
         Returns: Json
       }
+      entrar_na_equipe: { Args: { p_equipe_id: string }; Returns: Json }
+      get_equipe_membros: {
+        Args: { p_equipe_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          nome: string
+          papel: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_local_qrcode_token: { Args: { _local_id: string }; Returns: string }
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
@@ -1770,6 +1824,7 @@ export type Database = {
         Returns: undefined
       }
       teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
+      verificar_temporadas_encerradas: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
