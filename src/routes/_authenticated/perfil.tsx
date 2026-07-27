@@ -86,11 +86,14 @@ function Perfil() {
   });
 
   async function ativarArbitro() {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({ aceita_ser_arbitro: true })
       .eq("id", user.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("Erro ativar árbitro:", error);
+      return toast.error(error.message ?? "Erro ao ativar");
+    }
     toast.success("Você agora pode ser sorteado como árbitro!");
     refetchProfile();
     refetchArbitro();
@@ -98,11 +101,14 @@ function Perfil() {
   }
 
   async function desativarArbitro() {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("profiles")
       .update({ aceita_ser_arbitro: false })
       .eq("id", user.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("Erro desativar árbitro:", error);
+      return toast.error(error.message ?? "Erro ao desativar");
+    }
     toast.success("Você não será mais sorteado como árbitro.");
     refetchProfile();
     refetchArbitro();
