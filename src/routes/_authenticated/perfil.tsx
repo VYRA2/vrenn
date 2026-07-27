@@ -8,7 +8,7 @@ import { VyraLogo } from "@/components/VyraLogo";
 import {
   Share, Settings, BadgeCheck, Gem, Edit3, Target, Flame, Dumbbell, Users, Diamond,
   CheckCircle2, MessageCircle, Heart, UserPlus, TrendingUp, ChevronRight, Info, Trophy, Zap, Sparkles, LogOut, X,
-  Shield, Star,
+  Shield, Star, Activity,
 } from "lucide-react";
 
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
@@ -67,6 +67,19 @@ function Perfil() {
         seguidores: seguidoresRes.count ?? 0,
         seguindo: seguindoRes.count ?? 0,
       };
+    },
+  });
+
+  // Strava connection
+  const { data: stravaConn } = useQuery({
+    queryKey: ["strava-conn-perfil", user.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("strava_connections")
+        .select("athlete_name, athlete_photo, ultima_atividade_tipo, ultima_atividade_km")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -414,6 +427,48 @@ function Perfil() {
               </Link>
             )}
           </div>
+        </section>
+
+        {/* Strava */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold flex items-center gap-2">
+              <Activity size={14} className="text-[#FC4C02]" /> Strava
+            </h2>
+            <Link to="/strava-connect" className="text-xs font-semibold text-primary-light">
+              {stravaConn ? "Gerenciar →" : "Conectar →"}
+            </Link>
+          </div>
+          <Link to="/strava-connect" className="block rounded-2xl border border-border bg-card p-4 hover:border-primary/40 transition-colors">
+            {stravaConn ? (
+              <div className="flex items-center gap-3">
+                {stravaConn.athlete_photo ? (
+                  <img src={stravaConn.athlete_photo} alt="Strava" className="h-10 w-10 rounded-full object-cover border border-green-500/40" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FC4C02]/20 text-xl">🏃</div>
+                )}
+                <div>
+                  <div className="text-sm font-bold text-foreground">{stravaConn.athlete_name}</div>
+                  <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-semibold text-green-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> Conectado
+                  </div>
+                  {stravaConn.ultima_atividade_tipo && (
+                    <div className="mt-1 text-xs text-muted-foreground capitalize">
+                      Última: {stravaConn.ultima_atividade_tipo} {stravaConn.ultima_atividade_km ? `— ${Number(stravaConn.ultima_atividade_km).toFixed(1)} km` : ""}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FC4C02] text-white font-black text-lg">S</div>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">Conectar Strava</div>
+                  <div className="text-xs text-muted-foreground">Valide corridas e atividades automaticamente</div>
+                </div>
+              </div>
+            )}
+          </Link>
         </section>
 
         {/* Resumo de atividade */}
