@@ -853,6 +853,9 @@ async function registrarCheckinAutomatico(metaId: string, userId: string, mensag
 }
 
 function CheckinModal({ metaId, userId, acceptedArbitros, tipoValidacao, local, onClose, onCreated }: any) {
+  if (tipoValidacao === "strava") {
+    return <SharedStravaCheckinModal tipo="meta" refId={metaId} userId={userId} onClose={onClose} onCreated={onCreated} />;
+  }
   if (tipoValidacao === "qrcode") {
     return <CheckinQrCode metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />;
   }
