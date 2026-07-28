@@ -305,7 +305,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
       {post.media_url ? (
         <button type="button" onClick={() => setShowMedia(true)} className="relative mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-black block">
           {isVideo ? (
-            <video src={post.media_url} playsInline className="h-full w-full object-cover object-center pointer-events-none" />
+            <video src={post.media_url} playsInline muted autoPlay loop className="h-full w-full object-cover object-center cursor-pointer" />
           ) : (
             <img src={post.media_url} className="h-full w-full object-cover object-center" alt="" />
           )}
@@ -388,7 +388,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           </div>
           <div className="flex-1 flex items-center justify-center px-2" onClick={(e) => e.stopPropagation()}>
             {isVideo ? (
-              <video src={post.media_url} controls autoPlay playsInline className="max-h-full max-w-full object-contain" />
+              <video src={post.media_url} controls playsInline className="max-h-full max-w-full object-contain rounded-xl" />
             ) : (
               <img src={post.media_url} className="max-h-full max-w-full object-contain" alt="" />
             )}
