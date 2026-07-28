@@ -20,6 +20,7 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
   const [metaId, setMetaId] = useState<string>("");
   const [legenda, setLegenda] = useState("");
   const [hashtags, setHashtags] = useState("");
+  const [corFundo, setCorFundo] = useState<string | null>(null);
   const [metas, setMetas] = useState<any[]>([]);
   const [loadingMetas, setLoadingMetas] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -93,6 +94,7 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
         tipo,
         legenda: legenda || null,
         hashtags: tags,
+        cor_fundo: corFundo || null,
       });
       if (error) throw error;
       toast.success("Prova publicada!");
@@ -189,7 +191,7 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
         <label className="mb-1 block text-xs font-semibold text-muted-foreground">Legenda</label>
         <textarea value={legenda} onChange={(e) => setLegenda(e.target.value)} rows={3} placeholder="Compartilhe a prova…" className="mb-3 w-full resize-none rounded-2xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground" />
 
-        <label className="mb-1 block text-xs font-semibold text-muted-foreground">Hashtags</label>
+        <label className="mb-1 block text-xs font-semibold text-muted-foreground">Hashtags <span className="font-normal text-muted-foreground/60">(opcional)</span></label>
         <input value={hashtags} onChange={(e) => setHashtags(e.target.value)} placeholder={suggested.join(" ")} className="mb-2 w-full rounded-2xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground" />
         <div className="mb-4 flex flex-wrap gap-1.5">
           {suggested.map((s) => (
