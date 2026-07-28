@@ -10,6 +10,9 @@ import {
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
 import { toast } from "sonner";
 import { useState } from "react";
+import { subcategoriaSuportaStrava } from "@/lib/categorias";
+import { ObjetivoKmPicker } from "@/components/ObjetivoKmPicker";
+import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
   component: PerfilPublico,
@@ -164,9 +167,63 @@ function PerfilPublico() {
   const initial = (profile?.nome ?? "?")[0]?.toUpperCase();
   const seguindoNow = follow?.status === "aceito";
   const [showDesafiar, setShowDesafiar] = useState(false);
+  const [dueloTitulo, setDueloTitulo] = useState("");
+  const [dueloCategoria, setDueloCategoria] = useState("");
+  const [dueloSubcat, setDueloSubcat] = useState<string | null>(null);
+  const [dueloKm, setDueloKm] = useState<number | null>(null);
+  const [dueloLivre, setDueloLivre] = useState(false);
+  const [dueloCustodia, setDueloCustodia] = useState("10");
+  const [dueloPrazo, setDueloPrazo] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  });
+  const [criandoDuelo, setCriandoDuelo] = useState(false);
   const solicitacaoPendente = follow?.status === "pendente";
   const isPrivado = profile?.perfil_publico === false;
   const podeVerConteudo = !isPrivado || seguindoNow;
+
+  async function criarDuelo() {
+    if (!dueloTitulo.trim()) return toast.error("Adicione um título ao duelo");
+    if (!dueloCategoria) return toast.error("Selecione uma categoria");
+    setCriandoDuelo(true);
+    try {
+      const { data: { user: me } } = await supabase.auth.getUser();
+      if (!me) throw new Error("Não autenticado");
+      const { data: oponente } = await (supabase as any)
+        .from("profiles").select("id").eq("username", username).maybeSingle();
+      if (!oponente) throw new Error("Usuário não encontrado");
+
+      const { data: duelo, error } = await (supabase as any).from("duelos").insert({
+        titulo: dueloTitulo.trim(),
+        challenger_id: me.id,
+        opponent_id: oponente.id,
+        categoria: dueloCategoria,
+        subcategoria: dueloSubcat,
+        modalidade: dueloSubcat,
+        objetivo_km: subcategoriaSuportaStrava(dueloSubcat) && !dueloLivre ? dueloKm : null,
+        valor_custodia: Number(dueloCustodia) || 0,
+        prazo: dueloPrazo,
+        status: "pendente",
+        tipo: "privado",
+      }).select().single();
+
+      if (error) throw error;
+
+      await supabase.rpc("notify" as any, {
+        p_user_id: oponente.id,
+        p_tipo: "duelo_convite",
+        p_mensagem: `${me.email} te desafiou para um duelo: "${dueloTitulo}"`,
+        p_referencia_id: duelo.id,
+      });
+
+      toast.success("Desafio enviado! Aguardando aceitação.");
+      setShowDesafiar(false);
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao criar duelo");
+    } finally {
+      setCriandoDuelo(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
@@ -512,6 +569,96 @@ function PerfilPublico() {
 
 
 
+
+      {/* Modal de desafio */}
+      {showDesafiar && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8 max-h-[90vh] overflow-y-auto">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold flex items-center gap-2"><Swords size={18} className="text-primary-light" /> Desafiar</h3>
+                <p className="text-xs text-muted-foreground">@{username}</p>
+              </div>
+              <button onClick={() => setShowDesafiar(false)} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18} /></button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Título */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Título do duelo</label>
+                <input
+                  value={dueloTitulo}
+                  onChange={(e) => setDueloTitulo(e.target.value)}
+                  placeholder="Ex: Quem corre mais em 30 dias?"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                />
+              </div>
+
+              {/* Categoria */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Categoria</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "fitness", label: "Fitness" },
+                    { id: "esportes", label: "Esportes" },
+                    { id: "saude", label: "Saúde" },
+                    { id: "estudos", label: "Estudos" },
+                    { id: "financas", label: "Finanças" },
+                    { id: "habitos", label: "Hábitos" },
+                  ].map(({ id, label }) => (
+                    <button key={id} type="button"
+                      onClick={() => { setDueloCategoria(id); setDueloSubcat(null); setDueloKm(null); setDueloLivre(false); }}
+                      className={"rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors " + (dueloCategoria === id ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground")}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subcategoria */}
+              {dueloCategoria && (
+                <SubcategoriaPicker
+                  categoria={dueloCategoria}
+                  value={dueloSubcat}
+                  onChange={(v) => { setDueloSubcat(v); setDueloKm(null); setDueloLivre(false); }}
+                  label="Modalidade"
+                />
+              )}
+
+              {/* Objetivo km */}
+              {subcategoriaSuportaStrava(dueloSubcat) && (
+                <ObjetivoKmPicker
+                  subcategoria={dueloSubcat!}
+                  objetivoKm={dueloKm}
+                  modoLivre={dueloLivre}
+                  onChange={(km, livre) => { setDueloKm(km); setDueloLivre(livre); }}
+                />
+              )}
+
+              {/* Custódia e prazo */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Custódia (R$)</label>
+                  <input type="number" min="0" value={dueloCustodia} onChange={(e) => setDueloCustodia(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary/50" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Prazo final</label>
+                  <input type="date" value={dueloPrazo} onChange={(e) => setDueloPrazo(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary/50" />
+                </div>
+              </div>
+
+              <button onClick={criarDuelo} disabled={criandoDuelo || !dueloTitulo.trim() || !dueloCategoria}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+                {criandoDuelo ? <Loader2 size={16} className="animate-spin" /> : <Swords size={16} />}
+                Enviar desafio para @{username}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </main>
