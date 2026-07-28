@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { BottomNav } from "@/components/BottomNav";
 import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
+import { ObjetivoKmPicker } from "@/components/ObjetivoKmPicker";
+import { subcategoriaSuportaStrava } from "@/lib/categorias";
 import { toast } from "sonner";
 import { ArrowLeft, Info, Swords, Trophy, Users, Loader2, X, Flame } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -238,6 +240,8 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
   const [subcategoria, setSubcategoria] = useState<string | null>(null);
+  const [objetivoKm, setObjetivoKm] = useState<number | null>(null);
+  const [modoLivre, setModoLivre] = useState(false);
   const [prazo, setPrazo] = useState("");
   const [valorCustodia, setValorCustodia] = useState("");
   const [oponente, setOponente] = useState("");
@@ -271,6 +275,8 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         titulo,
         categoria,
         subcategoria,
+        modalidade: subcategoria,
+        objetivo_km: subcategoriaSuportaStrava(subcategoria) && !modoLivre ? objetivoKm : null,
         prazo: prazo ? new Date(prazo).toISOString() : null,
         valor_custodia: parseFloat(valorCustodia) || 0,
         frequencia_tipo: frequenciaTipo,
@@ -310,8 +316,35 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         </div>
 
         <Input label="Título do duelo" value={titulo} onChange={setTitulo} placeholder="Ex: Perder 5kg em 30 dias"/>
-        <Input label="Categoria" value={categoria} onChange={(v: string) => { setCategoria(v); setSubcategoria(null); }} placeholder="fitness, estudos, hábitos…"/>
+        <div>
+              <span className="mb-2 block text-xs font-medium text-muted-foreground">Categoria</span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "fitness", label: "Fitness" },
+                  { id: "esportes", label: "Esportes" },
+                  { id: "saude", label: "Saúde" },
+                  { id: "estudos", label: "Estudos" },
+                  { id: "financas", label: "Finanças" },
+                  { id: "habitos", label: "Hábitos" },
+                  { id: "outro", label: "Outro" },
+                ].map(({ id, label }) => (
+                  <button type="button" key={id}
+                    onClick={() => { setCategoria(id); setSubcategoria(null); setObjetivoKm(null); setModoLivre(false); }}
+                    className={"rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors " + (categoria === id ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground")}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
         <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
+              {subcategoriaSuportaStrava(subcategoria) && (
+                <ObjetivoKmPicker
+                  subcategoria={subcategoria!}
+                  objetivoKm={objetivoKm}
+                  modoLivre={modoLivre}
+                  onChange={(km, livre) => { setObjetivoKm(km); setModoLivre(livre); }}
+                />
+              )}
         <Input label="Prazo final" type="date" value={prazo} onChange={setPrazo}/>
         <Input label="Valor em custódia (R$)" type="number" value={valorCustodia} onChange={setValorCustodia} placeholder="0.00"/>
 
