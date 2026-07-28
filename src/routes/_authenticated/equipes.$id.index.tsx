@@ -1285,6 +1285,11 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     }
   }
 
+  // ─── Strava: valida atividade recente via edge function ───
+  if (desafio.tipo_validacao === "strava") {
+    return <StravaCheckinModal tipo="desafio_equipe" refId={desafio.id} userId={userId} onClose={onClose} onCreated={onCreated} />;
+  }
+
   // ─── QR Code: exige leitura da câmera ───
   if (desafio.tipo_validacao === "qrcode") {
     if (!desafio.local_id || !local?.qrcode_token) {
