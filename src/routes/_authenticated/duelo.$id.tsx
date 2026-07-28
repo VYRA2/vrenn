@@ -917,6 +917,11 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // ─── Strava: valida atividade recente via edge function ───
+  if (tipoValidacao === "strava") {
+    return <StravaCheckinModal tipo="duelo" refId={dueloId} userId={userId} onClose={onClose} onCreated={onDone} />;
+  }
+
   // ─── QR Code: escaneia obrigatoriamente antes de registrar ───
   if (tipoValidacao === "qrcode") {
     if (!local?.qrcode_token) {
