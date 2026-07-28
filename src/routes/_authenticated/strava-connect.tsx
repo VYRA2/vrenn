@@ -41,55 +41,18 @@ function StravaConnect() {
     enabled: !!user,
   });
 
-  // Verificar callback OAuth do Strava
+  // Verificar se veio de uma conexão bem-sucedida (toast de boas-vindas)
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    const error = url.searchParams.get("error");
-
-    if (error) {
-      toast.error("Conexão com Strava cancelada.");
+    const params = new URL(window.location.href).searchParams;
+    if (params.get("connected") === "1") {
+      toast.success("Strava conectado com sucesso!");
       window.history.replaceState({}, "", "/strava-connect");
-      return;
-    }
-
-    if (code && state === "vrenn-strava-oauth") {
-      setConnecting(true);
-      window.history.replaceState({}, "", "/strava-connect");
-      exchangeCode(code);
+      refetch();
     }
   }, []);
 
-  async function exchangeCode(code: string) {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-oauth`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ code }),
-        }
-      );
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      toast.success(`Strava conectado! Bem-vindo, ${data.athlete_name}!`);
-      refetch();
-    } catch (e: any) {
-      toast.error(e.message ?? "Erro ao conectar com Strava");
-    } finally {
-      setConnecting(false);
-    }
-  }
-
   function conectarStrava() {
-    const redirectUri = `${window.location.origin}/strava-connect`;
+    const redirectUri = `${window.location.origin}/strava-callback`;
     const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=force&scope=${STRAVA_SCOPE}&state=vrenn-strava-oauth`;
     window.location.href = url;
   }
