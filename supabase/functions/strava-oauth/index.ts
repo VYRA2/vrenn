@@ -16,9 +16,13 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Extrair token do header Authorization
+    // Admin client — pode fazer tudo
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    // Extrair e validar JWT manualmente via admin
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "").trim();
 
@@ -28,22 +32,17 @@ serve(async (req) => {
       });
     }
 
-    // Usar cliente com anon key + token do usuário para validar sessão
-    const supabaseUser = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
-
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    // Usar getUser com o token diretamente — funciona com service role
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      console.error("Auth error:", userError?.message);
-      return new Response(JSON.stringify({ error: "Não autorizado: " + (userError?.message ?? "user null") }), {
+      console.error("getUser error:", userError?.message ?? "user null");
+      return new Response(JSON.stringify({ error: "Sessão inválida: " + (userError?.message ?? "user null") }), {
         status: 401, headers: { ...cors, "Content-Type": "application/json" }
       });
     }
 
-    // Cliente de serviço para operações no banco
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+    console.log("User autenticado:", user.id);
 
     const body = await req.json();
     const { code } = body;
@@ -54,9 +53,7 @@ serve(async (req) => {
       });
     }
 
-    console.log("Trocando code por tokens para user:", user.id);
-
-    // Trocar code por tokens
+    // Trocar code por tokens no Strava
     const tokenRes = await fetch("https://www.strava.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -69,10 +66,11 @@ serve(async (req) => {
     });
 
     const tokenData = await tokenRes.json();
-    console.log("Strava token response status:", tokenRes.status, JSON.stringify(tokenData).substring(0, 200));
+    console.log("Strava status:", tokenRes.status, "access_token:", !!tokenData.access_token);
 
     if (!tokenData.access_token) {
-      throw new Error(tokenData.message ?? tokenData.error ?? "Erro ao obter tokens do Strava");
+      const msg = tokenData.message ?? tokenData.error_description ?? tokenData.error ?? "Sem access_token";
+      throw new Error("Strava error: " + msg);
     }
 
     const athlete = tokenData.athlete;
@@ -85,12 +83,10 @@ serve(async (req) => {
       });
       const acts = await actRes.json();
       if (Array.isArray(acts) && acts.length > 0) ultimaAtividade = acts[0];
-    } catch (e) {
-      console.log("Erro ao buscar atividades:", e);
-    }
+    } catch (_) {}
 
-    // Salvar conexão
-    const { error: upsertErr } = await supabaseAdmin.from("strava_connections").upsert({
+    // Salvar conexão no banco
+    const { error: upsertErr } = await supabase.from("strava_connections").upsert({
       user_id: user.id,
       athlete_id: String(athlete.id),
       athlete_name: `${athlete.firstname} ${athlete.lastname}`,
@@ -105,7 +101,7 @@ serve(async (req) => {
       total_atividades: 1,
     }, { onConflict: "user_id" });
 
-    if (upsertErr) throw new Error("DB error: " + upsertErr.message);
+    if (upsertErr) throw new Error("DB: " + upsertErr.message);
 
     return new Response(
       JSON.stringify({ ok: true, athlete_name: `${athlete.firstname} ${athlete.lastname}` }),
@@ -113,7 +109,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("strava-oauth error:", (error as Error).message);
+    console.error("strava-oauth ERRO:", (error as Error).message);
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500, headers: { ...cors, "Content-Type": "application/json" },
     });
