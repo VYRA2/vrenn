@@ -7,7 +7,8 @@ import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, L
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
-import { labelSubcategoria } from "@/lib/categorias";
+import { ObjetivoKmPicker } from "@/components/ObjetivoKmPicker";
+import { labelSubcategoria, subcategoriaSuportaStrava } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/nova-meta")({
   component: NovaMeta,
@@ -32,6 +33,8 @@ function NovaMeta() {
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
   const [subcategoria, setSubcategoria] = useState<string | null>(null);
+  const [objetivoKm, setObjetivoKm] = useState<number | null>(null);
+  const [modoLivre, setModoLivre] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [motivacao, setMotivacao] = useState("");
   const [prazo, setPrazo] = useState("");
@@ -77,6 +80,8 @@ function NovaMeta() {
       titulo,
       categoria,
       subcategoria,
+      modalidade: subcategoria,
+      objetivo_km: subcategoriaSuportaStrava(subcategoria) && !modoLivre ? objetivoKm : null,
       descricao,
       motivacao,
       prazo: prazo ? new Date(prazo).toISOString() : null,
@@ -122,6 +127,14 @@ function NovaMeta() {
               </div>
             </div>
             <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
+            {subcategoriaSuportaStrava(subcategoria) && (
+              <ObjetivoKmPicker
+                subcategoria={subcategoria!}
+                objetivoKm={objetivoKm}
+                modoLivre={modoLivre}
+                onChange={(km, livre) => { setObjetivoKm(km); setModoLivre(livre); }}
+              />
+            )}
             <Textarea label="Descrição" value={descricao} onChange={setDescricao} placeholder="O que você vai fazer?" />
             <Textarea label="O que está em jogo? (privado, só você vê)" value={motivacao} onChange={setMotivacao} placeholder="Ex: Perco R$200, faço 100 flexões em público, raspo o cabelo…" />
           </div>
