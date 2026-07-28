@@ -498,3 +498,43 @@ function SummaryRow({ icon, label, value, sub }: any) {
   );
 }
 
+function RegraSheet({ regras, onClose }: { regras: Record<string, boolean | string>; onClose: () => void }) {
+  const regrasAtivas = [
+    regras.foco_total && "Foco total — os participantes devem cumprir o objetivo durante todo o período",
+    regras.comprovacao && "Comprovação obrigatória — envie provas para validar o progresso",
+    regras.etica && "Respeito e ética — sem trapaças ou comportamento desleal",
+    regras.conclusao && "Conclusão — o desafio só encerra ao final do período ou quando as metas forem cumpridas",
+    typeof regras.consequencias === "string" && regras.consequencias.trim() && `Consequências: ${regras.consequencias}`,
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8" onClick={(e) => e.stopPropagation()}>
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20">
+            <Shield size={16} className="text-accent" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold">Como funciona este desafio</h3>
+            <p className="text-xs text-muted-foreground">Regras que se aplicam a todos os participantes</p>
+          </div>
+        </div>
+        <div className="space-y-2 mb-5">
+          {regrasAtivas.map((regra, i) => (
+            <div key={i} className="flex items-start gap-2 rounded-xl border border-border bg-background p-3 text-xs text-muted-foreground">
+              <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold text-primary-light">{i + 1}</span>
+              <span>{regra}</span>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-400 mb-4">
+          ⚠️ Ao entrar neste desafio, você declara ter lido e aceito todas as regras acima.
+        </div>
+        <button onClick={onClose} className="w-full rounded-2xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground">
+          Entendido
+        </button>
+      </div>
+    </div>
+  );
+}
