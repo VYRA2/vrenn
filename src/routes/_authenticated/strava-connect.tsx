@@ -53,7 +53,7 @@ function StravaConnect() {
 
   function conectarStrava() {
     const redirectUri = `${window.location.origin}/strava-callback`;
-    const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=force&scope=${STRAVA_SCOPE}&state=vrenn-strava-oauth`;
+    const url = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=auto&scope=${STRAVA_SCOPE}&state=vrenn-strava-oauth`;
     window.location.href = url;
   }
 
