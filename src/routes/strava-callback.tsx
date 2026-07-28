@@ -13,20 +13,18 @@ function StravaCallback() {
     const error = params.get("error");
     const state = params.get("state");
 
-    if (error || !code) {
-      // Redirecionar com erro
+    if (error || !code || state !== "vrenn-strava-oauth") {
+      sessionStorage.removeItem("strava_pending_code");
       window.location.replace("/strava-connect?strava_error=1");
       return;
     }
 
-    if (state !== "vrenn-strava-oauth") {
-      window.location.replace("/strava-connect?strava_error=1");
-      return;
-    }
+    // Salvar code no sessionStorage — persiste mesmo se redirecionar para login
+    sessionStorage.setItem("strava_pending_code", code);
+    sessionStorage.setItem("strava_pending_ts", String(Date.now()));
 
-    // Redirecionar imediatamente para tela autenticada com o code
-    // O code é válido por 60s — o redirect é instantâneo
-    window.location.replace(`/strava-connect?strava_code=${encodeURIComponent(code)}`);
+    // Ir direto para strava-connect autenticado
+    window.location.replace("/strava-connect");
   }, []);
 
   return (
