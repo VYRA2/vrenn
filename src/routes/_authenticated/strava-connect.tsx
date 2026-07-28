@@ -41,22 +41,32 @@ function StravaConnect() {
     enabled: !!user,
   });
 
-  // Processar code do Strava quando voltar do callback
+  // Processar code do Strava — vem do sessionStorage (salvo no callback)
   useEffect(() => {
     const params = new URL(window.location.href).searchParams;
-    const code = params.get("strava_code");
-    const error = params.get("strava_error");
 
-    if (error) {
+    // Erro explícito via query param
+    if (params.get("strava_error")) {
       toast.error("Conexão com Strava cancelada ou negada.");
       window.history.replaceState({}, "", "/strava-connect");
       return;
     }
 
-    if (code) {
-      window.history.replaceState({}, "", "/strava-connect");
+    // Code salvo no sessionStorage pelo /strava-callback
+    const code = sessionStorage.getItem("strava_pending_code");
+    const ts = Number(sessionStorage.getItem("strava_pending_ts") ?? 0);
+    const age = Date.now() - ts;
+
+    if (code && age < 55000) { // válido por até 55s (Strava expira em 60s)
+      sessionStorage.removeItem("strava_pending_code");
+      sessionStorage.removeItem("strava_pending_ts");
       setConnecting(true);
       exchangeCode(code);
+    } else if (code && age >= 55000) {
+      // Code expirado
+      sessionStorage.removeItem("strava_pending_code");
+      sessionStorage.removeItem("strava_pending_ts");
+      toast.error("O código do Strava expirou. Tente conectar novamente.");
     }
   }, []);
 
