@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/strava-connect")({
 });
 
 const STRAVA_CLIENT_ID = "268185";
-const STRAVA_SCOPE = "activity:read_all,profile:read_all";
+const STRAVA_SCOPE = "read,activity:read";
 
 function StravaConnect() {
   const navigate = useNavigate();
