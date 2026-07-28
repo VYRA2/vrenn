@@ -100,8 +100,11 @@ function StravaConnect() {
           body: JSON.stringify({ code }),
         }
       );
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      const rawText = await res.text();
+      console.log("Strava OAuth response:", res.status, rawText);
+      let data: any = {};
+      try { data = JSON.parse(rawText); } catch(_) { throw new Error("Resposta inválida: " + rawText.substring(0,100)); }
+      if (data.error) throw new Error(`HTTP ${res.status}: ${data.error}`);
       toast.success(`Strava conectado! Bem-vindo, ${data.athlete_name}! 🎉`);
       refetch();
     } catch (e: any) {
