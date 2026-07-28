@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
+import { StravaCheckinModal } from "@/components/StravaCheckinModal";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -915,6 +916,11 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // ─── Strava: valida atividade recente via edge function ───
+  if (tipoValidacao === "strava") {
+    return <StravaCheckinModal tipo="duelo" refId={dueloId} userId={userId} onClose={onClose} onCreated={onDone} />;
+  }
 
   // ─── QR Code: escaneia obrigatoriamente antes de registrar ───
   if (tipoValidacao === "qrcode") {

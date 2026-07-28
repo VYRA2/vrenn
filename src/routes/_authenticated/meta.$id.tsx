@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { StravaCheckinModal as SharedStravaCheckinModal } from "@/components/StravaCheckinModal";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -852,6 +853,9 @@ async function registrarCheckinAutomatico(metaId: string, userId: string, mensag
 }
 
 function CheckinModal({ metaId, userId, acceptedArbitros, tipoValidacao, local, onClose, onCreated }: any) {
+  if (tipoValidacao === "strava") {
+    return <SharedStravaCheckinModal tipo="meta" refId={metaId} userId={userId} onClose={onClose} onCreated={onCreated} />;
+  }
   if (tipoValidacao === "qrcode") {
     return <CheckinQrCode metaId={metaId} userId={userId} local={local} onClose={onClose} onCreated={onCreated} />;
   }

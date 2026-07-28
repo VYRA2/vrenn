@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
+import { StravaCheckinModal } from "@/components/StravaCheckinModal";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera, MessageSquare,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
@@ -1282,6 +1283,11 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     } finally {
       setLoading(false);
     }
+  }
+
+  // ─── Strava: valida atividade recente via edge function ───
+  if (desafio.tipo_validacao === "strava") {
+    return <StravaCheckinModal tipo="desafio_equipe" refId={desafio.id} userId={userId} onClose={onClose} onCreated={onCreated} />;
   }
 
   // ─── QR Code: exige leitura da câmera ───
