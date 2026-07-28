@@ -41,15 +41,52 @@ function StravaConnect() {
     enabled: !!user,
   });
 
-  // Verificar se veio de uma conexão bem-sucedida (toast de boas-vindas)
+  // Processar code do Strava quando voltar do callback
   useEffect(() => {
     const params = new URL(window.location.href).searchParams;
-    if (params.get("connected") === "1") {
-      toast.success("Strava conectado com sucesso!");
+    const code = params.get("strava_code");
+    const error = params.get("strava_error");
+
+    if (error) {
+      toast.error("Conexão com Strava cancelada ou negada.");
       window.history.replaceState({}, "", "/strava-connect");
-      refetch();
+      return;
+    }
+
+    if (code) {
+      window.history.replaceState({}, "", "/strava-connect");
+      setConnecting(true);
+      exchangeCode(code);
     }
   }, []);
+
+  async function exchangeCode(code: string) {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sessão expirada. Faça login novamente.");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-oauth`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ code }),
+        }
+      );
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast.success(`Strava conectado! Bem-vindo, ${data.athlete_name}! 🎉`);
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao conectar com Strava");
+    } finally {
+      setConnecting(false);
+    }
+  }
 
   function conectarStrava() {
     const redirectUri = `${window.location.origin}/strava-callback`;
