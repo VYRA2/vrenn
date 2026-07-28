@@ -121,6 +121,23 @@ function AuthPage() {
       const redirect_uri = `${window.location.origin}/auth/callback`;
       const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
       if (r?.error) return toast.error("Erro no login com Google");
+      if (r?.redirected) return;
+      // Popup/web_message flow: session já foi setada — decidir destino
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return toast.error("Não foi possível obter sua sessão");
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username, nome, onboarding_done")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      const needsOnboarding = !profile || !profile.username || !profile.nome || profile.onboarding_done === false;
+      if (needsOnboarding) {
+        toast.success("Conta criada! Configurando seu perfil...");
+        navigate({ to: "/onboarding" });
+      } else {
+        toast.success("Bem-vindo de volta! 🔥");
+        if (dest !== "/feed") window.location.href = dest; else navigate({ to: "/feed" });
+      }
     } catch (e: any) {
       toast.error("Erro ao conectar com Google. Tente novamente.");
     }
