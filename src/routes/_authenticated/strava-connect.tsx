@@ -72,17 +72,30 @@ function StravaConnect() {
 
   async function exchangeCode(code: string) {
     try {
+      // Aguardar sessão estar pronta
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Sessão expirada. Faça login novamente.");
 
+      if (!token) {
+        // Tentar refresh
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        if (!refreshData.session?.access_token) {
+          throw new Error("Sessão expirada. Faça login novamente.");
+        }
+      }
+
+      const finalToken = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!finalToken) throw new Error("Não foi possível obter token de autenticação.");
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-oauth`,
+        `${supabaseUrl}/functions/v1/strava-oauth`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            "Authorization": `Bearer ${finalToken}`,
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY ?? "",
           },
           body: JSON.stringify({ code }),
         }
