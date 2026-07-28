@@ -72,40 +72,43 @@ function StravaConnect() {
 
   async function exchangeCode(code: string) {
     try {
-      // Aguardar sessão estar pronta
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
+      // Trocar code por tokens diretamente no browser (temporário até deploy da edge function)
+      const tokenRes = await fetch("https://www.strava.com/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: "268185",
+          client_secret: "6ae83310ea696cfce7ec3720a57c1beb4c0b7791",
+          code,
+          grant_type: "authorization_code",
+        }),
+      });
 
-      if (!token) {
-        // Tentar refresh
-        const { data: refreshData } = await supabase.auth.refreshSession();
-        if (!refreshData.session?.access_token) {
-          throw new Error("Sessão expirada. Faça login novamente.");
-        }
+      const tokenData = await tokenRes.json();
+      if (!tokenData.access_token) {
+        throw new Error(tokenData.message ?? tokenData.error ?? "Erro ao conectar com Strava");
       }
 
-      const finalToken = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!finalToken) throw new Error("Não foi possível obter token de autenticação.");
+      const athlete = tokenData.athlete;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessão expirada. Faça login novamente.");
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/strava-oauth`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${finalToken}`,
-            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY ?? "",
-          },
-          body: JSON.stringify({ code }),
-        }
-      );
-      const rawText = await res.text();
-      console.log("Strava OAuth response:", res.status, rawText);
-      let data: any = {};
-      try { data = JSON.parse(rawText); } catch(_) { throw new Error("Resposta inválida: " + rawText.substring(0,100)); }
-      if (data.error) throw new Error(`HTTP ${res.status}: ${data.error}`);
-      toast.success(`Strava conectado! Bem-vindo, ${data.athlete_name}! 🎉`);
+      // Salvar conexão no banco
+      const { error: upsertErr } = await (supabase as any).from("strava_connections").upsert({
+        user_id: user.id,
+        athlete_id: String(athlete.id),
+        athlete_name: `${athlete.firstname} ${athlete.lastname}`,
+        athlete_photo: athlete.profile_medium ?? athlete.profile ?? null,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: tokenData.expires_at,
+        connected_at: new Date().toISOString(),
+        total_atividades: 1,
+      }, { onConflict: "user_id" });
+
+      if (upsertErr) throw new Error("Erro ao salvar: " + upsertErr.message);
+
+      toast.success(`Strava conectado! Bem-vindo, ${athlete.firstname}! 🎉`);
       refetch();
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao conectar com Strava");
