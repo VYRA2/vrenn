@@ -41,29 +41,26 @@ function StravaConnect() {
     enabled: !!user,
   });
 
-  // Processar code do Strava — vem do sessionStorage (salvo no callback)
+  // Processar code do Strava via sessionStorage (salvo pelo /strava-callback)
   useEffect(() => {
     const params = new URL(window.location.href).searchParams;
 
-    // Erro explícito via query param
     if (params.get("strava_error")) {
       toast.error("Conexão com Strava cancelada ou negada.");
       window.history.replaceState({}, "", "/strava-connect");
       return;
     }
 
-    // Code salvo no sessionStorage pelo /strava-callback
     const code = sessionStorage.getItem("strava_pending_code");
     const ts = Number(sessionStorage.getItem("strava_pending_ts") ?? 0);
     const age = Date.now() - ts;
 
-    if (code && age < 55000) { // válido por até 55s (Strava expira em 60s)
+    if (code && age < 55000) {
       sessionStorage.removeItem("strava_pending_code");
       sessionStorage.removeItem("strava_pending_ts");
       setConnecting(true);
       exchangeCode(code);
     } else if (code && age >= 55000) {
-      // Code expirado
       sessionStorage.removeItem("strava_pending_code");
       sessionStorage.removeItem("strava_pending_ts");
       toast.error("O código do Strava expirou. Tente conectar novamente.");
@@ -72,45 +69,34 @@ function StravaConnect() {
 
   async function exchangeCode(code: string) {
     try {
-      // Trocar code por tokens diretamente no browser (temporário até deploy da edge function)
-      const tokenRes = await fetch("https://www.strava.com/oauth/token", {
+      // Usar a edge function — NUNCA chamar Strava direto do browser (CORS + segurança)
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sessão expirada. Faça login novamente.");
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) throw new Error("URL do Supabase não configurada");
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/strava-oauth`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: "268185",
-          client_secret: "6ae83310ea696cfce7ec3720a57c1beb4c0b7791",
-          code,
-          grant_type: "authorization_code",
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
+        },
+        body: JSON.stringify({ code }),
       });
 
-      const tokenData = await tokenRes.json();
-      if (!tokenData.access_token) {
-        throw new Error(tokenData.message ?? tokenData.error ?? "Erro ao conectar com Strava");
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error ?? `Erro ${res.status} ao conectar com Strava`);
       }
 
-      const athlete = tokenData.athlete;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sessão expirada. Faça login novamente.");
-
-      // Salvar conexão no banco
-      const { error: upsertErr } = await (supabase as any).from("strava_connections").upsert({
-        user_id: user.id,
-        athlete_id: String(athlete.id),
-        athlete_name: `${athlete.firstname} ${athlete.lastname}`,
-        athlete_photo: athlete.profile_medium ?? athlete.profile ?? null,
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_at: tokenData.expires_at,
-        connected_at: new Date().toISOString(),
-        total_atividades: 1,
-      }, { onConflict: "user_id" });
-
-      if (upsertErr) throw new Error("Erro ao salvar: " + upsertErr.message);
-
-      toast.success(`Strava conectado! Bem-vindo, ${athlete.firstname}! 🎉`);
+      toast.success(`Strava conectado! Bem-vindo, ${data.athlete_name}! 🎉`);
       refetch();
     } catch (e: any) {
+      console.error("Strava connect error:", e);
       toast.error(e.message ?? "Erro ao conectar com Strava");
     } finally {
       setConnecting(false);
@@ -133,7 +119,10 @@ function StravaConnect() {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-disconnect`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
+          },
         }
       );
       toast.success("Strava desconectado. Seus tokens foram excluídos.");
@@ -150,7 +139,6 @@ function StravaConnect() {
   return (
     <main className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-md px-4 pt-6">
-        {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <button onClick={() => navigate({ to: "/perfil" })} className="rounded-full p-2 text-muted-foreground hover:bg-card">
             <ArrowLeft size={20} />
@@ -167,7 +155,6 @@ function StravaConnect() {
             <p className="text-sm text-muted-foreground">{connecting ? "Conectando ao Strava..." : "Carregando..."}</p>
           </div>
         ) : conectado ? (
-          /* Estado: conectado */
           <div className="space-y-4">
             <div className="rounded-2xl border border-green-500/30 bg-green-500/5 p-5">
               <div className="flex items-center gap-4">
@@ -202,53 +189,30 @@ function StravaConnect() {
                   )}
                 </div>
               )}
-
-              {stravaData.total_atividades > 0 && (
-                <div className="mt-2 text-xs text-muted-foreground text-center">
-                  {stravaData.total_atividades} atividades sincronizadas no total
-                </div>
-              )}
             </div>
 
-            <button
-              onClick={desconectarStrava}
-              disabled={disconnecting}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/40 bg-red-500/10 py-3.5 text-sm font-bold text-red-400 disabled:opacity-60"
-            >
+            <button onClick={desconectarStrava} disabled={disconnecting}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/40 bg-red-500/10 py-3.5 text-sm font-bold text-red-400 disabled:opacity-60">
               {disconnecting ? <Loader2 size={16} className="animate-spin" /> : <Unlink size={16} />}
               Desconectar Strava
             </button>
-
-            <p className="text-center text-xs text-muted-foreground">
-              Ao desconectar, seus tokens de acesso são excluídos imediatamente.
-            </p>
           </div>
         ) : (
-          /* Estado: desconectado */
           <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-card p-6 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FC4C02]">
                 <span className="text-3xl font-black text-white">S</span>
               </div>
               <h2 className="text-lg font-bold text-foreground">Conecte sua conta Strava</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Valide suas atividades físicas de forma automática nos seus check-ins.
-              </p>
-              <button
-                onClick={conectarStrava}
+              <p className="mt-2 text-sm text-muted-foreground">Valide suas atividades físicas de forma automática nos seus check-ins.</p>
+              <button onClick={conectarStrava}
                 className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-lg"
-                style={{ backgroundColor: "#FC4C02" }}
-              >
+                style={{ backgroundColor: "#FC4C02" }}>
                 <span className="text-lg font-black">S</span>
                 Conectar com Strava
               </button>
-              <label className="mt-3 flex items-start gap-2 text-left">
-                <input type="checkbox" defaultChecked className="mt-0.5 accent-[#FC4C02]" />
-                <span className="text-xs text-muted-foreground">Sincronizar corridas, caminhadas e pedaladas automaticamente.</span>
-              </label>
             </div>
 
-            {/* O que acessamos */}
             <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">O que acessamos</h3>
               {[
@@ -260,40 +224,21 @@ function StravaConnect() {
                 { ok: false, text: "Acesso a pagamentos ou conta bancária" },
               ].map(({ ok, text }) => (
                 <div key={text} className="flex items-start gap-2 text-xs text-muted-foreground">
-                  {ok
-                    ? <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-green-500" />
-                    : <XCircle size={14} className="mt-0.5 shrink-0 text-red-500" />}
+                  {ok ? <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-green-500" /> : <XCircle size={14} className="mt-0.5 shrink-0 text-red-500" />}
                   <span>{text}</span>
                 </div>
               ))}
             </div>
 
-            {/* Atividades suportadas */}
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Atividades suportadas</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {[["🏃", "Corrida"], ["🚶", "Caminhada"], ["🏊", "Natação"], ["🚴", "Ciclismo"], ["🏋️", "Funcional"], ["⚽", "Esporte"]].map(([emoji, label]) => (
-                  <div key={label} className="flex flex-col items-center gap-1 rounded-xl border border-border bg-background py-3 text-xs text-muted-foreground">
-                    <span className="text-xl">{emoji}</span>
-                    <span>{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Protocolo de privacidade */}
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary-light">
-                  <Shield size={14} /> Protocolo de Validação VRENN
-                </div>
-                <span className="text-xs font-black text-primary-light">VRENN</span>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary-light">
+                <Shield size={14} /> Privacidade VRENN
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Seus dados são usados apenas para verificação de metas. Nunca vendemos ou compartilhamos suas atividades com terceiros.
+                Seus dados são usados apenas para verificação de metas. Nunca vendemos ou compartilhamos suas atividades.
               </p>
               <Link to="/politica-privacidade" className="text-xs font-semibold text-primary-light underline underline-offset-2">
-                Ver Política de Privacidade completa →
+                Ver Política de Privacidade →
               </Link>
             </div>
           </div>
