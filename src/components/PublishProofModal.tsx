@@ -171,6 +171,25 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
           </div>
         )}
 
+        {/* Cor de fundo */}
+        <div className="mb-3">
+          <div className="mb-1.5 text-xs font-semibold text-muted-foreground">Cor de fundo <span className="font-normal opacity-60">(opcional)</span></div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => setCorFundo(null)} className={"h-7 px-2 rounded-full border-2 text-[10px] font-semibold " + (!corFundo ? "border-primary text-primary-light" : "border-border text-muted-foreground")}>
+              Sem cor
+            </button>
+            {["#7C3AED","#1D4ED8","#059669","#DC2626","#D97706","#DB2777","#0891B2","#111111"].map((cor) => (
+              <button key={cor} onClick={() => setCorFundo(cor)} style={{ backgroundColor: cor }}
+                className={"h-7 w-7 rounded-full border-2 transition-transform " + (corFundo === cor ? "border-white scale-110" : "border-transparent")} />
+            ))}
+          </div>
+          {corFundo && (
+            <div className="mt-2 rounded-xl p-4 text-center text-sm font-bold text-white min-h-[60px] flex items-center justify-center" style={{ backgroundColor: corFundo }}>
+              {legenda || "Prévia do texto…"}
+            </div>
+          )}
+        </div>
+
         <label className="mb-1 block text-xs font-semibold text-muted-foreground">Vincular à meta</label>
         <select value={metaId} onChange={(e) => setMetaId(e.target.value)} className="mb-3 w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm text-foreground">
           <option value="">Escolha uma meta ativa…</option>
