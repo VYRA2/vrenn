@@ -37,6 +37,7 @@ function NovoDesafio() {
   const [valor, setValor] = useState("50,00");
   const [premiacao, setPremiacao] = useState("");
   const [regras, setRegras] = useState({ foco_total: true, comprovacao: true, etica: true, conclusao: true });
+  const [showComoFunciona, setShowComoFunciona] = useState(false);
   const [consequencias, setConsequencias] = useState("");
   const [aceito, setAceito] = useState(false);
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("foto_arbitro");
@@ -185,7 +186,7 @@ function NovoDesafio() {
                 <div className="text-sm font-bold">Como funciona?</div>
                 <div className="text-[11px] text-muted-foreground">Explique as regras, dinâmica e condições para participação.</div>
               </div>
-              <button className="rounded-xl border border-primary px-3 py-1.5 text-[11px] font-semibold text-primary-light inline-flex items-center gap-1">Ver explicação <ChevronRight size={12}/></button>
+              <button onClick={() => setShowComoFunciona(true)} className="rounded-xl border border-primary px-3 py-1.5 text-[11px] font-semibold text-primary-light inline-flex items-center gap-1">Ver explicação <ChevronRight size={12}/></button>
             </div>
           </>
         )}
