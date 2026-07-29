@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ExecutionCardModal } from "./ExecutionCardModal";
+import type { ExecutionCardData } from "@/lib/executionCard";
 
 type Tipo = "meta" | "duelo" | "desafio_equipe";
 
@@ -12,6 +14,7 @@ interface Props {
   onClose: () => void;
   onCreated: () => void;
 }
+
 
 /**
  * Modal de check-in via Strava — usado em Meta, Duelo e Desafio em Equipe.
