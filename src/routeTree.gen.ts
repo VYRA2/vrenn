@@ -17,7 +17,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as AuthenticatedStravaConnectRouteImport } from './routes/_authenticated/strava-connect'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
@@ -97,9 +97,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
+  id: '/auth_/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedStravaConnectRoute =
   AuthenticatedStravaConnectRouteImport.update({
@@ -317,7 +317,7 @@ const AuthenticatedEquipesIdDesafioNovoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
@@ -365,7 +365,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
@@ -415,7 +415,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
@@ -438,7 +438,7 @@ export interface FileRoutesById {
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
   '/_authenticated/strava-connect': typeof AuthenticatedStravaConnectRoute
-  '/auth/callback': typeof AuthCallbackRoute
+  '/auth_/callback': typeof AuthCallbackRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
@@ -585,7 +585,7 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil'
     | '/_authenticated/ranking'
     | '/_authenticated/strava-connect'
-    | '/auth/callback'
+    | '/auth_/callback'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/duelo-convite/$id'
@@ -612,7 +612,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRouteWithChildren
+  AuthRoute: typeof AuthRoute
   McpRoute: typeof McpRoute
   OnboardingRoute: typeof OnboardingRoute
   PoliticaPrivacidadeRoute: typeof PoliticaPrivacidadeRoute
@@ -620,6 +620,7 @@ export interface RootRouteChildren {
   StravaCallbackRoute: typeof StravaCallbackRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
@@ -682,12 +683,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/strava-connect': {
       id: '/_authenticated/strava-connect'
@@ -1037,20 +1038,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface AuthRouteChildren {
-  AuthCallbackRoute: typeof AuthCallbackRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthCallbackRoute: AuthCallbackRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRouteWithChildren,
+  AuthRoute: AuthRoute,
   McpRoute: McpRoute,
   OnboardingRoute: OnboardingRoute,
   PoliticaPrivacidadeRoute: PoliticaPrivacidadeRoute,
@@ -1059,6 +1050,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
