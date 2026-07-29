@@ -94,7 +94,6 @@ export function PublishProofModal({ userId, onClose, onPublished }: { userId: st
         tipo,
         legenda: legenda || null,
         hashtags: tags,
-        cor_fundo: corFundo || null,
       });
       if (error) throw error;
       toast.success("Prova publicada!");
