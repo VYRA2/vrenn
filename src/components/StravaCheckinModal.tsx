@@ -141,9 +141,44 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
             Cancelar
           </button>
           {resultado?.valido ? (
-            <button onClick={onCreated} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-bold text-white">
-              ✓ Confirmar
-            </button>
+            <>
+              <button
+                onClick={async () => {
+                  const a = resultado.atividade ?? {};
+                  const { data: prof } = await supabase
+                    .from("profiles")
+                    .select("nome, username, avatar_url, nivel, rep_total")
+                    .eq("id", userId)
+                    .maybeSingle();
+                  setCardData({
+                    userName: prof?.nome ?? "Atleta VRENN",
+                    userHandle: prof?.username ?? "seuusuario",
+                    avatarUrl: prof?.avatar_url ?? null,
+                    nivel: prof?.nivel ?? null,
+                    rep: prof?.rep_total ?? null,
+                    tipo: a.tipo === "Ride" ? "CICLISMO" : a.tipo === "Swim" ? "NATAÇÃO" : a.tipo === "Walk" ? "CAMINHADA" : "CORRIDA",
+                    subtitulo: "ATIVIDADE AO AR LIVRE",
+                    distanciaKm: a.distancia_km_num ?? parseFloat(a.distancia_km ?? "0"),
+                    tempoSeg: a.tempo_seg ?? (a.duracao_min ?? 0) * 60,
+                    ritmoStr: a.ritmo ?? null,
+                    calorias: a.calorias ?? null,
+                    elevacaoM: a.elevacao_m ?? null,
+                    fcMedia: a.fc_media ?? null,
+                    polyline: a.polyline ?? null,
+                    data: a.inicio ? new Date(a.inicio) : new Date(),
+                    repGanho: 250,
+                    metaConcluida: true,
+                    qrCodeUrl: null,
+                  });
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-primary/10 py-3 text-xs font-bold text-primary-light"
+              >
+                <Share2 size={14} /> Cartão
+              </button>
+              <button onClick={onCreated} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-bold text-white">
+                ✓ Confirmar
+              </button>
+            </>
           ) : (
             <button
               onClick={validar}
@@ -155,6 +190,8 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
           )}
         </div>
       </div>
+      {cardData && <ExecutionCardModal data={cardData} onClose={() => setCardData(null)} />}
+
     </div>
   );
 }
