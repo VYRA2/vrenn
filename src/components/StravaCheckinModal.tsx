@@ -147,7 +147,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
                   const a = resultado.atividade ?? {};
                   const { data: prof } = await supabase
                     .from("profiles")
-                    .select("nome, username, avatar_url, nivel, rep_total")
+                    .select("nome, username, avatar_url, nivel, reputacao_pts")
                     .eq("id", userId)
                     .maybeSingle();
                   setCardData({
@@ -155,7 +155,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
                     userHandle: prof?.username ?? "seuusuario",
                     avatarUrl: prof?.avatar_url ?? null,
                     nivel: prof?.nivel ?? null,
-                    rep: prof?.rep_total ?? null,
+                    rep: prof?.reputacao_pts ?? null,
                     tipo: a.tipo === "Ride" ? "CICLISMO" : a.tipo === "Swim" ? "NATAÇÃO" : a.tipo === "Walk" ? "CAMINHADA" : "CORRIDA",
                     subtitulo: "ATIVIDADE AO AR LIVRE",
                     distanciaKm: a.distancia_km_num ?? parseFloat(a.distancia_km ?? "0"),
