@@ -56,8 +56,14 @@ serve(async (req) => {
       });
     }
 
-    // redirect_uri padrão = /strava-callback (onde o Strava redireciona)
-    const finalRedirectUri = redirect_uri ?? "https://preview--vrenn.lovable.app/strava-callback";
+    // redirect_uri DEVE ser enviado pelo cliente — precisa ser idêntico ao usado na autorização.
+    // Nunca usar fallback hardcoded aqui, pois o Strava rejeita qualquer divergência.
+    if (!redirect_uri) {
+      return new Response(JSON.stringify({ error: "redirect_uri ausente no body da requisição" }), {
+        status: 400, headers: { ...cors, "Content-Type": "application/json" }
+      });
+    }
+    const finalRedirectUri = redirect_uri;
 
     console.log("Trocando code por token. redirect_uri:", finalRedirectUri);
 
