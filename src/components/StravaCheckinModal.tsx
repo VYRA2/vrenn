@@ -26,6 +26,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
   const [resultado, setResultado] = useState<any>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [cardData, setCardData] = useState<ExecutionCardData | null>(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
