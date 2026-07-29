@@ -118,7 +118,7 @@ function AuthPage() {
       if (dest && dest !== "/feed") {
         try { sessionStorage.setItem("vrenn:post_login_dest", dest); } catch {}
       }
-      const redirect_uri = `${window.location.origin}/auth/callback`;
+      const redirect_uri = `${window.location.origin}/auth-callback`;
       const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
       if (r?.error) return toast.error("Erro no login com Google");
       if (r?.redirected) return;

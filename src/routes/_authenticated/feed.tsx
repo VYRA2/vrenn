@@ -43,39 +43,48 @@ function Feed() {
 
 
   const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ["feed-posts", user.id],
+    queryKey: ["feed-posts", user.id, tab],
     queryFn: async () => {
-      // Feed: apenas os meus posts + posts de quem eu sigo (status aceito)
-      const { data: follows } = await supabase
-        .from("follows")
-        .select("following_id")
-        .eq("follower_id", user.id)
-        .eq("status", "aceito");
+      let authorIds: string[] | null = null;
 
-      const followingIds = (follows ?? []).map((x: any) => x.following_id);
-      const authorIds = [...followingIds, user.id]; // inclui meus próprios posts
+      if (tab === "seguindo") {
+        // Aba "Seguindo": apenas quem eu sigo + eu
+        const { data: follows } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", user.id)
+          .eq("status", "aceito");
+        const followingIds = (follows ?? []).map((x: any) => x.following_id);
+        authorIds = [...followingIds, user.id];
+      }
+      // Aba padrão "feed" (Comunidade): mostra posts de TODOS os perfis públicos
+      // Não filtra por author — RLS da tabela posts já cuida da visibilidade pública.
 
-      const { data } = await supabase
+      let query = supabase
         .from("posts")
         .select("id, user_id, meta_id, media_url, tipo, legenda, hashtags, created_at, auto_gerado, likes_count, comments_count, profiles:user_id (nome, username, avatar_url, perfil_publico), metas:meta_id (titulo, status, progresso)")
-        .in("user_id", authorIds)
         .order("created_at", { ascending: false })
         .limit(50);
 
+      if (authorIds) query = query.in("user_id", authorIds);
+
+      const { data } = await query;
+      // No feed público, remove posts de perfis privados que não sigo
+      if (!authorIds) {
+        return (data ?? []).filter((p: any) => p.profiles?.perfil_publico !== false);
+      }
       return data ?? [];
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // atualização a cada 30s
   });
 
-  // Realtime — atualiza feed quando novo post é inserido por alguém que sigo
+  // Realtime — atualiza feed em qualquer INSERT/UPDATE de posts
   const channelRef = useRef<any>(null);
   useEffect(() => {
     const channel = supabase
       .channel("feed-realtime")
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "posts",
-      }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => {
         refetch();
       })
       .subscribe();
@@ -84,7 +93,8 @@ function Feed() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user.id]);
+  }, [user.id, tab]);
+
 
 
   const { data: me } = useQuery({

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ExecutionCardModal } from "./ExecutionCardModal";
+import type { ExecutionCardData } from "@/lib/executionCard";
 
 type Tipo = "meta" | "duelo" | "desafio_equipe";
 
@@ -13,6 +15,7 @@ interface Props {
   onCreated: () => void;
 }
 
+
 /**
  * Modal de check-in via Strava — usado em Meta, Duelo e Desafio em Equipe.
  * Chama a edge function `strava-validate-checkin` que valida janela de tempo (30 min)
@@ -23,6 +26,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
   const [resultado, setResultado] = useState<any>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [cardData, setCardData] = useState<ExecutionCardData | null>(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -137,9 +141,44 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
             Cancelar
           </button>
           {resultado?.valido ? (
-            <button onClick={onCreated} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-bold text-white">
-              ✓ Confirmar
-            </button>
+            <>
+              <button
+                onClick={async () => {
+                  const a = resultado.atividade ?? {};
+                  const { data: prof } = await supabase
+                    .from("profiles")
+                    .select("nome, username, avatar_url, nivel, reputacao_pts")
+                    .eq("id", userId)
+                    .maybeSingle();
+                  setCardData({
+                    userName: prof?.nome ?? "Atleta VRENN",
+                    userHandle: prof?.username ?? "seuusuario",
+                    avatarUrl: prof?.avatar_url ?? null,
+                    nivel: prof?.nivel ?? null,
+                    rep: prof?.reputacao_pts ?? null,
+                    tipo: a.tipo === "Ride" ? "CICLISMO" : a.tipo === "Swim" ? "NATAÇÃO" : a.tipo === "Walk" ? "CAMINHADA" : "CORRIDA",
+                    subtitulo: "ATIVIDADE AO AR LIVRE",
+                    distanciaKm: a.distancia_km_num ?? parseFloat(a.distancia_km ?? "0"),
+                    tempoSeg: a.tempo_seg ?? (a.duracao_min ?? 0) * 60,
+                    ritmoStr: a.ritmo ?? null,
+                    calorias: a.calorias ?? null,
+                    elevacaoM: a.elevacao_m ?? null,
+                    fcMedia: a.fc_media ?? null,
+                    polyline: a.polyline ?? null,
+                    data: a.inicio ? new Date(a.inicio) : new Date(),
+                    repGanho: 250,
+                    metaConcluida: true,
+                    qrCodeUrl: null,
+                  });
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-primary/10 py-3 text-xs font-bold text-primary-light"
+              >
+                <Share2 size={14} /> Cartão
+              </button>
+              <button onClick={onCreated} className="flex-1 rounded-xl bg-green-500 py-3 text-sm font-bold text-white">
+                ✓ Confirmar
+              </button>
+            </>
           ) : (
             <button
               onClick={validar}
@@ -151,6 +190,8 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
           )}
         </div>
       </div>
+      {cardData && <ExecutionCardModal data={cardData} onClose={() => setCardData(null)} />}
+
     </div>
   );
 }
