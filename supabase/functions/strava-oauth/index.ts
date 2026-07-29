@@ -25,7 +25,7 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabase = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     // Validar JWT do usuário
@@ -34,14 +34,19 @@ serve(async (req) => {
 
     if (!token) {
       return new Response(JSON.stringify({ error: "Token ausente" }), {
-        status: 401, headers: { ...cors, "Content-Type": "application/json" }
+        status: 401,
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Sessão inválida: " + (userError?.message ?? "user null") }), {
-        status: 401, headers: { ...cors, "Content-Type": "application/json" }
+        status: 401,
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -52,7 +57,8 @@ serve(async (req) => {
 
     if (!code) {
       return new Response(JSON.stringify({ error: "Código ausente" }), {
-        status: 400, headers: { ...cors, "Content-Type": "application/json" }
+        status: 400,
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -60,7 +66,8 @@ serve(async (req) => {
     // Nunca usar fallback hardcoded aqui, pois o Strava rejeita qualquer divergência.
     if (!redirect_uri) {
       return new Response(JSON.stringify({ error: "redirect_uri ausente no body da requisição" }), {
-        status: 400, headers: { ...cors, "Content-Type": "application/json" }
+        status: 400,
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     const finalRedirectUri = redirect_uri;
@@ -104,32 +111,34 @@ serve(async (req) => {
     } catch (_) {}
 
     // Salvar conexão no banco
-    const { error: upsertErr } = await supabase.from("strava_connections").upsert({
-      user_id: user.id,
-      athlete_id: String(athlete.id),
-      athlete_name: `${athlete.firstname} ${athlete.lastname}`,
-      athlete_photo: athlete.profile_medium ?? athlete.profile ?? null,
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: tokenData.expires_at,
-      connected_at: new Date().toISOString(),
-      ultima_atividade_tipo: ultimaAtividade?.type?.toLowerCase() ?? null,
-      ultima_atividade_km: ultimaAtividade ? (ultimaAtividade.distance / 1000) : null,
-      ultima_atividade_em: ultimaAtividade?.start_date ?? null,
-      total_atividades: 1,
-    }, { onConflict: "user_id" });
+    const { error: upsertErr } = await supabase.from("strava_connections").upsert(
+      {
+        user_id: user.id,
+        athlete_id: String(athlete.id),
+        athlete_name: `${athlete.firstname} ${athlete.lastname}`,
+        athlete_photo: athlete.profile_medium ?? athlete.profile ?? null,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: tokenData.expires_at,
+        connected_at: new Date().toISOString(),
+        ultima_atividade_tipo: ultimaAtividade?.type?.toLowerCase() ?? null,
+        ultima_atividade_km: ultimaAtividade ? ultimaAtividade.distance / 1000 : null,
+        ultima_atividade_em: ultimaAtividade?.start_date ?? null,
+        total_atividades: 1,
+      },
+      { onConflict: "user_id" },
+    );
 
     if (upsertErr) throw new Error("DB: " + upsertErr.message);
 
-    return new Response(
-      JSON.stringify({ ok: true, athlete_name: `${athlete.firstname} ${athlete.lastname}` }),
-      { headers: { ...cors, "Content-Type": "application/json" } },
-    );
-
+    return new Response(JSON.stringify({ ok: true, athlete_name: `${athlete.firstname} ${athlete.lastname}` }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("strava-oauth ERRO:", (error as Error).message);
     return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500, headers: { ...cors, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });
