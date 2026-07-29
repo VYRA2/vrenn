@@ -133,8 +133,10 @@ export type Database = {
           foto_url: string | null
           id: string
           is_seed: boolean
+          km_registrado: number | null
           mensagem: string | null
           meta_id: string | null
+          strava_activity_id: string | null
           user_id: string
           validado: boolean
           wearable_activity_id: string | null
@@ -148,8 +150,10 @@ export type Database = {
           foto_url?: string | null
           id?: string
           is_seed?: boolean
+          km_registrado?: number | null
           mensagem?: string | null
           meta_id?: string | null
+          strava_activity_id?: string | null
           user_id: string
           validado?: boolean
           wearable_activity_id?: string | null
@@ -163,8 +167,10 @@ export type Database = {
           foto_url?: string | null
           id?: string
           is_seed?: boolean
+          km_registrado?: number | null
           mensagem?: string | null
           meta_id?: string | null
+          strava_activity_id?: string | null
           user_id?: string
           validado?: boolean
           wearable_activity_id?: string | null
@@ -329,6 +335,7 @@ export type Database = {
           eliminado: boolean | null
           eliminado_em: string | null
           id: string
+          km_acumulado: number | null
           motivo_eliminacao: string | null
           progresso: number
           status: string
@@ -341,6 +348,7 @@ export type Database = {
           eliminado?: boolean | null
           eliminado_em?: string | null
           id?: string
+          km_acumulado?: number | null
           motivo_eliminacao?: string | null
           progresso?: number
           status?: string
@@ -353,6 +361,7 @@ export type Database = {
           eliminado?: boolean | null
           eliminado_em?: string | null
           id?: string
+          km_acumulado?: number | null
           motivo_eliminacao?: string | null
           progresso?: number
           status?: string
@@ -384,6 +393,8 @@ export type Database = {
           id: string
           is_seed: boolean
           local_id: string | null
+          modalidade: string | null
+          objetivo_km: number | null
           premiacao: string | null
           premio_acumulado: number
           regras: Json
@@ -407,6 +418,8 @@ export type Database = {
           id?: string
           is_seed?: boolean
           local_id?: string | null
+          modalidade?: string | null
+          objetivo_km?: number | null
           premiacao?: string | null
           premio_acumulado?: number
           regras?: Json
@@ -430,6 +443,8 @@ export type Database = {
           id?: string
           is_seed?: boolean
           local_id?: string | null
+          modalidade?: string | null
+          objetivo_km?: number | null
           premiacao?: string | null
           premio_acumulado?: number
           regras?: Json
@@ -470,6 +485,8 @@ export type Database = {
           frequencia_tipo: string | null
           id: string
           is_seed: boolean
+          modalidade: string | null
+          objetivo_km: number | null
           opponent_eliminado: boolean | null
           opponent_eliminado_em: string | null
           opponent_email: string | null
@@ -496,6 +513,8 @@ export type Database = {
           frequencia_tipo?: string | null
           id?: string
           is_seed?: boolean
+          modalidade?: string | null
+          objetivo_km?: number | null
           opponent_eliminado?: boolean | null
           opponent_eliminado_em?: string | null
           opponent_email?: string | null
@@ -522,6 +541,8 @@ export type Database = {
           frequencia_tipo?: string | null
           id?: string
           is_seed?: boolean
+          modalidade?: string | null
+          objetivo_km?: number | null
           opponent_eliminado?: boolean | null
           opponent_eliminado_em?: string | null
           opponent_email?: string | null
@@ -899,8 +920,11 @@ export type Database = {
           frequencia_tipo: string | null
           id: string
           is_seed: boolean
+          km_acumulado: number | null
           local_id: string | null
+          modalidade: string | null
           motivacao: string | null
+          objetivo_km: number | null
           prazo: string | null
           progresso: number
           status: string
@@ -921,8 +945,11 @@ export type Database = {
           frequencia_tipo?: string | null
           id?: string
           is_seed?: boolean
+          km_acumulado?: number | null
           local_id?: string | null
+          modalidade?: string | null
           motivacao?: string | null
+          objetivo_km?: number | null
           prazo?: string | null
           progresso?: number
           status?: string
@@ -943,8 +970,11 @@ export type Database = {
           frequencia_tipo?: string | null
           id?: string
           is_seed?: boolean
+          km_acumulado?: number | null
           local_id?: string | null
+          modalidade?: string | null
           motivacao?: string | null
+          objetivo_km?: number | null
           prazo?: string | null
           progresso?: number
           status?: string

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StravaCallbackRouteImport } from './routes/strava-callback'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PoliticaPrivacidadeRouteImport } from './routes/politica-privacidade'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -56,6 +57,11 @@ import { Route as AuthenticatedWalletDepositPixRouteImport } from './routes/_aut
 import { Route as AuthenticatedWalletDepositCardRouteImport } from './routes/_authenticated/wallet.deposit.card'
 import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
 
+const StravaCallbackRoute = StravaCallbackRouteImport.update({
+  id: '/strava-callback',
+  path: '/strava-callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -316,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/strava-callback': typeof StravaCallbackRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/arbitro': typeof AuthenticatedArbitroRoute
@@ -363,6 +370,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/strava-callback': typeof StravaCallbackRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/arbitro': typeof AuthenticatedArbitroRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/strava-callback': typeof StravaCallbackRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/arbitro': typeof AuthenticatedArbitroRoute
@@ -461,6 +470,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/politica-privacidade'
     | '/sitemap.xml'
+    | '/strava-callback'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/arbitro'
@@ -508,6 +518,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/politica-privacidade'
     | '/sitemap.xml'
+    | '/strava-callback'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/arbitro'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/politica-privacidade'
     | '/sitemap.xml'
+    | '/strava-callback'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/arbitro'
@@ -605,6 +617,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PoliticaPrivacidadeRoute: typeof PoliticaPrivacidadeRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StravaCallbackRoute: typeof StravaCallbackRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -613,6 +626,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/strava-callback': {
+      id: '/strava-callback'
+      path: '/strava-callback'
+      fullPath: '/strava-callback'
+      preLoaderRoute: typeof StravaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -1035,6 +1055,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PoliticaPrivacidadeRoute: PoliticaPrivacidadeRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StravaCallbackRoute: StravaCallbackRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
