@@ -77,6 +77,11 @@ function StravaConnect() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       if (!supabaseUrl) throw new Error("URL do Supabase não configurada");
 
+      // Recuperar o redirect_uri exato usado na autorização — Strava exige que sejam idênticos
+      const redirectUri = sessionStorage.getItem("strava_redirect_uri")
+        ?? `${window.location.origin}/strava-callback`;
+      sessionStorage.removeItem("strava_redirect_uri");
+
       const res = await fetch(`${supabaseUrl}/functions/v1/strava-oauth`, {
         method: "POST",
         headers: {
@@ -84,7 +89,7 @@ function StravaConnect() {
           "Authorization": `Bearer ${token}`,
           "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
         },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, redirect_uri: redirectUri }),
       });
 
       const data = await res.json();
