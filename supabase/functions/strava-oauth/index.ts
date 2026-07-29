@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Client ID público — ok ficar no código
 const STRAVA_CLIENT_ID = "268185";
-const STRAVA_CLIENT_SECRET = Deno.env.get("STRAVA_CLIENT_SECRET") ?? "6ae83310ea696cfce7ec3720a57c1beb4c0b7791";
+// Client Secret — DEVE vir de env var no Supabase (Settings → Edge Functions → Secrets)
+// Nome da secret: STRAVA_CLIENT_SECRET
+const STRAVA_CLIENT_SECRET = Deno.env.get("STRAVA_CLIENT_SECRET") ?? "";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -14,15 +17,18 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
+    if (!STRAVA_CLIENT_SECRET) {
+      throw new Error("STRAVA_CLIENT_SECRET não configurado nas secrets da Edge Function");
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Admin client — pode fazer tudo
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Extrair e validar JWT manualmente via admin
+    // Validar JWT do usuário
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "").trim();
 
@@ -32,11 +38,8 @@ serve(async (req) => {
       });
     }
 
-    // Usar getUser com o token diretamente — funciona com service role
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
     if (userError || !user) {
-      console.error("getUser error:", userError?.message ?? "user null");
       return new Response(JSON.stringify({ error: "Sessão inválida: " + (userError?.message ?? "user null") }), {
         status: 401, headers: { ...cors, "Content-Type": "application/json" }
       });
@@ -45,7 +48,7 @@ serve(async (req) => {
     console.log("User autenticado:", user.id);
 
     const body = await req.json();
-    const { code } = body;
+    const { code, redirect_uri } = body;
 
     if (!code) {
       return new Response(JSON.stringify({ error: "Código ausente" }), {
@@ -53,7 +56,13 @@ serve(async (req) => {
       });
     }
 
+    // redirect_uri padrão = /strava-callback (onde o Strava redireciona)
+    const finalRedirectUri = redirect_uri ?? "https://preview--vrenn.lovable.app/strava-callback";
+
+    console.log("Trocando code por token. redirect_uri:", finalRedirectUri);
+
     // Trocar code por tokens no Strava
+    // IMPORTANTE: redirect_uri deve ser idêntico ao usado na autorização
     const tokenRes = await fetch("https://www.strava.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,15 +71,18 @@ serve(async (req) => {
         client_secret: STRAVA_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
+        redirect_uri: finalRedirectUri,
       }),
     });
 
     const tokenData = await tokenRes.json();
-    console.log("Strava status:", tokenRes.status, "access_token:", !!tokenData.access_token);
+    console.log("Strava response status:", tokenRes.status);
+    console.log("Strava error:", tokenData.message ?? tokenData.error ?? "none");
+    console.log("Has access_token:", !!tokenData.access_token);
 
     if (!tokenData.access_token) {
       const msg = tokenData.message ?? tokenData.error_description ?? tokenData.error ?? "Sem access_token";
-      throw new Error("Strava error: " + msg);
+      throw new Error("Strava: " + msg);
     }
 
     const athlete = tokenData.athlete;
