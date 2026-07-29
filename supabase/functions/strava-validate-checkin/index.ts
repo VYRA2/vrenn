@@ -154,6 +154,13 @@ serve(async (req) => {
     }
 
 
+    // Ritmo médio (min/km) — pace = moving_time / distance
+    const dstKm = atividade.distance / 1000;
+    const paceSecPerKm = dstKm > 0 ? (atividade.moving_time / dstKm) : 0;
+    const paceMin = Math.floor(paceSecPerKm / 60);
+    const paceSec = Math.round(paceSecPerKm % 60);
+    const ritmo = dstKm > 0 ? `${paceMin}'${String(paceSec).padStart(2, "0")}"` : null;
+
     return new Response(JSON.stringify({
       valido,
       motivo: erros.join("; "),
@@ -161,12 +168,20 @@ serve(async (req) => {
         id: atividade.id,
         nome: atividade.name,
         tipo: atividade.type,
-        distancia_km: (atividade.distance / 1000).toFixed(1),
+        distancia_km: dstKm.toFixed(2),
+        distancia_km_num: dstKm,
         duracao_min: Math.round(atividade.moving_time / 60),
+        tempo_seg: atividade.moving_time,
+        ritmo,
+        calorias: atividade.calories ?? null,
+        elevacao_m: atividade.total_elevation_gain != null ? Math.round(atividade.total_elevation_gain) : null,
+        fc_media: atividade.average_heartrate != null ? Math.round(atividade.average_heartrate) : null,
+        polyline: atividade.map?.summary_polyline ?? atividade.map?.polyline ?? null,
         inicio: atividade.start_date,
         distancia_checkin_metros: distancia ? Math.round(distancia) : null,
       }
     }), { headers: { ...cors, "Content-Type": "application/json" } });
+
 
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
