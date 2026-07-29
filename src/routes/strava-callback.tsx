@@ -18,8 +18,10 @@ function StravaCallback() {
         return;
       }
 
+      // Salvar code E o redirect_uri exato usado — Strava exige que sejam idênticos
       sessionStorage.setItem("strava_pending_code", code);
       sessionStorage.setItem("strava_pending_ts", String(Date.now()));
+      sessionStorage.setItem("strava_redirect_uri", `${window.location.origin}/strava-callback`);
       window.location.replace("/strava-connect");
     } catch (_) {
       window.location.replace("/strava-connect?strava_error=1");
