@@ -91,12 +91,10 @@ function NovaMeta() {
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
     };
-    console.log("INSERT metas payload:", JSON.stringify(payload));
-    const { data, error } = await supabase.from("metas").insert(payload as any).select().single();
+    const { data, error } = await supabase.from("metas").insert(payload as any).select("id").single();
     setLoading(false);
     if (error) {
-      console.error("INSERT metas error:", JSON.stringify(error));
-      return toast.error(`${error.message} (code: ${error.code})`);
+      return toast.error(error.message);
     }
     toast.success("Meta criada! Boa sorte.");
     navigate({ to: "/meta/$id", params: { id: data.id } });
