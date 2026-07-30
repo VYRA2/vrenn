@@ -112,12 +112,15 @@ function OnboardingPage() {
 
   async function finalizar() {
     if (!userId) return;
+    if (!nome.trim()) return toast.error("Digite seu nome");
     setSaving(true);
     try {
       const { error } = await supabase.from("profiles").update({
         categorias_interesse: categorias,
         missao: missao || null,
         username: username.trim(),
+        nome: nome.trim(),
+        avatar_url: avatarPreview,
         perfil_publico: perfilPublico,
         onboarding_done: true,
       } as any).eq("id", userId);
