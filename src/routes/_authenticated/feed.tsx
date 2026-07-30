@@ -10,6 +10,7 @@ import { shareToInstagram } from "@/lib/shareToInstagram";
 import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { subscribeToPush, isPushSupported } from "@/lib/push";
 
 type Tab = "feed" | "seguindo" | "destaques" | "comunidades";
 
@@ -28,6 +29,17 @@ function Feed() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>(search.tab ?? "feed");
   const [showPublish, setShowPublish] = useState(false);
+
+  // Registrar device para push notifications — uma vez por sessão
+  useEffect(() => {
+    if (!user?.id || !isPushSupported()) return;
+    const key = `push_registered_${user.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    subscribeToPush(user.id).then((r) => {
+      if (r.ok) console.log("Push registrado ✓");
+    }).catch(() => {});
+  }, [user?.id]);
 
   useEffect(() => {
     if (search.publish) { setShowPublish(true); navigate({ to: "/feed", search: {} as any, replace: true }); }
