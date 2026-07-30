@@ -215,7 +215,52 @@ function OnboardingPage() {
             <h1 className="text-2xl font-bold">Personalize seu perfil</h1>
             <p className="mt-1 text-sm text-muted-foreground">Últimos ajustes antes de começar.</p>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <div className="relative">
+                <div className="h-24 w-24 overflow-hidden rounded-full border border-border bg-card">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Sua foto de perfil" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground">
+                      {(nome || "?")[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <label
+                  htmlFor="onboarding-avatar"
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow"
+                  aria-label="Trocar foto de perfil"
+                >
+                  <Camera size={16} />
+                </label>
+                <input
+                  id="onboarding-avatar"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadAvatar(f);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+              {avatarUploading && <p className="text-xs text-muted-foreground">Enviando…</p>}
+              <div className="w-full">
+                <label className="text-xs font-semibold text-muted-foreground">Nome completo</label>
+                <div className="relative mt-1.5">
+                  <UserIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    className="w-full rounded-2xl border border-border bg-card py-3 pl-9 pr-3 text-sm outline-none focus:border-primary"
+                    placeholder="Seu nome completo"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-4">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Sua missão</label>
                 <textarea
