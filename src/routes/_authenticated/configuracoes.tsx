@@ -1,13 +1,41 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { ArrowLeft, ChevronRight, User as UserIcon, Camera, AtSign, Mail, Lock, Shield, Bell, Globe, Ruler, HelpCircle, FileText, Info, LogOut, Trash2, X, Loader2, FlaskConical, Sparkles, Eraser, DollarSign, CheckCircle2, XCircle, Trophy, Activity } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  User as UserIcon,
+  Camera,
+  AtSign,
+  Mail,
+  Lock,
+  Shield,
+  Bell,
+  Globe,
+  Ruler,
+  HelpCircle,
+  FileText,
+  Info,
+  LogOut,
+  Trash2,
+  X,
+  Loader2,
+  FlaskConical,
+  Sparkles,
+  Eraser,
+  DollarSign,
+  CheckCircle2,
+  XCircle,
+  Trophy,
+  Activity,
+} from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { seedUsersBatch, seedContent, seedCleanup, seedStatus } from "@/lib/admin-seed.functions";
+import { subscribeToPush, unsubscribeFromPush, getPushSubscriptionStatus, isPushSupported } from "@/lib/push";
 
 const ADMIN_ID = "52fd9ebb-5d88-4b33-acc3-97b70c62a426";
 
@@ -21,10 +49,37 @@ function Configuracoes() {
   const deleteFn = useServerFn(deleteMyAccount);
   const [showPwd, setShowPwd] = useState(false);
   const [showDel, setShowDel] = useState(false);
+  const [pushStatus, setPushStatus] = useState<"unsupported" | "denied" | "subscribed" | "not-subscribed" | "loading">(
+    "loading",
+  );
+
+  useEffect(() => {
+    getPushSubscriptionStatus().then(setPushStatus);
+  }, []);
+
+  async function togglePush() {
+    if (pushStatus === "subscribed") {
+      await unsubscribeFromPush();
+      setPushStatus("not-subscribed");
+      toast.success("Notificações push desativadas");
+    } else {
+      const res = await subscribeToPush(user.id);
+      if (!res.ok) return toast.error(res.error ?? "Não foi possível ativar");
+      setPushStatus("subscribed");
+      toast.success("Notificações push ativadas! 🔔");
+    }
+  }
 
   const { data: profile, refetch } = useQuery({
     queryKey: ["profile-cfg", user.id],
-    queryFn: async () => (await supabase.from("profiles").select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at").eq("id", user.id).maybeSingle()).data,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("profiles")
+          .select("id, nome, username, avatar_url, bio, missao, perfil_publico, idioma, unidades, created_at")
+          .eq("id", user.id)
+          .maybeSingle()
+      ).data,
   });
 
   async function logout() {
@@ -43,7 +98,12 @@ function Configuracoes() {
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
       <header className="relative mx-auto flex max-w-md items-center justify-center px-5 pt-5 pb-2">
-        <button onClick={() => navigate({ to: "/perfil" })} className="absolute left-5 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"><ArrowLeft size={18}/></button>
+        <button
+          onClick={() => navigate({ to: "/perfil" })}
+          className="absolute left-5 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <VyraLogo size={32} />
       </header>
 
@@ -51,43 +111,127 @@ function Configuracoes() {
         <h1 className="text-3xl font-bold">Configurações</h1>
 
         <Section title="CONTA">
-          <Row icon={<UserIcon size={18}/>} label="Editar perfil" onClick={() => navigate({ to: "/perfil/editar" })} />
-          <Row icon={<Camera size={18}/>} label="Foto de perfil" onClick={() => navigate({ to: "/perfil/editar" })} right={
-            profile?.avatar_url
-              ? <img src={profile.avatar_url} className="h-8 w-8 rounded-full border-2 border-primary/40 object-cover"/>
-              : <div className="h-8 w-8 rounded-full bg-gradient-primary"/>
-          }/>
-          <Row icon={<AtSign size={18}/>} label="Username" right={<span className="text-xs text-muted-foreground">@{profile?.username ?? "—"}</span>} />
-          <Row icon={<Mail size={18}/>} label="Email" right={<span className="text-xs text-muted-foreground">{masked}</span>} />
-          <Row icon={<Lock size={18}/>} label="Senha" onClick={() => setShowPwd(true)} right={<span className="text-xs text-muted-foreground">••••••••</span>} />
-          <Row icon={<Shield size={18}/>} label="Privacidade da conta" right={
-            <div className="inline-flex rounded-full bg-background p-0.5 border border-border">
-              <button onClick={() => setPublico(true)} className={`rounded-full px-3 py-1 text-[11px] font-bold ${profile?.perfil_publico ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Público</button>
-              <button onClick={() => setPublico(false)} className={`rounded-full px-3 py-1 text-[11px] font-bold ${!profile?.perfil_publico ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Privado</button>
-            </div>
-          } noArrow/>
+          <Row icon={<UserIcon size={18} />} label="Editar perfil" onClick={() => navigate({ to: "/perfil/editar" })} />
+          <Row
+            icon={<Camera size={18} />}
+            label="Foto de perfil"
+            onClick={() => navigate({ to: "/perfil/editar" })}
+            right={
+              profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  className="h-8 w-8 rounded-full border-2 border-primary/40 object-cover"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-gradient-primary" />
+              )
+            }
+          />
+          <Row
+            icon={<AtSign size={18} />}
+            label="Username"
+            right={<span className="text-xs text-muted-foreground">@{profile?.username ?? "—"}</span>}
+          />
+          <Row
+            icon={<Mail size={18} />}
+            label="Email"
+            right={<span className="text-xs text-muted-foreground">{masked}</span>}
+          />
+          <Row
+            icon={<Lock size={18} />}
+            label="Senha"
+            onClick={() => setShowPwd(true)}
+            right={<span className="text-xs text-muted-foreground">••••••••</span>}
+          />
+          <Row
+            icon={<Shield size={18} />}
+            label="Privacidade da conta"
+            right={
+              <div className="inline-flex rounded-full bg-background p-0.5 border border-border">
+                <button
+                  onClick={() => setPublico(true)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold ${profile?.perfil_publico ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                >
+                  Público
+                </button>
+                <button
+                  onClick={() => setPublico(false)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold ${!profile?.perfil_publico ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                >
+                  Privado
+                </button>
+              </div>
+            }
+            noArrow
+          />
         </Section>
 
         <Section title="PREFERÊNCIAS">
-          <Row icon={<Bell size={18}/>} label="Notificações" onClick={() => navigate({ to: "/notificacoes" })}
-        />
-        <Row icon={<Activity size={18} className="text-[#FC4C02]"/>} label="Conectar Strava" sublabel="Valide atividades físicas automaticamente" onClick={() => navigate({ to: "/strava-connect" })}/>
-          <Row icon={<Globe size={18}/>} label="Idioma" right={<span className="text-xs text-muted-foreground">Português</span>}/>
-          <Row icon={<Ruler size={18}/>} label="Unidades" right={<span className="text-xs text-muted-foreground">{profile?.unidades ?? "kg"}</span>}/>
+          <Row icon={<Bell size={18} />} label="Notificações" onClick={() => navigate({ to: "/notificacoes" })} />
+          {isPushSupported() && (
+            <Row
+              icon={<Bell size={18} />}
+              label="Notificações push"
+              right={
+                pushStatus === "loading" ? (
+                  <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                ) : pushStatus === "denied" ? (
+                  <span className="text-[10px] text-muted-foreground">Bloqueadas no navegador</span>
+                ) : (
+                  <button
+                    onClick={togglePush}
+                    className={`relative h-6 w-11 rounded-full transition-colors ${pushStatus === "subscribed" ? "bg-primary" : "bg-border"}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${pushStatus === "subscribed" ? "translate-x-5" : "translate-x-0.5"}`}
+                    />
+                  </button>
+                )
+              }
+              noArrow
+            />
+          )}
+          <Row
+            icon={<Activity size={18} className="text-[#FC4C02]" />}
+            label="Conectar Strava"
+            sublabel="Valide atividades físicas automaticamente"
+            onClick={() => navigate({ to: "/strava-connect" })}
+          />
+          <Row
+            icon={<Globe size={18} />}
+            label="Idioma"
+            right={<span className="text-xs text-muted-foreground">Português</span>}
+          />
+          <Row
+            icon={<Ruler size={18} />}
+            label="Unidades"
+            right={<span className="text-xs text-muted-foreground">{profile?.unidades ?? "kg"}</span>}
+          />
         </Section>
 
         <Section title="GERAL">
-          <Row icon={<HelpCircle size={18}/>} label="Política de Privacidade" onClick={() => navigate({ to: "/politica-privacidade" })}
-        />
-        <Row icon={<HelpCircle size={18}/>} label="Central de ajuda" onClick={() => navigate({ to: "/como-funciona" })} />
-          <Row icon={<FileText size={18}/>} label="Termos de uso"/>
-          <Row icon={<Shield size={18}/>} label="Política de privacidade"/>
-          <Row icon={<Info size={18}/>} label="Sobre o VRENN" right={<span className="text-xs text-muted-foreground">v1.0</span>}/>
+          <Row
+            icon={<HelpCircle size={18} />}
+            label="Política de Privacidade"
+            onClick={() => navigate({ to: "/politica-privacidade" })}
+          />
+          <Row
+            icon={<HelpCircle size={18} />}
+            label="Central de ajuda"
+            onClick={() => navigate({ to: "/como-funciona" })}
+          />
+          <Row icon={<FileText size={18} />} label="Termos de uso" />
+          <Row icon={<Shield size={18} />} label="Política de privacidade" />
+          <Row
+            icon={<Info size={18} />}
+            label="Sobre o VRENN"
+            right={<span className="text-xs text-muted-foreground">v1.0</span>}
+          />
         </Section>
 
         <Section title="AÇÃO">
-          <Row icon={<LogOut size={18}/>} label="Sair da conta" onClick={logout} danger />
-          <Row icon={<Trash2 size={18}/>} label="Excluir conta" onClick={() => setShowDel(true)} danger />
+          <Row icon={<LogOut size={18} />} label="Sair da conta" onClick={logout} danger />
+          <Row icon={<Trash2 size={18} />} label="Excluir conta" onClick={() => setShowDel(true)} danger />
         </Section>
 
         {user.id === ADMIN_ID && <AdminSection />}
@@ -170,7 +314,9 @@ function AdminSection() {
       setProgress(`Populando metas, posts, duelos, follows para ${createdIds.length} usuários…`);
       const contentRes: any = await seedContentFn({ data: { userIds: createdIds } });
       setProgress("Concluído.");
-      toast.success(`Seed pronto: ${createdIds.length} usuários, ${contentRes.metas} metas, ${contentRes.posts} posts, ${contentRes.duelos} duelos, ${contentRes.follows} follows.`);
+      toast.success(
+        `Seed pronto: ${createdIds.length} usuários, ${contentRes.metas} metas, ${contentRes.posts} posts, ${contentRes.duelos} duelos, ${contentRes.follows} follows.`,
+      );
       await refreshStatus();
     } catch (e: any) {
       toast.error(e?.message ?? "Falhou no seed");
@@ -201,41 +347,63 @@ function AdminSection() {
     <Section title="ADMIN — TESTES">
       <div className="p-4 space-y-3">
         <p className="text-xs text-muted-foreground">
-          Popula o banco com ~200 usuários fictícios (metas, posts, duelos, follows). Todos marcados com <code className="text-primary-light">is_seed=true</code>. Nada dos seus dados reais é tocado.
+          Popula o banco com ~200 usuários fictícios (metas, posts, duelos, follows). Todos marcados com{" "}
+          <code className="text-primary-light">is_seed=true</code>. Nada dos seus dados reais é tocado.
         </p>
         {stats && (
           <div className="rounded-xl border border-border bg-background p-3 text-xs space-y-1">
             <div className="font-bold mb-1 text-primary-light">Registros fictícios no banco:</div>
             {Object.entries(stats).map(([k, v]) => (
-              <div key={k} className="flex justify-between"><span className="text-muted-foreground">{k}</span><span className="font-bold">{v}</span></div>
+              <div key={k} className="flex justify-between">
+                <span className="text-muted-foreground">{k}</span>
+                <span className="font-bold">{v}</span>
+              </div>
             ))}
           </div>
         )}
         {progress && <div className="text-xs text-primary-light">{progress}</div>}
         <div className="grid grid-cols-1 gap-2">
-          <button onClick={runSeed} disabled={!!busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50">
-            {busy === "seed" ? <Loader2 size={14} className="animate-spin"/> : <Sparkles size={14}/>} Popular banco (~200 usuários)
+          <button
+            onClick={runSeed}
+            disabled={!!busy}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
+          >
+            {busy === "seed" ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Popular banco
+            (~200 usuários)
           </button>
-          <button onClick={refreshStatus} disabled={!!busy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-bold disabled:opacity-50">
-            {busy === "status" ? <Loader2 size={14} className="animate-spin"/> : <FlaskConical size={14}/>} Ver contagem atual
+          <button
+            onClick={refreshStatus}
+            disabled={!!busy}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-bold disabled:opacity-50"
+          >
+            {busy === "status" ? <Loader2 size={14} className="animate-spin" /> : <FlaskConical size={14} />} Ver
+            contagem atual
           </button>
-          <button onClick={() => setConfirmClean(true)} disabled={!!busy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 text-sm font-bold text-destructive disabled:opacity-50">
-            {busy === "clean" ? <Loader2 size={14} className="animate-spin"/> : <Eraser size={14}/>} Apagar dados fictícios
+          <button
+            onClick={() => setConfirmClean(true)}
+            disabled={!!busy}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 text-sm font-bold text-destructive disabled:opacity-50"
+          >
+            {busy === "clean" ? <Loader2 size={14} className="animate-spin" /> : <Eraser size={14} />} Apagar dados
+            fictícios
           </button>
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Emails dos fictícios: <code>seed-N@seed.vrenn.test</code> — senha padrão para permitir login nos testes automatizados.
+          Emails dos fictícios: <code>seed-N@seed.vrenn.test</code> — senha padrão para permitir login nos testes
+          automatizados.
         </p>
       </div>
       {/* Card Teste Financeiro */}
       <div className="mt-4 rounded-2xl border border-border bg-background p-4 space-y-3">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary-light">
-            <DollarSign size={16}/>
+            <DollarSign size={16} />
           </span>
           <div>
             <div className="text-sm font-bold">Teste Financeiro — Desafio de Equipe</div>
-            <div className="text-[11px] text-muted-foreground">50 participantes · R$ 50 entrada · 5 vencedores · modo proporcional</div>
+            <div className="text-[11px] text-muted-foreground">
+              50 participantes · R$ 50 entrada · 5 vencedores · modo proporcional
+            </div>
           </div>
         </div>
 
@@ -244,10 +412,15 @@ function AdminSection() {
           disabled={testeFinanceiro === "running"}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary-light disabled:opacity-50"
         >
-          {testeFinanceiro === "running"
-            ? <><Loader2 size={14} className="animate-spin"/> Rodando teste…</>
-            : <><FlaskConical size={14}/> Rodar teste financeiro</>
-          }
+          {testeFinanceiro === "running" ? (
+            <>
+              <Loader2 size={14} className="animate-spin" /> Rodando teste…
+            </>
+          ) : (
+            <>
+              <FlaskConical size={14} /> Rodar teste financeiro
+            </>
+          )}
         </button>
 
         {testeFinanceiro === "done" && testeResultado && (
@@ -287,7 +460,7 @@ function AdminSection() {
             {/* Distribuição */}
             <div className="rounded-xl border border-border bg-card p-3 space-y-2">
               <div className="flex items-center gap-1.5 font-bold text-primary-light mb-1">
-                <Trophy size={13}/> Distribuição por posição
+                <Trophy size={13} /> Distribuição por posição
               </div>
               {(testeResultado.distribuicao ?? []).map((w: any) => (
                 <div key={w.posicao} className="flex items-center gap-2">
@@ -306,11 +479,12 @@ function AdminSection() {
               <div className="font-bold text-primary-light mb-1">Verificações</div>
               {Object.entries(testeResultado.verificacoes ?? {}).map(([key, val]) => (
                 <div key={key} className="flex items-center gap-2">
-                  {val
-                    ? <CheckCircle2 size={13} className="text-green-400 shrink-0"/>
-                    : <XCircle size={13} className="text-destructive shrink-0"/>
-                  }
-                  <span className={val ? "text-green-400" : "text-destructive"}>{key.replace(/_/g, ' ')}</span>
+                  {val ? (
+                    <CheckCircle2 size={13} className="text-green-400 shrink-0" />
+                  ) : (
+                    <XCircle size={13} className="text-destructive shrink-0" />
+                  )}
+                  <span className={val ? "text-green-400" : "text-destructive"}>{key.replace(/_/g, " ")}</span>
                 </div>
               ))}
             </div>
@@ -331,13 +505,32 @@ function AdminSection() {
       </div>
 
       {confirmClean && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={() => setConfirmClean(false)}>
-          <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setConfirmClean(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-base font-bold">Apagar dados fictícios?</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Todos os registros marcados como <code>is_seed=true</code> serão apagados. Seus dados reais permanecem. Continuar?</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Todos os registros marcados como <code>is_seed=true</code> serão apagados. Seus dados reais permanecem.
+              Continuar?
+            </p>
             <div className="mt-4 flex gap-2">
-              <button onClick={() => setConfirmClean(false)} className="flex-1 rounded-xl border border-border bg-background py-3 text-sm font-semibold">Cancelar</button>
-              <button onClick={runCleanup} className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground">Apagar tudo</button>
+              <button
+                onClick={() => setConfirmClean(false)}
+                className="flex-1 rounded-xl border border-border bg-background py-3 text-sm font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={runCleanup}
+                className="flex-1 rounded-xl bg-destructive py-3 text-sm font-semibold text-destructive-foreground"
+              >
+                Apagar tudo
+              </button>
             </div>
           </div>
         </div>
@@ -364,15 +557,36 @@ function TrocarSenhaModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-bold">Alterar senha</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18}/></button>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background">
+            <X size={18} />
+          </button>
         </div>
         <div className="space-y-3">
-          <input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Nova senha (mín. 8 caracteres)" className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary" />
-          <input type="password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} placeholder="Confirmar nova senha" className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary" />
-          <button onClick={submit} disabled={busy} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60">
+          <input
+            type="password"
+            value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+            placeholder="Nova senha (mín. 8 caracteres)"
+            className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary"
+          />
+          <input
+            type="password"
+            value={pwd2}
+            onChange={(e) => setPwd2(e.target.value)}
+            placeholder="Confirmar nova senha"
+            className="w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary"
+          />
+          <button
+            onClick={submit}
+            disabled={busy}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+          >
             {busy && <Loader2 size={14} className="animate-spin" />} Salvar nova senha
           </button>
         </div>
@@ -387,15 +601,32 @@ function ExcluirContaModal({ onClose, onConfirm }: { onClose: () => void; onConf
   const ok = txt.trim().toUpperCase() === "EXCLUIR";
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-bold text-destructive">Excluir conta</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18}/></button>
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-background">
+            <X size={18} />
+          </button>
         </div>
-        <p className="text-sm text-muted-foreground">Esta ação é <strong>irreversível</strong>. Sua conta, posts, metas e histórico serão apagados. Digite <strong>EXCLUIR</strong> para confirmar.</p>
-        <input value={txt} onChange={(e) => setTxt(e.target.value)} placeholder="Digite EXCLUIR" className="mt-3 w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-destructive" />
+        <p className="text-sm text-muted-foreground">
+          Esta ação é <strong>irreversível</strong>. Sua conta, posts, metas e histórico serão apagados. Digite{" "}
+          <strong>EXCLUIR</strong> para confirmar.
+        </p>
+        <input
+          value={txt}
+          onChange={(e) => setTxt(e.target.value)}
+          placeholder="Digite EXCLUIR"
+          className="mt-3 w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-destructive"
+        />
         <button
-          onClick={async () => { setBusy(true); await onConfirm(); setBusy(false); }}
+          onClick={async () => {
+            setBusy(true);
+            await onConfirm();
+            setBusy(false);
+          }}
           disabled={!ok || busy}
           className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-destructive py-3 text-sm font-bold text-destructive-foreground disabled:opacity-40"
         >
@@ -410,21 +641,27 @@ function Section({ title, children }: any) {
   return (
     <section className="mt-6">
       <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">{title}</div>
-      <div className="rounded-2xl border border-border bg-card divide-y divide-border/60 overflow-hidden">{children}</div>
+      <div className="rounded-2xl border border-border bg-card divide-y divide-border/60 overflow-hidden">
+        {children}
+      </div>
     </section>
   );
 }
 function Row({ icon, label, right, onClick, danger, noArrow }: any) {
   return (
-    <button onClick={onClick} className={`flex w-full items-center gap-3 px-4 py-3.5 text-left ${danger ? "text-destructive" : ""}`}>
-      <span className={`flex h-9 w-9 items-center justify-center rounded-full ${danger ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary-light"}`}>{icon}</span>
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 px-4 py-3.5 text-left ${danger ? "text-destructive" : ""}`}
+    >
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${danger ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary-light"}`}
+      >
+        {icon}
+      </span>
       <span className="flex-1 text-sm font-semibold">{label}</span>
       {right}
-      {!noArrow && !right && <ChevronRight size={16} className="text-muted-foreground"/>}
-      {!noArrow && right && <ChevronRight size={14} className="text-muted-foreground ml-1"/>}
+      {!noArrow && !right && <ChevronRight size={16} className="text-muted-foreground" />}
+      {!noArrow && right && <ChevronRight size={14} className="text-muted-foreground ml-1" />}
     </button>
   );
 }
-
-
-
