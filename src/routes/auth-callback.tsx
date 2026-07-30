@@ -37,16 +37,16 @@ function AuthCallback() {
           }
         }
 
-        // Sessão válida — verificar se perfil existe (novo usuário)
+        // Sessão válida — verificar se o onboarding já foi concluído
         const userId = session?.user?.id;
         if (userId) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("username, nome")
+            .select("onboarding_done")
             .eq("id", userId)
             .maybeSingle();
 
-          if (!profile?.username || !profile?.nome) {
+          if (!profile || profile.onboarding_done !== true) {
             // Novo usuário via Google — ir para onboarding
             setMsg("Conta criada! Configurando seu perfil...");
             await new Promise(r => setTimeout(r, 800));

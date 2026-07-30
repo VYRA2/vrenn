@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Dumbbell, Leaf, BookOpen, Brain, Target, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import { Dumbbell, Leaf, BookOpen, Brain, Target, Calendar, ArrowRight, Loader2, Camera, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -38,16 +38,43 @@ function OnboardingPage() {
   const [sugestoes, setSugestoes] = useState<string[]>([]);
   const [perfilPublico, setPerfilPublico] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [nome, setNome] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) { navigate({ to: "/auth", replace: true }); return; }
       setUserId(data.user.id);
-      const { data: p } = await supabase.from("profiles").select("username").eq("id", data.user.id).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("username, nome, avatar_url").eq("id", data.user.id).maybeSingle();
       if (p?.username) setUsername(p.username);
+
+      const metaNome = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name;
+      const metaAvatar = data.user.user_metadata?.avatar_url ?? data.user.user_metadata?.picture;
+      setNome(p?.nome && p.nome !== p.username ? p.nome : (metaNome ?? ""));
+      setAvatarPreview(p?.avatar_url ?? metaAvatar ?? null);
     })();
   }, []);
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  async function uploadAvatar(file: File) {
+    if (!userId) return;
+    if (!allowedTypes.includes(file.type)) return toast.error("Formato inválido. Use JPG, PNG ou WebP.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Máximo 5MB.");
+    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${userId}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+    if (error) { setAvatarUploading(false); return toast.error(error.message); }
+    const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed) { setAvatarUploading(false); return toast.error(sErr?.message ?? "Falha ao gerar URL"); }
+    setAvatarPreview(signed.signedUrl);
+    setAvatarUploading(false);
+    toast.success("Foto atualizada!");
+  }
+
 
   async function gerarSugestoes(base: string): Promise<string[]> {
     const b = base.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -85,12 +112,15 @@ function OnboardingPage() {
 
   async function finalizar() {
     if (!userId) return;
+    if (!nome.trim()) return toast.error("Digite seu nome");
     setSaving(true);
     try {
       const { error } = await supabase.from("profiles").update({
         categorias_interesse: categorias,
         missao: missao || null,
         username: username.trim(),
+        nome: nome.trim(),
+        avatar_url: avatarPreview,
         perfil_publico: perfilPublico,
         onboarding_done: true,
       } as any).eq("id", userId);
@@ -185,7 +215,52 @@ function OnboardingPage() {
             <h1 className="text-2xl font-bold">Personalize seu perfil</h1>
             <p className="mt-1 text-sm text-muted-foreground">Últimos ajustes antes de começar.</p>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <div className="relative">
+                <div className="h-24 w-24 overflow-hidden rounded-full border border-border bg-card">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Sua foto de perfil" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground">
+                      {(nome || "?")[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <label
+                  htmlFor="onboarding-avatar"
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow"
+                  aria-label="Trocar foto de perfil"
+                >
+                  <Camera size={16} />
+                </label>
+                <input
+                  id="onboarding-avatar"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadAvatar(f);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+              {avatarUploading && <p className="text-xs text-muted-foreground">Enviando…</p>}
+              <div className="w-full">
+                <label className="text-xs font-semibold text-muted-foreground">Nome completo</label>
+                <div className="relative mt-1.5">
+                  <UserIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    className="w-full rounded-2xl border border-border bg-card py-3 pl-9 pr-3 text-sm outline-none focus:border-primary"
+                    placeholder="Seu nome completo"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-4">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Sua missão</label>
                 <textarea
@@ -246,7 +321,7 @@ function OnboardingPage() {
 
             <button
               onClick={finalizar}
-              disabled={saving || !username.trim() || usernameTaken || usernameChecking}
+              disabled={saving || avatarUploading || !nome.trim() || !username.trim() || usernameTaken || usernameChecking}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <>Entrar no VRENN <ArrowRight size={16} /></>}
