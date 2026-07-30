@@ -204,16 +204,15 @@ function PerfilPublico() {
         valor_custodia: Number(dueloCustodia) || 0,
         prazo: dueloPrazo,
         status: "pendente",
-        tipo: "privado",
       }).select().single();
 
       if (error) throw error;
 
       await supabase.rpc("notify" as any, {
-        p_user_id: oponente.id,
-        p_tipo: "duelo_convite",
-        p_mensagem: `${me.email} te desafiou para um duelo: "${dueloTitulo}"`,
-        p_referencia_id: duelo.id,
+        _user_id: oponente.id,
+        _tipo: "duelo_convite",
+        _mensagem: `${me.email} te desafiou para um duelo: "${dueloTitulo}"`,
+        _link_id: duelo.id,
       });
 
       toast.success("Desafio enviado! Aguardando aceitação.");
@@ -753,5 +752,3 @@ const CONQUISTAS_CATALOGO = [
   { slug: "lenda",              emoji: "👑", label: "Lenda",          color: "#7B2EFF" },
   { slug: "master_concluido",   emoji: "🏆", label: "Master Season",  color: "#FFD700" },
 ] as const;
-
-
