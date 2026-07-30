@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Dumbbell, Leaf, BookOpen, Brain, Target, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import { Dumbbell, Leaf, BookOpen, Brain, Target, Calendar, ArrowRight, Loader2, Camera, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -38,16 +38,43 @@ function OnboardingPage() {
   const [sugestoes, setSugestoes] = useState<string[]>([]);
   const [perfilPublico, setPerfilPublico] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [nome, setNome] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) { navigate({ to: "/auth", replace: true }); return; }
       setUserId(data.user.id);
-      const { data: p } = await supabase.from("profiles").select("username").eq("id", data.user.id).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("username, nome, avatar_url").eq("id", data.user.id).maybeSingle();
       if (p?.username) setUsername(p.username);
+
+      const metaNome = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name;
+      const metaAvatar = data.user.user_metadata?.avatar_url ?? data.user.user_metadata?.picture;
+      setNome(p?.nome && p.nome !== p.username ? p.nome : (metaNome ?? ""));
+      setAvatarPreview(p?.avatar_url ?? metaAvatar ?? null);
     })();
   }, []);
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  async function uploadAvatar(file: File) {
+    if (!userId) return;
+    if (!allowedTypes.includes(file.type)) return toast.error("Formato inválido. Use JPG, PNG ou WebP.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Máximo 5MB.");
+    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${userId}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+    if (error) { setAvatarUploading(false); return toast.error(error.message); }
+    const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed) { setAvatarUploading(false); return toast.error(sErr?.message ?? "Falha ao gerar URL"); }
+    setAvatarPreview(signed.signedUrl);
+    setAvatarUploading(false);
+    toast.success("Foto atualizada!");
+  }
+
 
   async function gerarSugestoes(base: string): Promise<string[]> {
     const b = base.toLowerCase().replace(/[^a-z0-9]/g, "");
