@@ -75,7 +75,7 @@ function NovaMeta() {
     if (!titulo || !categoria) return toast.error("Preencha título e categoria");
     setLoading(true);
     const valor = parseFloat(valorCustodia.replace(",", ".")) || 0;
-    const { data, error } = await supabase.from("metas").insert({
+    const payload = {
       user_id: user.id,
       titulo,
       categoria,
@@ -90,9 +90,14 @@ function NovaMeta() {
       local_id: tipoValidacao === "qrcode" ? localId : null,
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
-    } as any).select().single();
+    };
+    console.log("INSERT metas payload:", JSON.stringify(payload));
+    const { data, error } = await supabase.from("metas").insert(payload as any).select().single();
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("INSERT metas error:", JSON.stringify(error));
+      return toast.error(`${error.message} (code: ${error.code})`);
+    }
     toast.success("Meta criada! Boa sorte.");
     navigate({ to: "/meta/$id", params: { id: data.id } });
   }
