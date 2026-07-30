@@ -4,7 +4,7 @@
 // Dados dinâmicos (feed, metas, chat, etc.) NUNCA são cacheados —
 // esse app depende de dados em tempo real via Supabase.
 
-const CACHE_VERSION = "vrenn-v1";
+const CACHE_VERSION = "vrenn-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const PRECACHE_URLS = [
@@ -19,10 +19,7 @@ const PRECACHE_URLS = [
 // Instala e pré-cacheia o essencial
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())
   );
 });
 
@@ -33,10 +30,12 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((key) => key.startsWith("vrenn-") && key !== STATIC_CACHE).map((key) => caches.delete(key)),
-        ),
+          keys
+            .filter((key) => key.startsWith("vrenn-") && key !== STATIC_CACHE)
+            .map((key) => caches.delete(key))
+        )
       )
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
   );
 });
 
@@ -66,7 +65,9 @@ self.addEventListener("fetch", (event) => {
 
   // Navegação de página (HTML) — network-first, cai pro offline.html se falhar
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+    event.respondWith(
+      fetch(request).catch(() => caches.match("/offline.html"))
+    );
     return;
   }
 
@@ -82,7 +83,7 @@ self.addEventListener("fetch", (event) => {
           })
           .catch(() => cached);
         return cached ?? fetchPromise;
-      }),
+      })
     );
   }
   // Qualquer outra requisição (API, dados) segue direto pra rede, sem interceptar.
@@ -122,6 +123,6 @@ self.addEventListener("notificationclick", (event) => {
         if (clientUrl.pathname === targetUrl && "focus" in client) return client.focus();
       }
       if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
-    }),
+    })
   );
 });
