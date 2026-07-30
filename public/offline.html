@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VRENN — Sem conexão</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #0F0F17;
+      color: #F5F5F7;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+    p { color: #9A9AA5; font-size: 0.95rem; max-width: 320px; line-height: 1.5; margin-bottom: 24px; }
+    button {
+      background: #F5F5F7; color: #0F0F17; border: none; border-radius: 999px;
+      padding: 12px 28px; font-weight: 600; font-size: 0.95rem; cursor: pointer;
+    }
+    .tag { margin-top: 32px; font-size: 0.8rem; color: #55555f; letter-spacing: 0.02em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Você está offline</h1>
+    <p>Não conseguimos conectar ao VRENN agora. Verifique sua internet e tente novamente.</p>
+    <button onclick="location.reload()">Tentar novamente</button>
+    <div class="tag">VRENN — Não diga que vai fazer. Mostre.</div>
+  </div>
+</body>
+</html>
