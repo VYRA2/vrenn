@@ -321,7 +321,7 @@ function OnboardingPage() {
 
             <button
               onClick={finalizar}
-              disabled={saving || !username.trim() || usernameTaken || usernameChecking}
+              disabled={saving || avatarUploading || !nome.trim() || !username.trim() || usernameTaken || usernameChecking}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <>Entrar no VRENN <ArrowRight size={16} /></>}
