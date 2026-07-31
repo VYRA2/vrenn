@@ -281,6 +281,47 @@ function DescobrirPage() {
           </div>
         </Link>
 
+        {/* Em alta */}
+        <div className="mt-6 mb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold">Em alta</h3>
+          <Link to="/busca" className="text-xs font-semibold text-primary-light">Ver tudo</Link>
+        </div>
+        <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {EM_ALTA_FILTROS.map((f) => {
+            const a = emAltaFiltro === f;
+            return (
+              <button key={f} onClick={() => setEmAltaFiltro(f)} className={`shrink-0 rounded-2xl border px-4 py-2 text-xs font-semibold transition-colors ${a ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                {f}
+              </button>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {(emAlta ?? []).length === 0 && (
+            <div className="col-span-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nada em alta agora.</div>
+          )}
+          {(emAlta ?? []).map((p: any) => (
+            <Link key={p.id} to="/post/$id" params={{ id: p.id }} className="relative block aspect-[4/5] overflow-hidden rounded-lg bg-card">
+              {p.tipo === "video" ? (
+                <video src={p.media_url} className="h-full w-full object-cover" playsInline muted loop />
+              ) : (
+                <img src={p.media_url} className="h-full w-full object-cover" alt="" />
+              )}
+              <span className="absolute right-1.5 top-1.5 text-white/90">
+                {p.tipo === "video" ? <Play size={14} className="fill-white/90" /> : <Images size={14} />}
+              </span>
+              <span className="absolute inset-x-1 bottom-1 flex items-center gap-1.5 rounded-full bg-black/60 px-1.5 py-1 backdrop-blur">
+                {p.profiles?.avatar_url ? (
+                  <img src={p.profiles.avatar_url} className="h-4 w-4 rounded-full object-cover" alt="" />
+                ) : (
+                  <span className="h-4 w-4 rounded-full bg-primary" />
+                )}
+                <span className="truncate text-[9px] font-semibold text-white">{p.profiles?.username ?? "—"}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Destaques da comunidade</h3>
           <button onClick={() => navigate({ to: "/feed", search: { tab: "destaques" } as any })} className="inline-flex items-center gap-1 text-xs font-semibold text-primary-light">Ver todos <ArrowRight size={12} /></button>
