@@ -44,6 +44,7 @@ function DescobrirPage() {
   const [tab, setTab] = useState<Tab>("voce");
   const [q, setQ] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [emAltaFiltro, setEmAltaFiltro] = useState("Tudo");
   const [countdown, setCountdown] = useState({ d: 23, h: 14, m: 38 });
 
   const buscando = q.trim().length >= 2;
