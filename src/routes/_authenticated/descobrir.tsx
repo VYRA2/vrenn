@@ -168,14 +168,24 @@ function DescobrirPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
-        <div className="w-10" />
-        <VyraLogo size={32} />
-        <Link to="/notificacoes" className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/40 bg-card text-foreground">
-          <Bell size={18} />
-          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
-        </Link>
+      <header className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
+        <div className="justify-self-start">
+          <Link to="/mensagens" aria-label="Mensagens" className="rounded-full p-2 text-foreground/90 inline-flex">
+            <MessageCircle size={22} />
+          </Link>
+        </div>
+        <div className="justify-self-center"><VyraLogo size={32} showWordmark={false} /></div>
+        <div className="justify-self-end flex items-center gap-1">
+          <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
+            <Bell size={22} />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
+          </Link>
+          <Link to="/wallet" aria-label="Carteira" className="rounded-full p-2 text-primary-light">
+            <Wallet size={22} />
+          </Link>
+        </div>
       </header>
+
 
       <div className="mx-auto max-w-md px-5">
         <h1 className="mt-2 text-3xl font-bold">Descobrir</h1>
