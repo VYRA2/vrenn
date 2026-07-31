@@ -5,6 +5,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import { PublishProofModal } from "@/components/PublishProofModal";
 import { CommentsModal } from "@/components/CommentsModal";
+import { StoriesBar } from "@/components/StoriesBar";
+
 import { shareToInstagram } from "@/lib/shareToInstagram";
 
 import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
@@ -134,35 +136,18 @@ function Feed() {
             </Link>
           </div>
         </div>
-        <div className="mx-auto flex max-w-md px-3">
-          {([["feed", "Feed"], ["seguindo", "Seguindo"], ["destaques", "Destaques"], ["comunidades", "Comunidades"]] as const).map(([k, l]) => {
-            const active = tab === k;
-            return (
-              <button key={k} onClick={() => setTab(k)} className={`relative flex-1 py-3 text-xs font-semibold transition-colors ${active ? "text-primary-light" : "text-muted-foreground"}`}>
-                {l}
-                {active && <span className="absolute inset-x-4 -bottom-px h-0.5 rounded-full bg-primary" />}
-              </button>
-            );
-          })}
-        </div>
         <div className="h-px bg-border" />
+
       </header>
+
+      <div className="mx-auto max-w-md">
+        <StoriesBar userId={user.id} />
+        <div className="h-px bg-border" />
+      </div>
 
       <div className="mx-auto max-w-md space-y-4 px-4 py-4">
         <h1 className="sr-only">Feed de evolução</h1>
-        <button onClick={() => setShowPublish(true)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left">
 
-          <div className="relative shrink-0">
-            {me?.avatar_url ? (
-              <img src={me.avatar_url} alt="" className="h-11 w-11 rounded-full border-2 border-primary/60 object-cover" />
-            ) : (
-              <div className="h-11 w-11 rounded-full border-2 border-primary/60 bg-gradient-primary" />
-            )}
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-card"><Plus size={12} strokeWidth={3} /></span>
-          </div>
-          <span className="flex-1 text-sm text-muted-foreground">Compartilhe uma prova. Inspire credibilidade.</span>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-light"><Camera size={18} /></div>
-        </button>
 
         {isLoading && [1, 2].map(i => <div key={i} className="h-96 animate-pulse rounded-2xl bg-card" />)}
         {!isLoading && (!posts || posts.length === 0) && (
