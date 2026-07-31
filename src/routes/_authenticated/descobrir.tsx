@@ -243,6 +243,16 @@ function DescobrirPage() {
                 : (resultados ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)}
             </div>
           </section>
+        ) : tab === "comunidade" ? (
+          <section className="mt-5">
+            <h3 className="mb-3 text-sm font-bold">Todos os perfis do VRENN</h3>
+            <div className="space-y-2">
+              {(todosPerfis ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum perfil encontrado.</p>
+              )}
+              {(todosPerfis ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)}
+            </div>
+          </section>
         ) : (
         <>
         <Link to="/desafio-temporada" className="mt-5 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17] p-5 shadow-glow">
