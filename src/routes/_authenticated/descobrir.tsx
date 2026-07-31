@@ -6,21 +6,24 @@ import { toast } from "sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight,
-  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical,
+  Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight, Wallet,
+  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical, Play, Images,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/descobrir")({
   component: DescobrirPage,
 });
 
-type Tab = "voce" | "pessoas" | "habitos" | "metas" | "provas";
+type Tab = "voce" | "comunidade" | "pessoas" | "habitos" | "metas" | "provas";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "voce", label: "Para você", icon: Users },
+  { id: "comunidade", label: "Comunidade", icon: Users },
   { id: "metas", label: "Metas", icon: Target },
   { id: "provas", label: "Provas", icon: Shield },
 ];
+
+const EM_ALTA_FILTROS = ["Tudo", "Fitness", "Corrida", "Disciplina", "Alimentação"];
 
 const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
   { id: "pessoas", label: "Pessoas", icon: Users },
