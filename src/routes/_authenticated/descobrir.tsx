@@ -152,6 +152,46 @@ function DescobrirPage() {
     },
   });
 
+  const { data: todosPerfis } = useQuery({
+    queryKey: ["descobrir-todos-perfis", q],
+    enabled: tab === "comunidade",
+    queryFn: async () => {
+      let query = supabase.from("profiles").select("id, nome, username, avatar_url").neq("id", user.id).limit(100);
+      const term = q.trim();
+      if (term.length >= 2) query = query.or(`nome.ilike.%${term}%,username.ilike.%${term}%`);
+      const { data } = await query.order("nome", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: emAlta } = useQuery({
+    queryKey: ["descobrir-em-alta", emAltaFiltro],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("posts")
+        .select("id, media_url, tipo, hashtags, likes_count, created_at, user_id, profiles:user_id(username, avatar_url, perfil_publico), metas:meta_id(categoria, subcategoria)")
+        .not("media_url", "is", null)
+        .order("likes_count", { ascending: false })
+        .limit(60);
+      const publicos = (data ?? []).filter((p: any) => p.profiles?.perfil_publico !== false);
+      if (emAltaFiltro === "Tudo") return publicos.slice(0, 30);
+      const alvo = emAltaFiltro.toLowerCase();
+      return publicos
+        .filter((p: any) => {
+          const bag = [
+            ...(p.hashtags ?? []),
+            p.metas?.categoria ?? "",
+            p.metas?.subcategoria ?? "",
+          ].join(" ").toLowerCase();
+          if (alvo === "fitness") return /fitness|treino|muscula|academia/.test(bag);
+          if (alvo === "corrida") return /corrida|correr|run|caminhada/.test(bag);
+          if (alvo === "disciplina") return /disciplina|habito|hábito|foco|rotina/.test(bag);
+          return bag.includes(alvo.replace("ç", "c"));
+        })
+        .slice(0, 30);
+    },
+  });
+
   useEffect(() => {
     const t = setInterval(() => {
       setCountdown((c) => {
