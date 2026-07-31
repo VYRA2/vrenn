@@ -6,21 +6,24 @@ import { toast } from "sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight,
-  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical,
+  Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight, Wallet,
+  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical, Play, Images,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/descobrir")({
   component: DescobrirPage,
 });
 
-type Tab = "voce" | "pessoas" | "habitos" | "metas" | "provas";
+type Tab = "voce" | "comunidade" | "pessoas" | "habitos" | "metas" | "provas";
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "voce", label: "Para você", icon: Users },
+  { id: "comunidade", label: "Comunidade", icon: Users },
   { id: "metas", label: "Metas", icon: Target },
   { id: "provas", label: "Provas", icon: Shield },
 ];
+
+const EM_ALTA_FILTROS = ["Tudo", "Fitness", "Corrida", "Disciplina", "Alimentação"];
 
 const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
   { id: "pessoas", label: "Pessoas", icon: Users },
@@ -41,6 +44,7 @@ function DescobrirPage() {
   const [tab, setTab] = useState<Tab>("voce");
   const [q, setQ] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [emAltaFiltro, setEmAltaFiltro] = useState("Tudo");
   const [countdown, setCountdown] = useState({ d: 23, h: 14, m: 38 });
 
   const buscando = q.trim().length >= 2;
@@ -149,6 +153,46 @@ function DescobrirPage() {
     },
   });
 
+  const { data: todosPerfis } = useQuery({
+    queryKey: ["descobrir-todos-perfis", q],
+    enabled: tab === "comunidade",
+    queryFn: async () => {
+      let query = supabase.from("profiles").select("id, nome, username, avatar_url").neq("id", user.id).limit(100);
+      const term = q.trim();
+      if (term.length >= 2) query = query.or(`nome.ilike.%${term}%,username.ilike.%${term}%`);
+      const { data } = await query.order("nome", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: emAlta } = useQuery({
+    queryKey: ["descobrir-em-alta", emAltaFiltro],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("posts")
+        .select("id, media_url, tipo, hashtags, likes_count, created_at, user_id, profiles:user_id(username, avatar_url, perfil_publico), metas:meta_id(categoria, subcategoria)")
+        .not("media_url", "is", null)
+        .order("likes_count", { ascending: false })
+        .limit(60);
+      const publicos = (data ?? []).filter((p: any) => p.profiles?.perfil_publico !== false);
+      if (emAltaFiltro === "Tudo") return publicos.slice(0, 30);
+      const alvo = emAltaFiltro.toLowerCase();
+      return publicos
+        .filter((p: any) => {
+          const bag = [
+            ...(p.hashtags ?? []),
+            p.metas?.categoria ?? "",
+            p.metas?.subcategoria ?? "",
+          ].join(" ").toLowerCase();
+          if (alvo === "fitness") return /fitness|treino|muscula|academia/.test(bag);
+          if (alvo === "corrida") return /corrida|correr|run|caminhada/.test(bag);
+          if (alvo === "disciplina") return /disciplina|habito|hábito|foco|rotina/.test(bag);
+          return bag.includes(alvo.replace("ç", "c"));
+        })
+        .slice(0, 30);
+    },
+  });
+
   useEffect(() => {
     const t = setInterval(() => {
       setCountdown((c) => {
@@ -165,14 +209,24 @@ function DescobrirPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto flex max-w-md items-center justify-between px-5 pt-4 pb-2">
-        <div className="w-10" />
-        <VyraLogo size={32} />
-        <Link to="/notificacoes" className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/40 bg-card text-foreground">
-          <Bell size={18} />
-          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
-        </Link>
+      <header className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
+        <div className="justify-self-start">
+          <Link to="/mensagens" aria-label="Mensagens" className="rounded-full p-2 text-foreground/90 inline-flex">
+            <MessageCircle size={22} />
+          </Link>
+        </div>
+        <div className="justify-self-center"><VyraLogo size={32} showWordmark={false} /></div>
+        <div className="justify-self-end flex items-center gap-1">
+          <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
+            <Bell size={22} />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
+          </Link>
+          <Link to="/wallet" aria-label="Carteira" className="rounded-full p-2 text-primary-light">
+            <Wallet size={22} />
+          </Link>
+        </div>
       </header>
+
 
       <div className="mx-auto max-w-md px-5">
         <h1 className="mt-2 text-3xl font-bold">Descobrir</h1>
@@ -240,6 +294,16 @@ function DescobrirPage() {
                 : (resultados ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)}
             </div>
           </section>
+        ) : tab === "comunidade" ? (
+          <section className="mt-5">
+            <h3 className="mb-3 text-sm font-bold">Todos os perfis do VRENN</h3>
+            <div className="space-y-2">
+              {(todosPerfis ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum perfil encontrado.</p>
+              )}
+              {(todosPerfis ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)}
+            </div>
+          </section>
         ) : (
         <>
         <Link to="/desafio-temporada" className="mt-5 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17] p-5 shadow-glow">
@@ -277,6 +341,47 @@ function DescobrirPage() {
             </div>
           </div>
         </Link>
+
+        {/* Em alta */}
+        <div className="mt-6 mb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold">Em alta</h3>
+          <Link to="/busca" className="text-xs font-semibold text-primary-light">Ver tudo</Link>
+        </div>
+        <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {EM_ALTA_FILTROS.map((f) => {
+            const a = emAltaFiltro === f;
+            return (
+              <button key={f} onClick={() => setEmAltaFiltro(f)} className={`shrink-0 rounded-2xl border px-4 py-2 text-xs font-semibold transition-colors ${a ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                {f}
+              </button>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {(emAlta ?? []).length === 0 && (
+            <div className="col-span-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nada em alta agora.</div>
+          )}
+          {(emAlta ?? []).map((p: any) => (
+            <Link key={p.id} to="/post/$id" params={{ id: p.id }} className="relative block aspect-[4/5] overflow-hidden rounded-lg bg-card">
+              {p.tipo === "video" ? (
+                <video src={p.media_url} className="h-full w-full object-cover" playsInline muted loop />
+              ) : (
+                <img src={p.media_url} className="h-full w-full object-cover" alt="" />
+              )}
+              <span className="absolute right-1.5 top-1.5 text-white/90">
+                {p.tipo === "video" ? <Play size={14} className="fill-white/90" /> : <Images size={14} />}
+              </span>
+              <span className="absolute inset-x-1 bottom-1 flex items-center gap-1.5 rounded-full bg-black/60 px-1.5 py-1 backdrop-blur">
+                {p.profiles?.avatar_url ? (
+                  <img src={p.profiles.avatar_url} className="h-4 w-4 rounded-full object-cover" alt="" />
+                ) : (
+                  <span className="h-4 w-4 rounded-full bg-primary" />
+                )}
+                <span className="truncate text-[9px] font-semibold text-white">{p.profiles?.username ?? "—"}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
 
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Destaques da comunidade</h3>

@@ -1293,6 +1293,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       reputacao_log: {
         Row: {
           created_at: string | null
@@ -1330,26 +1360,35 @@ export type Database = {
       }
       stories: {
         Row: {
+          bg_gradient: string | null
           created_at: string
           expires_at: string
           id: string
-          media_url: string
+          media_type: string
+          media_url: string | null
+          text_content: string | null
           tipo: string
           user_id: string
         }
         Insert: {
+          bg_gradient?: string | null
           created_at?: string
           expires_at?: string
           id?: string
-          media_url: string
+          media_type?: string
+          media_url?: string | null
+          text_content?: string | null
           tipo?: string
           user_id: string
         }
         Update: {
+          bg_gradient?: string | null
           created_at?: string
           expires_at?: string
           id?: string
-          media_url?: string
+          media_type?: string
+          media_url?: string | null
+          text_content?: string | null
           tipo?: string
           user_id?: string
         }
@@ -1357,22 +1396,22 @@ export type Database = {
       }
       story_views: {
         Row: {
-          created_at: string
           id: string
           story_id: string
-          user_id: string
+          viewed_at: string
+          viewer_id: string
         }
         Insert: {
-          created_at?: string
           id?: string
           story_id: string
-          user_id: string
+          viewed_at?: string
+          viewer_id: string
         }
         Update: {
-          created_at?: string
           id?: string
           story_id?: string
-          user_id?: string
+          viewed_at?: string
+          viewer_id?: string
         }
         Relationships: [
           {
