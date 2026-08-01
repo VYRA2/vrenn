@@ -351,23 +351,23 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-5 border-t border-border pt-3">
+      <div className="mt-3 flex items-center gap-6 border-t border-border pt-3">
         <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
-          <Heart size={20} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
+          <Heart size={22} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
         </button>
         <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 text-sm text-foreground">
-          <MessageCircle size={20} />
+          <MessageCircle size={22} />
           <span className="font-semibold">{stats?.comments ?? 0}</span>
         </button>
         <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 text-sm text-foreground">
-          <Send size={20} />
+          <Send size={22} />
         </button>
         <button onClick={toggleSave} className="ml-auto">
-          <Bookmark size={20} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
+          <Bookmark size={22} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
         </button>
       </div>
-      </div>
+
       {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
       {showShare && (
         <ShareSheet
