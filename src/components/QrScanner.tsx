@@ -42,7 +42,12 @@ export function QrScanner({ expectedToken, validateLocalId, onValid, onCancel, t
             const codes = await detector.detect(videoRef.current);
             if (codes.length > 0) {
               const raw = codes[0].rawValue as string;
-              if (expectedToken && raw !== expectedToken) {
+              const ok = validateLocalId
+                ? await validarQrToken(validateLocalId, raw)
+                : expectedToken
+                  ? raw === expectedToken
+                  : true;
+              if (!ok) {
                 setErro("Esse QR Code não pertence a este desafio.");
               } else {
                 ativo = false;
@@ -60,6 +65,7 @@ export function QrScanner({ expectedToken, validateLocalId, onValid, onCancel, t
           } catch {
             /* frame inválido */
           }
+
           raf = requestAnimationFrame(loop);
         };
         loop();
