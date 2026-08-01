@@ -256,21 +256,23 @@ function DescobrirPage() {
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-5 px-5">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const a = tab === id;
-            return (
-              <button key={id} onClick={() => setTab(id)} className={`flex shrink-0 items-center gap-1.5 rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors ${a ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
-                <Icon size={14} /> {label}
-              </button>
-            );
-          })}
-          {(tab === "pessoas" || tab === "habitos") && (
-            <button onClick={() => setTab("voce")} className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light">
-              {tab === "pessoas" ? "Pessoas ✕" : "Hábitos ✕"}
+        <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Filtros do Descobrir">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === id ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"}`}
+            >
+              {label}
+            </button>
+          ))}
+          {tab === "habitos" && (
+            <button onClick={() => setTab("voce")} className="shrink-0 rounded-full border border-primary bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary-light">
+              Hábitos ✕
             </button>
           )}
-        </div>
+        </nav>
+
 
         {buscando ? (
           <section className="mt-5">
