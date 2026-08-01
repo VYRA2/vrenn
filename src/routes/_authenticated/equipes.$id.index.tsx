@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchQrToken } from "@/lib/qrcode-local";
 import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
@@ -1206,14 +1207,14 @@ function DesafioQrCode({ localId }: { localId: string }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (!local?.qrcode_token) return null;
+  if (!local || !qrToken) return null;
 
   return (
     <div className="pt-1">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-primary-light mb-2">
         <QrCode size={13} /> QR Code de check-in
       </div>
-      <QrCodeExportCard nome={local.nome} token={local.qrcode_token} />
+      <QrCodeExportCard nome={local.nome} token={qrToken} />
     </div>
   );
 }
@@ -1292,7 +1293,7 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
 
   // ─── QR Code: exige leitura da câmera ───
   if (desafio.tipo_validacao === "qrcode") {
-    if (!desafio.local_id || !local?.qrcode_token) {
+    if (!desafio.local_id || !local?.id) {
       return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
@@ -1311,7 +1312,7 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
       <QrScanner
         title={`Check-in — ${desafio.titulo}`}
         helper={`Escaneie o QR Code fixado em ${local.nome}.`}
-        expectedToken={local.qrcode_token}
+        validateLocalId={local.id}
         onCancel={onClose}
         onValid={registrarQr}
       />
