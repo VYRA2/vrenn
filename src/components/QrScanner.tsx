@@ -80,7 +80,7 @@ export function QrScanner({ expectedToken, validateLocalId, onValid, onCancel, t
       cancelAnimationFrame(raf);
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, [scanning, suportado, expectedToken, onValid]);
+  }, [scanning, suportado, expectedToken, validateLocalId, onValid]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onCancel}>
