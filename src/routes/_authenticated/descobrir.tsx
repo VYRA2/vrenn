@@ -477,6 +477,36 @@ function DescobrirPage() {
   );
 }
 
+function EmAltaGrid({ posts }: { posts: any[] }) {
+  return (
+    <div className="grid grid-cols-3 gap-1">
+      {posts.length === 0 && (
+        <div className="col-span-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nada em alta agora.</div>
+      )}
+      {posts.map((p: any) => (
+        <Link key={p.id} to="/post/$id" params={{ id: p.id }} className="relative block aspect-[4/5] overflow-hidden rounded-lg bg-card">
+          {p.tipo === "video" ? (
+            <video src={p.media_url} className="h-full w-full object-cover" playsInline muted loop />
+          ) : (
+            <img src={p.media_url} className="h-full w-full object-cover" alt="" />
+          )}
+          <span className="absolute right-1.5 top-1.5 text-white/90">
+            {p.tipo === "video" ? <Play size={14} className="fill-white/90" /> : <Images size={14} />}
+          </span>
+          <span className="absolute inset-x-1 bottom-1 flex items-center gap-1.5 rounded-full bg-black/60 px-1.5 py-1 backdrop-blur">
+            {p.profiles?.avatar_url ? (
+              <img src={p.profiles.avatar_url} className="h-4 w-4 rounded-full object-cover" alt="" />
+            ) : (
+              <span className="h-4 w-4 rounded-full bg-primary" />
+            )}
+            <span className="truncate text-[9px] font-semibold text-white">{p.profiles?.username ?? "—"}</span>
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function TimeBox({ v, l }: { v: number; l: string }) {
   return (
     <div className="text-center">
