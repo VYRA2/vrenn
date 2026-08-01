@@ -9,17 +9,17 @@ import { StoriesBar } from "@/components/StoriesBar";
 
 import { shareToInstagram } from "@/lib/shareToInstagram";
 
-import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
+import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { subscribeToPush, isPushSupported } from "@/lib/push";
 
-type Tab = "feed" | "seguindo" | "destaques" | "comunidades";
+type Tab = "feed" | "seguindo";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   validateSearch: (s: Record<string, unknown>) => ({
     publish: s.publish ? 1 : undefined,
-    tab: (["feed","seguindo","destaques","comunidades"].includes(s.tab as string) ? s.tab : undefined) as Tab | undefined,
+    tab: (["feed","seguindo"].includes(s.tab as string) ? s.tab : undefined) as Tab | undefined,
   }),
   component: Feed,
 });
@@ -118,10 +118,10 @@ function Feed() {
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-lg">
         <div className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
           <div className="justify-self-start"><VyraLogo size={28} showWordmark={false} /></div>
-          <div className="justify-self-center"><VyraLogo size={22} showWordmark={true} className="[&>img]:hidden" /></div>
+          <div className="justify-self-center text-base font-bold tracking-widest text-foreground">VRENN</div>
           <div className="justify-self-end flex items-center gap-1">
             <Link to="/mensagens" className="rounded-full p-2 text-foreground/90" aria-label="Mensagens">
               <MessageCircle size={22} />
@@ -136,29 +136,60 @@ function Feed() {
             </Link>
           </div>
         </div>
-        <div className="h-px bg-border" />
-
       </header>
 
       <div className="mx-auto max-w-md">
         <StoriesBar userId={user.id} />
         <div className="h-px bg-border" />
+        <nav className="flex gap-2 overflow-x-auto px-4 py-3" aria-label="Filtros do feed">
+          {([{ id: "feed", label: "Para você" }, { id: "seguindo", label: "Seguindo" }] as const).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === t.id ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      <div className="mx-auto max-w-md space-y-4 px-4 py-4">
+      <div className="mx-auto max-w-md py-4">
         <h1 className="sr-only">Feed de evolução</h1>
 
 
-        {isLoading && [1, 2].map(i => <div key={i} className="h-96 animate-pulse rounded-2xl bg-card" />)}
+        {isLoading && <div className="space-y-4 px-4">{[1, 2].map(i => <div key={i} className="h-96 animate-pulse rounded-2xl bg-card" />)}</div>}
         {!isLoading && (!posts || posts.length === 0) && (
-          <div className="rounded-2xl border border-border bg-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {tab === "seguindo" ? "Você ainda não segue ninguém." : tab === "comunidades" ? "Entre em uma equipe para ver publicações." : "Nenhuma publicação ainda. Compartilhe sua primeira prova!"}
-            </p>
+          <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
+            <Camera size={48} className="text-muted-foreground" />
+            <h2 className="text-lg font-bold">Seja o primeiro a mostrar.</h2>
+            <p className="text-sm text-muted-foreground">Publique sua primeira prova e apareça no feed de todo mundo.</p>
+            <button
+              onClick={() => setShowPublish(true)}
+              className="mt-2 rounded-2xl bg-gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow"
+            >
+              Publicar agora
+            </button>
           </div>
         )}
-        {posts?.map((p: any) => <PostCard key={p.id} post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />)}
+        {posts?.map((p: any, i: number) => (
+          <div key={p.id}>
+            <div className="px-4">
+              <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
+            </div>
+            {i < posts.length - 1 && <div className="h-px bg-border mx-4 my-4" />}
+          </div>
+        ))}
       </div>
+
+      <button
+        onClick={() => setShowPublish(true)}
+        aria-label="Publicar prova"
+        className="fixed bottom-24 right-5 z-40 rounded-full bg-gradient-primary p-4 text-primary-foreground shadow-glow"
+      >
+        <Camera size={22} />
+      </button>
+
 
       {showPublish && <PublishProofModal userId={user.id} onClose={() => setShowPublish(false)} onPublished={() => refetch()} />}
 
@@ -244,12 +275,12 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const cumprido = m?.status === "concluida";
 
   const cardBorder = isConquista
-    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-[1.5px]"
+    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40"
     : "border-border bg-card";
 
   return (
-    <article className={`rounded-2xl ${isConquista ? "" : "border"} ${cardBorder}`}>
-      <div className={`rounded-2xl bg-card p-4 ${isConquista ? "" : ""}`}>
+    <article className={`rounded-2xl p-4 ${isConquista ? "" : "border"} ${cardBorder}`}>
+
       {isConquista && (
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
           {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
@@ -274,7 +305,6 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
             ) : (
               <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
             )}
-            <BadgeCheck size={14} className="text-primary-light" />
           </div>
           <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
         </div>
@@ -351,23 +381,23 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-5 border-t border-border pt-3">
+      <div className="mt-3 flex items-center gap-6 border-t border-border pt-3">
         <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
-          <Heart size={20} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
+          <Heart size={22} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
         </button>
         <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 text-sm text-foreground">
-          <MessageCircle size={20} />
+          <MessageCircle size={22} />
           <span className="font-semibold">{stats?.comments ?? 0}</span>
         </button>
         <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 text-sm text-foreground">
-          <Send size={20} />
+          <Send size={22} />
         </button>
         <button onClick={toggleSave} className="ml-auto">
-          <Bookmark size={20} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
+          <Bookmark size={22} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
         </button>
       </div>
-      </div>
+
       {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
       {showShare && (
         <ShareSheet
@@ -496,7 +526,7 @@ function formatWhen(iso: string) {
   const h = Math.floor(min / 60);
   if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d`;
+  if (d <= 30) return `${d}d`;
   return new Date(iso).toLocaleDateString("pt-BR");
 }
 
