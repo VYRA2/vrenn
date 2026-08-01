@@ -164,8 +164,8 @@ function OnboardingPage() {
         categoria: categorias[0] ?? "outro",
         status: "ativa",
         prazo: prazoData.toISOString().slice(0, 10),
-        prazo_dias: metaPrazo,
-        publica: metaPublica,
+        prazo: prazoData.toISOString().slice(0, 10),
+
       } as any);
       if (error) throw error;
       toast.success("Meta criada! Agora mostre que você vai cumprir. 💪");
