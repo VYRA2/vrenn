@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { QrCode, X, Loader2 } from "lucide-react";
+import { validarQrToken } from "@/lib/qrcode-local";
 
 interface QrScannerProps {
   /** Se informado, valida que o QR lido bate com esse token. */
   expectedToken?: string;
+  /** Preferencial: valida o QR no servidor, sem expor o token ao cliente. */
+  validateLocalId?: string | null;
   onValid: (rawValue: string) => void | Promise<void>;
   onCancel: () => void;
   title?: string;
   helper?: string;
 }
 
-export function QrScanner({ expectedToken, onValid, onCancel, title = "Ler QR Code", helper }: QrScannerProps) {
+export function QrScanner({ expectedToken, validateLocalId, onValid, onCancel, title = "Ler QR Code", helper }: QrScannerProps) {
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const [scanning, setScanning] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
