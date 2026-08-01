@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchQrToken, validarQrToken } from "@/lib/qrcode-local";
 import { StravaCheckinModal as SharedStravaCheckinModal } from "@/components/StravaCheckinModal";
 import { findUserForInvite } from "@/lib/arbitros.functions";
 import { useState, useEffect, useRef } from "react";
@@ -79,12 +80,19 @@ function MetaDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("locais_validacao")
-        .select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token")
+        .select("id, nome, latitude, longitude, raio_geofence_metros")
         .eq("id", meta!.local_id!)
         .maybeSingle();
       return data;
     },
     enabled: !!meta?.local_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: qrToken } = useQuery({
+    queryKey: ["meta-qr-token", meta?.local_id],
+    queryFn: () => fetchQrToken(meta!.local_id!),
+    enabled: !!meta?.local_id && meta?.tipo_validacao === "qrcode",
     staleTime: 5 * 60 * 1000,
   });
 
@@ -295,8 +303,8 @@ function MetaDetail() {
               <QrCode size={16} className="text-primary-light" /> Seu QR Code de check-in
             </h3>
             <p className="text-xs text-muted-foreground">Imprima e fixe no local. Se perder, baixe aqui novamente.</p>
-            {local?.qrcode_token ? (
-              <QrCodeExportCard nome={local.nome} token={local.qrcode_token} />
+            {qrToken && local ? (
+              <QrCodeExportCard nome={local.nome} token={qrToken} />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-4 text-center text-xs text-muted-foreground">
                 Carregando QR Code…
@@ -1054,8 +1062,9 @@ function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
   }, [scanning]);
 
   async function onCodigoLido(valor: string) {
-    if (!local?.qrcode_token) return;
-    if (valor !== local.qrcode_token) {
+    if (!local?.id) return;
+    const ok = await validarQrToken(local.id, valor);
+    if (!ok) {
       setErro("Esse QR Code não corresponde ao local desta meta.");
       return;
     }

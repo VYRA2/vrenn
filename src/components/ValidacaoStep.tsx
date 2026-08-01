@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchQrToken } from "@/lib/qrcode-local";
 import { QrCode, MapPin, Shield, Search, Plus, Crosshair, Loader2, Minus, Camera, Activity } from "lucide-react";
 import { subcategoriaSuportaStrava } from "@/lib/categorias";
 
@@ -49,7 +50,7 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
   const { data: locais } = useQuery({
     queryKey: ["locais-validacao", busca],
     queryFn: async () => {
-      let q = supabase.from("locais_validacao").select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token").limit(20);
+      let q = supabase.from("locais_validacao").select("id, nome, latitude, longitude, raio_geofence_metros").limit(20);
       if (busca.trim()) q = q.ilike("nome", `%${busca.trim()}%`);
       const { data } = await q;
       return data ?? [];
@@ -76,20 +77,20 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
       longitude: novoLng,
       raio_geofence_metros: novoRaio,
       criado_por: userId,
-    } as any).select("id, nome, qrcode_token").single();
+    } as any).select("id, nome").single();
     setSaving(false);
     if (error) return toast.error(error.message);
     onChangeLocalId(data.id);
     setLocalNome(data.nome);
-    setLocalQrToken((data as any).qrcode_token ?? null);
+    setLocalQrToken(await fetchQrToken(data.id));
     toast.success("Local cadastrado");
     setValStep("metodo");
   }
 
-  function selecionar(l: { id: string; nome: string; qrcode_token?: string }) {
+  async function selecionar(l: { id: string; nome: string }) {
     onChangeLocalId(l.id);
     setLocalNome(l.nome);
-    setLocalQrToken(l.qrcode_token ?? null);
+    setLocalQrToken(await fetchQrToken(l.id));
     setValStep("metodo");
   }
 

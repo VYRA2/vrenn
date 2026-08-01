@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchQrToken } from "@/lib/qrcode-local";
 import { BottomNav } from "@/components/BottomNav";
 import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
@@ -58,12 +59,19 @@ function DueloDetalhe() {
     queryFn: async () => {
       const { data } = await supabase
         .from("locais_validacao")
-        .select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token")
+        .select("id, nome, latitude, longitude, raio_geofence_metros")
         .eq("id", duelo!.local_id)
         .maybeSingle();
       return data;
     },
     enabled: !!duelo?.local_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: qrToken } = useQuery({
+    queryKey: ["duelo-qr-token", duelo?.local_id],
+    queryFn: () => fetchQrToken(duelo!.local_id!),
+    enabled: !!duelo?.local_id && duelo?.tipo_validacao === "qrcode",
     staleTime: 5 * 60 * 1000,
   });
 
@@ -390,8 +398,8 @@ function DueloDetalhe() {
               <QrCode size={16} className="text-primary-light" /> Seu QR Code de check-in
             </h3>
             <p className="text-xs text-muted-foreground">Imprima e fixe no local. Se perder, baixe aqui novamente.</p>
-            {local?.qrcode_token ? (
-              <QrCodeExportCard nome={local.nome} token={local.qrcode_token} />
+            {qrToken && local ? (
+              <QrCodeExportCard nome={local.nome} token={qrToken} />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-4 text-center text-xs text-muted-foreground">Carregando QR Code…</div>
             )}
@@ -924,7 +932,7 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
 
   // ─── QR Code: escaneia obrigatoriamente antes de registrar ───
   if (tipoValidacao === "qrcode") {
-    if (!local?.qrcode_token) {
+    if (!local?.id) {
       return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border bg-card p-5 space-y-3">
@@ -941,7 +949,7 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
       <QrScanner
         title={`Check-in — ${local.nome}`}
         helper={`Escaneie o QR Code fixado em ${local.nome}.`}
-        expectedToken={local.qrcode_token}
+        validateLocalId={local.id}
         onCancel={onClose}
         onValid={async (raw) => {
           const { error } = await supabase.from("checkins").insert({

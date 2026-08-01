@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { QrCode, X, Loader2 } from "lucide-react";
+import { validarQrToken } from "@/lib/qrcode-local";
 
 interface QrScannerProps {
   /** Se informado, valida que o QR lido bate com esse token. */
   expectedToken?: string;
+  /** Preferencial: valida o QR no servidor, sem expor o token ao cliente. */
+  validateLocalId?: string | null;
   onValid: (rawValue: string) => void | Promise<void>;
   onCancel: () => void;
   title?: string;
   helper?: string;
 }
 
-export function QrScanner({ expectedToken, onValid, onCancel, title = "Ler QR Code", helper }: QrScannerProps) {
+export function QrScanner({ expectedToken, validateLocalId, onValid, onCancel, title = "Ler QR Code", helper }: QrScannerProps) {
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const [scanning, setScanning] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -38,7 +42,12 @@ export function QrScanner({ expectedToken, onValid, onCancel, title = "Ler QR Co
             const codes = await detector.detect(videoRef.current);
             if (codes.length > 0) {
               const raw = codes[0].rawValue as string;
-              if (expectedToken && raw !== expectedToken) {
+              const ok = validateLocalId
+                ? await validarQrToken(validateLocalId, raw)
+                : expectedToken
+                  ? raw === expectedToken
+                  : true;
+              if (!ok) {
                 setErro("Esse QR Code não pertence a este desafio.");
               } else {
                 ativo = false;
@@ -56,6 +65,7 @@ export function QrScanner({ expectedToken, onValid, onCancel, title = "Ler QR Co
           } catch {
             /* frame inválido */
           }
+
           raf = requestAnimationFrame(loop);
         };
         loop();
@@ -70,7 +80,7 @@ export function QrScanner({ expectedToken, onValid, onCancel, title = "Ler QR Co
       cancelAnimationFrame(raf);
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, [scanning, suportado, expectedToken, onValid]);
+  }, [scanning, suportado, expectedToken, validateLocalId, onValid]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onCancel}>

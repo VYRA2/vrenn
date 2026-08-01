@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchQrToken } from "@/lib/qrcode-local";
 import { toast } from "sonner";
 import { ArrowLeft, Dumbbell, Heart, BookOpen, DollarSign, Calendar, Sparkles, Loader2, Lock } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
@@ -52,10 +53,11 @@ function NovaMeta() {
     queryFn: async () => {
       const { data } = await supabase
         .from("locais_validacao")
-        .select("id, nome, qrcode_token")
+        .select("id, nome")
         .eq("id", localId!)
         .maybeSingle();
-      return data;
+      if (!data) return null;
+      return { ...data, token: await fetchQrToken(data.id) };
     },
     enabled: !!localId && tipoValidacao === "qrcode",
     staleTime: 5 * 60 * 1000,
@@ -263,8 +265,8 @@ function NovaMeta() {
 
             {/* FIX: mostra loading enquanto o dado não chega, em vez de não renderizar nada */}
             {tipoValidacao === "qrcode" && (
-              localSelecionado?.qrcode_token ? (
-                <QrCodeExportCard nome={localSelecionado.nome} token={localSelecionado.qrcode_token} />
+              localSelecionado?.token && localSelecionado.nome ? (
+                <QrCodeExportCard nome={localSelecionado.nome} token={localSelecionado.token} />
               ) : localId ? (
                 <div className="rounded-2xl border border-border bg-card p-4 text-center text-xs text-muted-foreground">
                   Carregando QR Code…
