@@ -9,17 +9,17 @@ import { StoriesBar } from "@/components/StoriesBar";
 
 import { shareToInstagram } from "@/lib/shareToInstagram";
 
-import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
+import { Bell, Wallet, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Camera, Plus, CheckCircle2, Clock, X, ExternalLink, Trophy, Swords, Pencil, Trash2, Instagram, Loader2, Link2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { subscribeToPush, isPushSupported } from "@/lib/push";
 
-type Tab = "feed" | "seguindo" | "destaques" | "comunidades";
+type Tab = "feed" | "seguindo";
 
 export const Route = createFileRoute("/_authenticated/feed")({
   validateSearch: (s: Record<string, unknown>) => ({
     publish: s.publish ? 1 : undefined,
-    tab: (["feed","seguindo","destaques","comunidades"].includes(s.tab as string) ? s.tab : undefined) as Tab | undefined,
+    tab: (["feed","seguindo"].includes(s.tab as string) ? s.tab : undefined) as Tab | undefined,
   }),
   component: Feed,
 });
@@ -244,7 +244,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const cumprido = m?.status === "concluida";
 
   const cardBorder = isConquista
-    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-[1.5px]"
+    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40"
     : "border-border bg-card";
 
   return (
@@ -274,7 +274,6 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
             ) : (
               <span className="text-sm font-bold truncate">{p?.nome ?? "Usuário"}</span>
             )}
-            <BadgeCheck size={14} className="text-primary-light" />
           </div>
           <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
         </div>
