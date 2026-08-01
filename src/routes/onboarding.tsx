@@ -143,7 +143,7 @@ function OnboardingPage() {
         onboarding_done: true,
       } as any).eq("id", userId);
       if (error) throw error;
-      navigate({ to: "/feed" });
+      setStep(4);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao salvar");
     } finally {
