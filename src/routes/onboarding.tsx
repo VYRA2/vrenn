@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Dumbbell, Leaf, BookOpen, Brain, Target, Calendar, ArrowRight, Loader2, Camera, User as UserIcon } from "lucide-react";
+import { ArrowRight, Loader2, Camera, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -11,24 +11,29 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const CATEGORIAS = [
-  { id: "treino", label: "Treino", icon: Dumbbell, color: "#A855F7" },
-  { id: "alimentacao", label: "Alimentação", icon: Leaf, color: "#22D3A1" },
-  { id: "estudos", label: "Estudos", icon: BookOpen, color: "#A855F7" },
-  { id: "mentalidade", label: "Mentalidade", icon: Brain, color: "#A855F7" },
-  { id: "produtividade", label: "Produtividade", icon: Target, color: "#A855F7" },
-  { id: "habitos", label: "Hábitos", icon: Calendar, color: "#A855F7" },
+  { id: "fitness", label: "Corpo e Movimento", emoji: "🏃" },
+  { id: "estudos", label: "Estudo e Aprendizado", emoji: "📚" },
+  { id: "financas", label: "Dinheiro e Finanças", emoji: "💰" },
+  { id: "habitos", label: "Hábitos e Rotina", emoji: "🎯" },
+  { id: "saude", label: "Mente e Saúde", emoji: "🧠" },
+  { id: "foco", label: "Foco e Produtividade", emoji: "⚡" },
+  { id: "esportes", label: "Esportes", emoji: "🏆" },
+  { id: "outro", label: "Outro", emoji: "✨" },
 ];
 
 const NIVEIS = [
-  { id: "iniciante", emoji: "🌱", label: "Iniciante", desc: "Estou começando agora" },
-  { id: "evolucao", emoji: "⚡", label: "Em evolução", desc: "Já tenho hábitos, quero ir além" },
-  { id: "comprometido", emoji: "🔥", label: "Comprometido", desc: "Treino/estudo com disciplina há meses" },
+  { id: "iniciante", emoji: "🌱", label: "Tô começando agora", desc: "Primeira vez tentando de verdade" },
+  { id: "evolucao", emoji: "⚡", label: "Já tô na corrida", desc: "Tenho hábitos, quero ir além" },
+  { id: "comprometido", emoji: "🔥", label: "Sou disciplinado de verdade", desc: "Meses de consistência, não paro" },
 ];
+
+const PRAZOS = [30, 60, 90];
 
 function OnboardingPage() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [splashPhase, setSplashPhase] = useState(0);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [nivelPerfil, setNivelPerfil] = useState<string | null>(null);
   const [missao, setMissao] = useState("");
@@ -41,6 +46,19 @@ function OnboardingPage() {
   const [nome, setNome] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [metaTitulo, setMetaTitulo] = useState("");
+  const [metaPrazo, setMetaPrazo] = useState<number>(30);
+  const [prazoCustom, setPrazoCustom] = useState(false);
+  const [metaPublica, setMetaPublica] = useState(true);
+  const [criandoMeta, setCriandoMeta] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setSplashPhase(1), 100);
+    const t2 = setTimeout(() => setSplashPhase(2), 900);
+    const t3 = setTimeout(() => setStep((s) => (s === 0 ? 1 : s)), 2500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
 
   useEffect(() => {
     (async () => {
@@ -125,12 +143,57 @@ function OnboardingPage() {
         onboarding_done: true,
       } as any).eq("id", userId);
       if (error) throw error;
-      navigate({ to: "/feed" });
+      setStep(4);
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao salvar");
     } finally {
       setSaving(false);
     }
+  }
+
+  async function criarPrimeiraMeta() {
+    if (!userId) return;
+    if (!metaTitulo.trim()) return toast.error("Escreva sua meta");
+    setCriandoMeta(true);
+    try {
+      const prazoData = new Date();
+      prazoData.setDate(prazoData.getDate() + metaPrazo);
+      const { error } = await supabase.from("metas").insert({
+        user_id: userId,
+        titulo: metaTitulo.trim(),
+        categoria: categorias[0] ?? "outro",
+        status: "ativa",
+        prazo: prazoData.toISOString().slice(0, 10),
+
+
+      } as any);
+      if (error) throw error;
+      toast.success("Meta criada! Agora mostre que você vai cumprir. 💪");
+      navigate({ to: "/feed" });
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao criar meta");
+    } finally {
+      setCriandoMeta(false);
+    }
+  }
+
+  if (step === 0) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background px-8 text-center text-foreground">
+        <h1
+          className="text-4xl font-bold leading-tight transition-opacity duration-700"
+          style={{ opacity: splashPhase >= 1 ? 1 : 0 }}
+        >
+          Não diga que vai fazer.
+        </h1>
+        <p
+          className="mt-4 bg-gradient-primary bg-clip-text text-4xl font-bold text-transparent transition-opacity duration-700"
+          style={{ opacity: splashPhase >= 2 ? 1 : 0 }}
+        >
+          Mostre.
+        </p>
+      </main>
+    );
   }
 
   return (
@@ -142,17 +205,17 @@ function OnboardingPage() {
       <div className="mx-auto max-w-md px-5">
         {/* Stepper */}
         <div className="mb-8 flex items-center gap-2">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-gradient-primary" : "bg-border"}`} />
           ))}
         </div>
 
         {step === 1 && (
           <section>
-            <h1 className="text-2xl font-bold">Quais são seus objetivos?</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Escolha até 3 categorias que você quer acompanhar no VRENN.</p>
+            <h1 className="text-2xl font-bold">Tem algo que você disse que ia fazer e ainda não fez?</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Escolha onde você quer mostrar que consegue.</p>
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {CATEGORIAS.map(({ id, label, icon: Icon, color }) => {
+              {CATEGORIAS.map(({ id, label, emoji }) => {
                 const sel = categorias.includes(id);
                 const disabled = !sel && categorias.length >= 3;
                 return (
@@ -162,7 +225,7 @@ function OnboardingPage() {
                     disabled={disabled}
                     className={`flex flex-col items-center gap-2 rounded-2xl border p-5 transition-all ${sel ? "border-primary bg-primary/10 text-primary-light shadow-glow" : "border-border bg-card"} ${disabled ? "opacity-50" : ""}`}
                   >
-                    <Icon size={28} style={{ color: sel ? undefined : color }} />
+                    <span className="text-3xl">{emoji}</span>
                     <span className="text-sm font-bold">{label}</span>
                   </button>
                 );
@@ -180,8 +243,9 @@ function OnboardingPage() {
 
         {step === 2 && (
           <section>
-            <h1 className="text-2xl font-bold">Como você se descreve?</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Isso ajuda a calibrar seus desafios.</p>
+            <h1 className="text-2xl font-bold">Onde você está agora?</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Sem julgamento. Só pra calibrar seus desafios.</p>
+
             <div className="mt-6 space-y-3">
               {NIVEIS.map((n) => {
                 const sel = nivelPerfil === n.id;
@@ -212,8 +276,8 @@ function OnboardingPage() {
 
         {step === 3 && (
           <section>
-            <h1 className="text-2xl font-bold">Personalize seu perfil</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Últimos ajustes antes de começar.</p>
+            <h1 className="text-2xl font-bold">Agora o mundo vai te conhecer.</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Seu histórico no VRENN é permanente. Suas vitórias também.</p>
 
             <div className="mt-6 flex flex-col items-center gap-3">
               <div className="relative">
@@ -325,6 +389,83 @@ function OnboardingPage() {
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <>Entrar no VRENN <ArrowRight size={16} /></>}
+            </button>
+          </section>
+        )}
+
+        {step === 4 && (
+          <section>
+            <h1 className="text-2xl font-bold">Agora vem o mais importante.</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Crie sua primeira meta. Leva menos de 30 segundos.</p>
+
+            <div className="mt-6 space-y-4">
+              <input
+                value={metaTitulo}
+                maxLength={100}
+                onChange={(e) => setMetaTitulo(e.target.value)}
+                placeholder="O que você vai mostrar que consegue fazer?"
+                className="w-full rounded-2xl border border-border bg-card p-3.5 text-sm outline-none focus:border-primary"
+              />
+
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Prazo</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {PRAZOS.map((d) => {
+                    const sel = !prazoCustom && metaPrazo === d;
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => { setPrazoCustom(false); setMetaPrazo(d); }}
+                        className={`rounded-full border px-4 py-2 text-xs font-bold transition-colors ${sel ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}
+                      >
+                        {d} dias
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setPrazoCustom(true)}
+                    className={`rounded-full border px-4 py-2 text-xs font-bold transition-colors ${prazoCustom ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}
+                  >
+                    Personalizado
+                  </button>
+                </div>
+                {prazoCustom && (
+                  <input
+                    type="number"
+                    min={1}
+                    value={metaPrazo}
+                    onChange={(e) => setMetaPrazo(Math.max(1, Number(e.target.value) || 1))}
+                    className="mt-3 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
+                    placeholder="Dias"
+                  />
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                {[{ v: true, l: "Pública" }, { v: false, l: "Privada" }].map((o) => (
+                  <button
+                    key={o.l}
+                    onClick={() => setMetaPublica(o.v)}
+                    className={`flex-1 rounded-2xl border py-3 text-xs font-bold transition-colors ${metaPublica === o.v ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={criarPrimeiraMeta}
+              disabled={criandoMeta || !metaTitulo.trim()}
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
+            >
+              {criandoMeta ? <Loader2 size={16} className="animate-spin" /> : <>Criar e começar <ArrowRight size={16} /></>}
+            </button>
+            <button
+              onClick={() => navigate({ to: "/feed" })}
+              className="mt-4 w-full text-center text-xs text-muted-foreground"
+            >
+              Pular por agora →
             </button>
           </section>
         )}
