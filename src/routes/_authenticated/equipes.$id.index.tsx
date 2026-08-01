@@ -1207,6 +1207,12 @@ function DesafioQrCode({ localId }: { localId: string }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: qrToken } = useQuery({
+    queryKey: ["desafio-local-token", localId],
+    queryFn: () => fetchQrToken(localId),
+    staleTime: 5 * 60 * 1000,
+  });
+
   if (!local || !qrToken) return null;
 
   return (

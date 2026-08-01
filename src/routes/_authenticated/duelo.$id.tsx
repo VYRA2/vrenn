@@ -68,6 +68,13 @@ function DueloDetalhe() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: qrToken } = useQuery({
+    queryKey: ["duelo-qr-token", duelo?.local_id],
+    queryFn: () => fetchQrToken(duelo!.local_id!),
+    enabled: !!duelo?.local_id && duelo?.tipo_validacao === "qrcode",
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Check-in de hoje neste duelo
   const hoje = new Date().toISOString().split("T")[0];
   const { data: checkinHoje } = useQuery({
