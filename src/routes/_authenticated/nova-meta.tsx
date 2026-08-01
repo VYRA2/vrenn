@@ -52,7 +52,7 @@ function NovaMeta() {
     queryFn: async () => {
       const { data } = await supabase
         .from("locais_validacao")
-        .select("id, nome, qrcode_token")
+        .select("id, nome")
         .eq("id", localId!)
         .maybeSingle();
       return data;

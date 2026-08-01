@@ -58,7 +58,7 @@ function DueloDetalhe() {
     queryFn: async () => {
       const { data } = await supabase
         .from("locais_validacao")
-        .select("id, nome, latitude, longitude, raio_geofence_metros, qrcode_token")
+        .select("id, nome, latitude, longitude, raio_geofence_metros")
         .eq("id", duelo!.local_id)
         .maybeSingle();
       return data;

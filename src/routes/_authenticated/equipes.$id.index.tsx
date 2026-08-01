@@ -1200,7 +1200,7 @@ function DesafioQrCode({ localId }: { localId: string }) {
   const { data: local } = useQuery({
     queryKey: ["desafio-local", localId],
     queryFn: async () => {
-      const { data } = await supabase.from("locais_validacao").select("id, nome, qrcode_token").eq("id", localId).maybeSingle();
+      const { data } = await supabase.from("locais_validacao").select("id, nome").eq("id", localId).maybeSingle();
       return data;
     },
     staleTime: 5 * 60 * 1000,
@@ -1232,7 +1232,7 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     queryKey: ["desafio-local-scan", desafio.local_id],
     queryFn: async () => {
       if (!desafio.local_id) return null;
-      const { data } = await supabase.from("locais_validacao").select("id, nome, qrcode_token").eq("id", desafio.local_id).maybeSingle();
+      const { data } = await supabase.from("locais_validacao").select("id, nome").eq("id", desafio.local_id).maybeSingle();
       return data;
     },
     enabled: desafio.tipo_validacao === "qrcode" && !!desafio.local_id,
