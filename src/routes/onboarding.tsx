@@ -164,7 +164,7 @@ function OnboardingPage() {
         categoria: categorias[0] ?? "outro",
         status: "ativa",
         prazo: prazoData.toISOString().slice(0, 10),
-        prazo: prazoData.toISOString().slice(0, 10),
+
 
       } as any);
       if (error) throw error;
