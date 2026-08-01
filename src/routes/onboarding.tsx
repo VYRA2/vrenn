@@ -276,8 +276,8 @@ function OnboardingPage() {
 
         {step === 3 && (
           <section>
-            <h1 className="text-2xl font-bold">Personalize seu perfil</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Últimos ajustes antes de começar.</p>
+            <h1 className="text-2xl font-bold">Agora o mundo vai te conhecer.</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Seu histórico no VRENN é permanente. Suas vitórias também.</p>
 
             <div className="mt-6 flex flex-col items-center gap-3">
               <div className="relative">
