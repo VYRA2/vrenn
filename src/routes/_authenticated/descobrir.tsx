@@ -14,13 +14,13 @@ export const Route = createFileRoute("/_authenticated/descobrir")({
   component: DescobrirPage,
 });
 
-type Tab = "voce" | "comunidade" | "pessoas" | "habitos" | "metas" | "provas";
+type Tab = "voce" | "em-alta" | "pessoas" | "comunidade" | "habitos" | "metas" | "provas";
 
-const TABS: { id: Tab; label: string; icon: any }[] = [
-  { id: "voce", label: "Para você", icon: Users },
-  { id: "comunidade", label: "Comunidade", icon: Users },
-  { id: "metas", label: "Metas", icon: Target },
-  { id: "provas", label: "Provas", icon: Shield },
+const TABS: { id: Tab; label: string }[] = [
+  { id: "voce", label: "Para você" },
+  { id: "em-alta", label: "Em alta" },
+  { id: "pessoas", label: "Pessoas" },
+  { id: "comunidade", label: "Comunidade" },
 ];
 
 const EM_ALTA_FILTROS = ["Tudo", "Fitness", "Corrida", "Disciplina", "Alimentação"];
@@ -31,11 +31,13 @@ const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
 ];
 
 const CATEGORIAS = [
-  { label: "Treino", pubs: "12.4K", icon: Dumbbell, color: "#A855F7" },
-  { label: "Alimentação", pubs: "8.7K", icon: Leaf, color: "#22D3A1" },
-  { label: "Estudos", pubs: "9.3K", icon: BookOpen, color: "#A855F7" },
-  { label: "Mentalidade", pubs: "6.2K", icon: Brain, color: "#A855F7" },
-  { label: "Produtividade", pubs: "5.1K", icon: Target, color: "#A855F7" },
+  { id: "fitness", label: "Corpo", emoji: "🏃", color: "#A855F7" },
+  { id: "estudos", label: "Estudos", emoji: "📚", color: "#22D3A1" },
+  { id: "financas", label: "Finanças", emoji: "💰", color: "#A855F7" },
+  { id: "habitos", label: "Hábitos", emoji: "🎯", color: "#A855F7" },
+  { id: "saude", label: "Mente", emoji: "🧠", color: "#22D3A1" },
+  { id: "foco", label: "Foco", emoji: "⚡", color: "#A855F7" },
+  { id: "esportes", label: "Esportes", emoji: "🏆", color: "#A855F7" },
 ];
 
 function DescobrirPage() {
