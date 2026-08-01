@@ -1963,6 +1963,10 @@ export type Database = {
       sortear_arbitro_duelo: { Args: { _duelo_id: string }; Returns: undefined }
       sortear_arbitro_meta: { Args: { _meta_id: string }; Returns: undefined }
       teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
+      validar_qrcode_local: {
+        Args: { _local_id: string; _token: string }
+        Returns: boolean
+      }
       verificar_temporadas_encerradas: { Args: never; Returns: undefined }
     }
     Enums: {
