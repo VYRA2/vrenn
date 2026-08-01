@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight, Wallet,
-  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical, Play, Images,
+  Search, SlidersHorizontal, Users, CheckCircle2, Shield, Bell, ArrowRight, Wallet,
+  MoreVertical, Play, Images,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/descobrir")({
