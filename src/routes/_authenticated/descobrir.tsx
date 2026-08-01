@@ -6,21 +6,21 @@ import { toast } from "sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { VyraLogo } from "@/components/VyraLogo";
 import {
-  Search, SlidersHorizontal, Users, CheckCircle2, Target, Shield, Bell, ArrowRight, Wallet,
-  Dumbbell, Leaf, BookOpen, Brain, Heart, MessageCircle, Bookmark, MoreVertical, Play, Images,
+  Search, SlidersHorizontal, Users, CheckCircle2, Shield, Bell, ArrowRight, Wallet,
+  MoreVertical, Play, Images,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/descobrir")({
   component: DescobrirPage,
 });
 
-type Tab = "voce" | "comunidade" | "pessoas" | "habitos" | "metas" | "provas";
+type Tab = "voce" | "em-alta" | "pessoas" | "comunidade" | "habitos" | "metas" | "provas";
 
-const TABS: { id: Tab; label: string; icon: any }[] = [
-  { id: "voce", label: "Para você", icon: Users },
-  { id: "comunidade", label: "Comunidade", icon: Users },
-  { id: "metas", label: "Metas", icon: Target },
-  { id: "provas", label: "Provas", icon: Shield },
+const TABS: { id: Tab; label: string }[] = [
+  { id: "voce", label: "Para você" },
+  { id: "em-alta", label: "Em alta" },
+  { id: "pessoas", label: "Pessoas" },
+  { id: "comunidade", label: "Comunidade" },
 ];
 
 const EM_ALTA_FILTROS = ["Tudo", "Fitness", "Corrida", "Disciplina", "Alimentação"];
@@ -31,11 +31,13 @@ const FILTER_OPTIONS: { id: Tab; label: string; icon: any }[] = [
 ];
 
 const CATEGORIAS = [
-  { label: "Treino", pubs: "12.4K", icon: Dumbbell, color: "#A855F7" },
-  { label: "Alimentação", pubs: "8.7K", icon: Leaf, color: "#22D3A1" },
-  { label: "Estudos", pubs: "9.3K", icon: BookOpen, color: "#A855F7" },
-  { label: "Mentalidade", pubs: "6.2K", icon: Brain, color: "#A855F7" },
-  { label: "Produtividade", pubs: "5.1K", icon: Target, color: "#A855F7" },
+  { id: "fitness", label: "Corpo", emoji: "🏃", color: "#A855F7" },
+  { id: "estudos", label: "Estudos", emoji: "📚", color: "#22D3A1" },
+  { id: "financas", label: "Finanças", emoji: "💰", color: "#A855F7" },
+  { id: "habitos", label: "Hábitos", emoji: "🎯", color: "#A855F7" },
+  { id: "saude", label: "Mente", emoji: "🧠", color: "#22D3A1" },
+  { id: "foco", label: "Foco", emoji: "⚡", color: "#A855F7" },
+  { id: "esportes", label: "Esportes", emoji: "🏆", color: "#A855F7" },
 ];
 
 function DescobrirPage() {
@@ -209,28 +211,25 @@ function DescobrirPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
-        <div className="justify-self-start">
-          <Link to="/mensagens" aria-label="Mensagens" className="rounded-full p-2 text-foreground/90 inline-flex">
-            <MessageCircle size={22} />
-          </Link>
-        </div>
-        <div className="justify-self-center"><VyraLogo size={32} showWordmark={false} /></div>
-        <div className="justify-self-end flex items-center gap-1">
-          <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
-            <Bell size={22} />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
-          </Link>
-          <Link to="/wallet" aria-label="Carteira" className="rounded-full p-2 text-primary-light">
-            <Wallet size={22} />
-          </Link>
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-lg">
+        <div className="mx-auto grid max-w-md grid-cols-3 items-center px-5 pt-4 pb-2">
+          <div className="justify-self-start"><VyraLogo size={28} showWordmark={false} /></div>
+          <div className="justify-self-center text-base font-bold tracking-widest text-foreground">VRENN</div>
+          <div className="justify-self-end flex items-center gap-1">
+            <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
+              <Bell size={22} />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
+            </Link>
+            <Link to="/wallet" aria-label="Carteira" className="rounded-full p-2 text-primary-light">
+              <Wallet size={22} />
+            </Link>
+          </div>
         </div>
       </header>
 
-
       <div className="mx-auto max-w-md px-5">
-        <h1 className="mt-2 text-3xl font-bold">Descobrir</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Encontre pessoas, hábitos e conteúdos que vão te inspirar.</p>
+        <h1 className="sr-only">Descobrir</h1>
+
 
         <div className="mt-4 flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3">
@@ -257,21 +256,23 @@ function DescobrirPage() {
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-5 px-5">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const a = tab === id;
-            return (
-              <button key={id} onClick={() => setTab(id)} className={`flex shrink-0 items-center gap-1.5 rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors ${a ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
-                <Icon size={14} /> {label}
-              </button>
-            );
-          })}
-          {(tab === "pessoas" || tab === "habitos") && (
-            <button onClick={() => setTab("voce")} className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light">
-              {tab === "pessoas" ? "Pessoas ✕" : "Hábitos ✕"}
+        <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Filtros do Descobrir">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === id ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"}`}
+            >
+              {label}
+            </button>
+          ))}
+          {tab === "habitos" && (
+            <button onClick={() => setTab("voce")} className="shrink-0 rounded-full border border-primary bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary-light">
+              Hábitos ✕
             </button>
           )}
-        </div>
+        </nav>
+
 
         {buscando ? (
           <section className="mt-5">
@@ -304,36 +305,61 @@ function DescobrirPage() {
               {(todosPerfis ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)}
             </div>
           </section>
+        ) : tab === "pessoas" ? (
+          <section className="mt-5">
+            <h3 className="mb-3 text-sm font-bold">Pessoas para seguir</h3>
+            <div className="space-y-2">
+              {(sugestoes ?? []).length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nenhuma sugestão no momento</div>
+              ) : (
+                (sugestoes ?? []).map((p: any) => <PessoaRow key={p.id} pessoa={p} userId={user.id} />)
+              )}
+            </div>
+          </section>
+        ) : tab === "em-alta" ? (
+          <section className="mt-5">
+            <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {EM_ALTA_FILTROS.map((f) => {
+                const a = emAltaFiltro === f;
+                return (
+                  <button key={f} onClick={() => setEmAltaFiltro(f)} className={`shrink-0 rounded-2xl border px-4 py-2 text-xs font-semibold transition-colors ${a ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
+            <EmAltaGrid posts={emAlta ?? []} />
+          </section>
         ) : (
         <>
+
         <Link to="/desafio-temporada" className="mt-5 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17] p-5 shadow-glow">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary-light">Desafio Final da Temporada</p>
-              <h2 className="mt-2 text-3xl font-black leading-none">DESAFIO DA</h2>
-              <h2 className="text-3xl font-black leading-none bg-gradient-to-r from-primary-light to-primary bg-clip-text text-transparent">MASTER</h2>
-              {temporadaAtiva?.titulo && (
-                <p className="mt-1 text-xs text-primary-light/70 font-semibold">Season {temporadaAtiva.numero} — {temporadaAtiva.titulo}</p>
-              )}
-              <p className="mt-2 text-xs text-muted-foreground">O maior desafio individual do ano. Mostre sua disciplina.</p>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-primary-light">Desafio Final da Temporada</p>
+            <h2 className="mt-2 text-2xl font-black leading-none">DESAFIO DA</h2>
+            <h2 className="text-2xl font-black leading-none bg-gradient-to-r from-primary-light to-primary bg-clip-text text-transparent">MASTER</h2>
+            {temporadaAtiva?.titulo && (
+              <p className="mt-1 text-xs text-primary-light/70 font-semibold">Season {temporadaAtiva.numero} — {temporadaAtiva.titulo}</p>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">O maior desafio individual do ano. Mostre sua disciplina.</p>
 
-              {/* Fundo acumulado em destaque */}
-              {temporadaAtiva?.fundo_acumulado > 0 && (
-                <div className="mt-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400/70">Fundo acumulado</div>
-                  <div className="text-xl font-black text-yellow-400">
-                    {Number(temporadaAtiva.fundo_acumulado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </div>
+            {/* Fundo acumulado em destaque */}
+            {temporadaAtiva?.fundo_acumulado > 0 && (
+              <div className="mt-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400/70">Fundo acumulado</div>
+                <div className="text-xl font-black text-yellow-400">
+                  {Number(temporadaAtiva.fundo_acumulado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </div>
-              )}
-
-              <div className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-primary bg-primary/20 px-4 py-2 text-xs font-bold text-primary-light">
-                {temporadaAtiva ? "Participar agora" : "Ver regulamento"} <ArrowRight size={14} />
               </div>
+            )}
+
+            <div className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-primary bg-primary/20 px-4 py-2 text-xs font-bold text-primary-light">
+              {temporadaAtiva ? "Participar agora" : "Ver regulamento"} <ArrowRight size={14} />
             </div>
-            <div className="flex flex-col items-end gap-2">
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-primary/20 pt-3">
               <span className="rounded-full border border-primary bg-primary/15 px-2.5 py-1 text-[10px] font-bold text-primary-light">Termina em</span>
-              <div className="flex gap-2 text-center">
+              <div className="flex gap-4 text-center">
                 <TimeBox v={countdown.d} l="DIAS" />
                 <TimeBox v={countdown.h} l="HORAS" />
                 <TimeBox v={countdown.m} l="MIN" />
@@ -345,43 +371,10 @@ function DescobrirPage() {
         {/* Em alta */}
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Em alta</h3>
-          <Link to="/busca" className="text-xs font-semibold text-primary-light">Ver tudo</Link>
+          <button onClick={() => setTab("em-alta")} className="text-xs font-semibold text-primary-light">Ver todos</button>
         </div>
-        <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {EM_ALTA_FILTROS.map((f) => {
-            const a = emAltaFiltro === f;
-            return (
-              <button key={f} onClick={() => setEmAltaFiltro(f)} className={`shrink-0 rounded-2xl border px-4 py-2 text-xs font-semibold transition-colors ${a ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
-                {f}
-              </button>
-            );
-          })}
-        </div>
-        <div className="grid grid-cols-3 gap-1">
-          {(emAlta ?? []).length === 0 && (
-            <div className="col-span-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nada em alta agora.</div>
-          )}
-          {(emAlta ?? []).map((p: any) => (
-            <Link key={p.id} to="/post/$id" params={{ id: p.id }} className="relative block aspect-[4/5] overflow-hidden rounded-lg bg-card">
-              {p.tipo === "video" ? (
-                <video src={p.media_url} className="h-full w-full object-cover" playsInline muted loop />
-              ) : (
-                <img src={p.media_url} className="h-full w-full object-cover" alt="" />
-              )}
-              <span className="absolute right-1.5 top-1.5 text-white/90">
-                {p.tipo === "video" ? <Play size={14} className="fill-white/90" /> : <Images size={14} />}
-              </span>
-              <span className="absolute inset-x-1 bottom-1 flex items-center gap-1.5 rounded-full bg-black/60 px-1.5 py-1 backdrop-blur">
-                {p.profiles?.avatar_url ? (
-                  <img src={p.profiles.avatar_url} className="h-4 w-4 rounded-full object-cover" alt="" />
-                ) : (
-                  <span className="h-4 w-4 rounded-full bg-primary" />
-                )}
-                <span className="truncate text-[9px] font-semibold text-white">{p.profiles?.username ?? "—"}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
+        <EmAltaGrid posts={(emAlta ?? []).slice(0, 9)} />
+
 
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Destaques da comunidade</h3>
@@ -450,15 +443,14 @@ function DescobrirPage() {
 
         <h3 className="mt-6 mb-3 text-base font-bold">Explorar por categorias</h3>
         <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2">
-          {CATEGORIAS.map(({ label, pubs, icon: Icon, color }) => (
+          {CATEGORIAS.map(({ id, label, emoji, color }) => (
             <button
-              key={label}
-              onClick={() => navigate({ to: "/busca", search: { q: label.toLowerCase() } as any })}
+              key={id}
+              onClick={() => navigate({ to: "/busca", search: { q: id } as any })}
               className="w-28 shrink-0 rounded-2xl border border-border bg-card p-3 text-center hover:border-primary/50 transition-colors"
             >
-              <Icon size={26} className="mx-auto mb-1.5" style={{ color }} />
+              <div className="mb-1.5 text-3xl leading-none" style={{ color }}>{emoji}</div>
               <div className="text-xs font-bold">{label}</div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">{pubs} publicações</div>
             </button>
           ))}
         </div>
@@ -482,6 +474,36 @@ function DescobrirPage() {
 
       <BottomNav />
     </main>
+  );
+}
+
+function EmAltaGrid({ posts }: { posts: any[] }) {
+  return (
+    <div className="grid grid-cols-3 gap-1">
+      {posts.length === 0 && (
+        <div className="col-span-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nada em alta agora.</div>
+      )}
+      {posts.map((p: any) => (
+        <Link key={p.id} to="/post/$id" params={{ id: p.id }} className="relative block aspect-[4/5] overflow-hidden rounded-lg bg-card">
+          {p.tipo === "video" ? (
+            <video src={p.media_url} className="h-full w-full object-cover" playsInline muted loop />
+          ) : (
+            <img src={p.media_url} className="h-full w-full object-cover" alt="" />
+          )}
+          <span className="absolute right-1.5 top-1.5 text-white/90">
+            {p.tipo === "video" ? <Play size={14} className="fill-white/90" /> : <Images size={14} />}
+          </span>
+          <span className="absolute inset-x-1 bottom-1 flex items-center gap-1.5 rounded-full bg-black/60 px-1.5 py-1 backdrop-blur">
+            {p.profiles?.avatar_url ? (
+              <img src={p.profiles.avatar_url} className="h-4 w-4 rounded-full object-cover" alt="" />
+            ) : (
+              <span className="h-4 w-4 rounded-full bg-primary" />
+            )}
+            <span className="truncate text-[9px] font-semibold text-white">{p.profiles?.username ?? "—"}</span>
+          </span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
