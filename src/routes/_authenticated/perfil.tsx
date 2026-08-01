@@ -406,10 +406,11 @@ function Perfil() {
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Duelos participando</h2>
-                <Link to="/duelos" className="text-xs font-semibold text-primary-light">Ver todas</Link>
+                <Link to="/duelos" search={{ criar: false }} className="text-xs font-semibold text-primary-light">Ver todas</Link>
               </div>
               {(duelos ?? []).length === 0 ? (
-                <Link to="/duelos" className="block rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                <Link to="/duelos" search={{ criar: false }} className="block rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+
                   Nenhum duelo ativo. <span className="font-semibold text-primary-light">Desafiar alguém</span>
                 </Link>
               ) : (
