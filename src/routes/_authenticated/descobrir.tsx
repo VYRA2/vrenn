@@ -334,33 +334,32 @@ function DescobrirPage() {
         <>
 
         <Link to="/desafio-temporada" className="mt-5 block overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17] p-5 shadow-glow">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary-light">Desafio Final da Temporada</p>
-              <h2 className="mt-2 text-3xl font-black leading-none">DESAFIO DA</h2>
-              <h2 className="text-3xl font-black leading-none bg-gradient-to-r from-primary-light to-primary bg-clip-text text-transparent">MASTER</h2>
-              {temporadaAtiva?.titulo && (
-                <p className="mt-1 text-xs text-primary-light/70 font-semibold">Season {temporadaAtiva.numero} — {temporadaAtiva.titulo}</p>
-              )}
-              <p className="mt-2 text-xs text-muted-foreground">O maior desafio individual do ano. Mostre sua disciplina.</p>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-primary-light">Desafio Final da Temporada</p>
+            <h2 className="mt-2 text-2xl font-black leading-none">DESAFIO DA</h2>
+            <h2 className="text-2xl font-black leading-none bg-gradient-to-r from-primary-light to-primary bg-clip-text text-transparent">MASTER</h2>
+            {temporadaAtiva?.titulo && (
+              <p className="mt-1 text-xs text-primary-light/70 font-semibold">Season {temporadaAtiva.numero} — {temporadaAtiva.titulo}</p>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">O maior desafio individual do ano. Mostre sua disciplina.</p>
 
-              {/* Fundo acumulado em destaque */}
-              {temporadaAtiva?.fundo_acumulado > 0 && (
-                <div className="mt-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400/70">Fundo acumulado</div>
-                  <div className="text-xl font-black text-yellow-400">
-                    {Number(temporadaAtiva.fundo_acumulado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </div>
+            {/* Fundo acumulado em destaque */}
+            {temporadaAtiva?.fundo_acumulado > 0 && (
+              <div className="mt-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-2.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400/70">Fundo acumulado</div>
+                <div className="text-xl font-black text-yellow-400">
+                  {Number(temporadaAtiva.fundo_acumulado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </div>
-              )}
-
-              <div className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-primary bg-primary/20 px-4 py-2 text-xs font-bold text-primary-light">
-                {temporadaAtiva ? "Participar agora" : "Ver regulamento"} <ArrowRight size={14} />
               </div>
+            )}
+
+            <div className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-primary bg-primary/20 px-4 py-2 text-xs font-bold text-primary-light">
+              {temporadaAtiva ? "Participar agora" : "Ver regulamento"} <ArrowRight size={14} />
             </div>
-            <div className="flex flex-col items-end gap-2">
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-primary/20 pt-3">
               <span className="rounded-full border border-primary bg-primary/15 px-2.5 py-1 text-[10px] font-bold text-primary-light">Termina em</span>
-              <div className="flex gap-2 text-center">
+              <div className="flex gap-4 text-center">
                 <TimeBox v={countdown.d} l="DIAS" />
                 <TimeBox v={countdown.h} l="HORAS" />
                 <TimeBox v={countdown.m} l="MIN" />
@@ -372,43 +371,10 @@ function DescobrirPage() {
         {/* Em alta */}
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Em alta</h3>
-          <Link to="/busca" className="text-xs font-semibold text-primary-light">Ver tudo</Link>
+          <button onClick={() => setTab("em-alta")} className="text-xs font-semibold text-primary-light">Ver todos</button>
         </div>
-        <div className="flex gap-2 overflow-x-auto -mx-5 px-5 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {EM_ALTA_FILTROS.map((f) => {
-            const a = emAltaFiltro === f;
-            return (
-              <button key={f} onClick={() => setEmAltaFiltro(f)} className={`shrink-0 rounded-2xl border px-4 py-2 text-xs font-semibold transition-colors ${a ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}>
-                {f}
-              </button>
-            );
-          })}
-        </div>
-        <div className="grid grid-cols-3 gap-1">
-          {(emAlta ?? []).length === 0 && (
-            <div className="col-span-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Nada em alta agora.</div>
-          )}
-          {(emAlta ?? []).map((p: any) => (
-            <Link key={p.id} to="/post/$id" params={{ id: p.id }} className="relative block aspect-[4/5] overflow-hidden rounded-lg bg-card">
-              {p.tipo === "video" ? (
-                <video src={p.media_url} className="h-full w-full object-cover" playsInline muted loop />
-              ) : (
-                <img src={p.media_url} className="h-full w-full object-cover" alt="" />
-              )}
-              <span className="absolute right-1.5 top-1.5 text-white/90">
-                {p.tipo === "video" ? <Play size={14} className="fill-white/90" /> : <Images size={14} />}
-              </span>
-              <span className="absolute inset-x-1 bottom-1 flex items-center gap-1.5 rounded-full bg-black/60 px-1.5 py-1 backdrop-blur">
-                {p.profiles?.avatar_url ? (
-                  <img src={p.profiles.avatar_url} className="h-4 w-4 rounded-full object-cover" alt="" />
-                ) : (
-                  <span className="h-4 w-4 rounded-full bg-primary" />
-                )}
-                <span className="truncate text-[9px] font-semibold text-white">{p.profiles?.username ?? "—"}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
+        <EmAltaGrid posts={(emAlta ?? []).slice(0, 9)} />
+
 
         <div className="mt-6 mb-3 flex items-center justify-between">
           <h3 className="text-base font-bold">Destaques da comunidade</h3>
