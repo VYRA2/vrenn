@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
-import { Dumbbell, Leaf, BookOpen, Brain, Target, Calendar, ArrowRight, Loader2, Camera, User as UserIcon } from "lucide-react";
+import { ArrowRight, Loader2, Camera, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -11,24 +11,29 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const CATEGORIAS = [
-  { id: "treino", label: "Treino", icon: Dumbbell, color: "#A855F7" },
-  { id: "alimentacao", label: "Alimentação", icon: Leaf, color: "#22D3A1" },
-  { id: "estudos", label: "Estudos", icon: BookOpen, color: "#A855F7" },
-  { id: "mentalidade", label: "Mentalidade", icon: Brain, color: "#A855F7" },
-  { id: "produtividade", label: "Produtividade", icon: Target, color: "#A855F7" },
-  { id: "habitos", label: "Hábitos", icon: Calendar, color: "#A855F7" },
+  { id: "fitness", label: "Corpo e Movimento", emoji: "🏃" },
+  { id: "estudos", label: "Estudo e Aprendizado", emoji: "📚" },
+  { id: "financas", label: "Dinheiro e Finanças", emoji: "💰" },
+  { id: "habitos", label: "Hábitos e Rotina", emoji: "🎯" },
+  { id: "saude", label: "Mente e Saúde", emoji: "🧠" },
+  { id: "foco", label: "Foco e Produtividade", emoji: "⚡" },
+  { id: "esportes", label: "Esportes", emoji: "🏆" },
+  { id: "outro", label: "Outro", emoji: "✨" },
 ];
 
 const NIVEIS = [
-  { id: "iniciante", emoji: "🌱", label: "Iniciante", desc: "Estou começando agora" },
-  { id: "evolucao", emoji: "⚡", label: "Em evolução", desc: "Já tenho hábitos, quero ir além" },
-  { id: "comprometido", emoji: "🔥", label: "Comprometido", desc: "Treino/estudo com disciplina há meses" },
+  { id: "iniciante", emoji: "🌱", label: "Tô começando agora", desc: "Primeira vez tentando de verdade" },
+  { id: "evolucao", emoji: "⚡", label: "Já tô na corrida", desc: "Tenho hábitos, quero ir além" },
+  { id: "comprometido", emoji: "🔥", label: "Sou disciplinado de verdade", desc: "Meses de consistência, não paro" },
 ];
+
+const PRAZOS = [30, 60, 90];
 
 function OnboardingPage() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [splashPhase, setSplashPhase] = useState(0);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [nivelPerfil, setNivelPerfil] = useState<string | null>(null);
   const [missao, setMissao] = useState("");
@@ -41,6 +46,19 @@ function OnboardingPage() {
   const [nome, setNome] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [metaTitulo, setMetaTitulo] = useState("");
+  const [metaPrazo, setMetaPrazo] = useState<number>(30);
+  const [prazoCustom, setPrazoCustom] = useState(false);
+  const [metaPublica, setMetaPublica] = useState(true);
+  const [criandoMeta, setCriandoMeta] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setSplashPhase(1), 100);
+    const t2 = setTimeout(() => setSplashPhase(2), 900);
+    const t3 = setTimeout(() => setStep((s) => (s === 0 ? 1 : s)), 2500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
 
   useEffect(() => {
     (async () => {
