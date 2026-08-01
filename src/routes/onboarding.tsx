@@ -392,6 +392,83 @@ function OnboardingPage() {
             </button>
           </section>
         )}
+
+        {step === 4 && (
+          <section>
+            <h1 className="text-2xl font-bold">Agora vem o mais importante.</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Crie sua primeira meta. Leva menos de 30 segundos.</p>
+
+            <div className="mt-6 space-y-4">
+              <input
+                value={metaTitulo}
+                maxLength={100}
+                onChange={(e) => setMetaTitulo(e.target.value)}
+                placeholder="O que você vai mostrar que consegue fazer?"
+                className="w-full rounded-2xl border border-border bg-card p-3.5 text-sm outline-none focus:border-primary"
+              />
+
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Prazo</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {PRAZOS.map((d) => {
+                    const sel = !prazoCustom && metaPrazo === d;
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => { setPrazoCustom(false); setMetaPrazo(d); }}
+                        className={`rounded-full border px-4 py-2 text-xs font-bold transition-colors ${sel ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}
+                      >
+                        {d} dias
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setPrazoCustom(true)}
+                    className={`rounded-full border px-4 py-2 text-xs font-bold transition-colors ${prazoCustom ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}
+                  >
+                    Personalizado
+                  </button>
+                </div>
+                {prazoCustom && (
+                  <input
+                    type="number"
+                    min={1}
+                    value={metaPrazo}
+                    onChange={(e) => setMetaPrazo(Math.max(1, Number(e.target.value) || 1))}
+                    className="mt-3 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
+                    placeholder="Dias"
+                  />
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                {[{ v: true, l: "Pública" }, { v: false, l: "Privada" }].map((o) => (
+                  <button
+                    key={o.l}
+                    onClick={() => setMetaPublica(o.v)}
+                    className={`flex-1 rounded-2xl border py-3 text-xs font-bold transition-colors ${metaPublica === o.v ? "border-primary bg-primary/15 text-primary-light" : "border-border bg-card text-muted-foreground"}`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={criarPrimeiraMeta}
+              disabled={criandoMeta || !metaTitulo.trim()}
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-50"
+            >
+              {criandoMeta ? <Loader2 size={16} className="animate-spin" /> : <>Criar e começar <ArrowRight size={16} /></>}
+            </button>
+            <button
+              onClick={() => navigate({ to: "/feed" })}
+              className="mt-4 w-full text-center text-xs text-muted-foreground"
+            >
+              Pular por agora →
+            </button>
+          </section>
+        )}
       </div>
     </main>
   );
