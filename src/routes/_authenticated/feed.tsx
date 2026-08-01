@@ -248,8 +248,8 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
     : "border-border bg-card";
 
   return (
-    <article className={`rounded-2xl ${isConquista ? "" : "border"} ${cardBorder}`}>
-      <div className={`rounded-2xl bg-card p-4 ${isConquista ? "" : ""}`}>
+    <article className={`rounded-2xl p-4 ${isConquista ? "" : "border"} ${cardBorder}`}>
+
       {isConquista && (
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
           {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
