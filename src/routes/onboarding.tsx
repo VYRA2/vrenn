@@ -151,6 +151,51 @@ function OnboardingPage() {
     }
   }
 
+  async function criarPrimeiraMeta() {
+    if (!userId) return;
+    if (!metaTitulo.trim()) return toast.error("Escreva sua meta");
+    setCriandoMeta(true);
+    try {
+      const prazoData = new Date();
+      prazoData.setDate(prazoData.getDate() + metaPrazo);
+      const { error } = await supabase.from("metas").insert({
+        user_id: userId,
+        titulo: metaTitulo.trim(),
+        categoria: categorias[0] ?? "outro",
+        status: "ativa",
+        prazo: prazoData.toISOString().slice(0, 10),
+        prazo_dias: metaPrazo,
+        publica: metaPublica,
+      } as any);
+      if (error) throw error;
+      toast.success("Meta criada! Agora mostre que você vai cumprir. 💪");
+      navigate({ to: "/feed" });
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao criar meta");
+    } finally {
+      setCriandoMeta(false);
+    }
+  }
+
+  if (step === 0) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background px-8 text-center text-foreground">
+        <h1
+          className="text-4xl font-bold leading-tight transition-opacity duration-700"
+          style={{ opacity: splashPhase >= 1 ? 1 : 0 }}
+        >
+          Não diga que vai fazer.
+        </h1>
+        <p
+          className="mt-4 bg-gradient-primary bg-clip-text text-4xl font-bold text-transparent transition-opacity duration-700"
+          style={{ opacity: splashPhase >= 2 ? 1 : 0 }}
+        >
+          Mostre.
+        </p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-16">
       <header className="mx-auto flex max-w-md items-center justify-center px-5 pt-6 pb-4">
@@ -160,17 +205,17 @@ function OnboardingPage() {
       <div className="mx-auto max-w-md px-5">
         {/* Stepper */}
         <div className="mb-8 flex items-center gap-2">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-gradient-primary" : "bg-border"}`} />
           ))}
         </div>
 
         {step === 1 && (
           <section>
-            <h1 className="text-2xl font-bold">Quais são seus objetivos?</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Escolha até 3 categorias que você quer acompanhar no VRENN.</p>
+            <h1 className="text-2xl font-bold">Tem algo que você disse que ia fazer e ainda não fez?</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Escolha onde você quer mostrar que consegue.</p>
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {CATEGORIAS.map(({ id, label, icon: Icon, color }) => {
+              {CATEGORIAS.map(({ id, label, emoji }) => {
                 const sel = categorias.includes(id);
                 const disabled = !sel && categorias.length >= 3;
                 return (
@@ -180,7 +225,7 @@ function OnboardingPage() {
                     disabled={disabled}
                     className={`flex flex-col items-center gap-2 rounded-2xl border p-5 transition-all ${sel ? "border-primary bg-primary/10 text-primary-light shadow-glow" : "border-border bg-card"} ${disabled ? "opacity-50" : ""}`}
                   >
-                    <Icon size={28} style={{ color: sel ? undefined : color }} />
+                    <span className="text-3xl">{emoji}</span>
                     <span className="text-sm font-bold">{label}</span>
                   </button>
                 );
@@ -198,8 +243,9 @@ function OnboardingPage() {
 
         {step === 2 && (
           <section>
-            <h1 className="text-2xl font-bold">Como você se descreve?</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Isso ajuda a calibrar seus desafios.</p>
+            <h1 className="text-2xl font-bold">Onde você está agora?</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Sem julgamento. Só pra calibrar seus desafios.</p>
+
             <div className="mt-6 space-y-3">
               {NIVEIS.map((n) => {
                 const sel = nivelPerfil === n.id;
