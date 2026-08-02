@@ -387,6 +387,8 @@ function Perfil() {
         </section>
 
         {/* ABA ATIVO */}
+
+
         {tab === "ativo" && (
           <div className="mt-5 space-y-6">
             <section>
@@ -546,6 +548,100 @@ function Perfil() {
               </div>
             </section>
 
+            {/* Resumo de atividade */}
+            <section className="pb-2">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-bold">Resumo de atividade</h2>
+                <Link to="/ranking" className="text-xs font-semibold text-primary-light">Ver ranking</Link>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                <Link to="/perfil/publicacoes" className="block"><ActivityTile icon={<CheckCircle2 size={20} />} value={profileStats?.publicacoes ?? 0} label="Publicações" color="#A855F7" /></Link>
+                <ActivityTile icon={<MessageCircle size={20} />} value={profileStats?.comentarios ?? 0} label="Comentários" color="#22D3A1" />
+                <ActivityTile icon={<HeartIcon size={20} />} value={profileStats?.curtidasRecebidas ?? 0} label="Curtidas recebidas" color="#F59E0B" />
+                <Link to="/perfil/seguidores" className="block"><ActivityTile icon={<Users size={20} />} value={profileStats?.seguidores ?? 0} label="Seguidores" color="#38BDF8" /></Link>
+                <Link to="/perfil/seguindo" className="block"><ActivityTile icon={<TrendingUp size={20} />} value={profileStats?.seguindo ?? 0} label="Seguindo" color="#A855F7" /></Link>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* Sheet — todas as conquistas */}
+        {showConquistasSheet && (
+          <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setShowConquistasSheet(false)}>
+            <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-3xl bg-background p-6" onClick={e => e.stopPropagation()}>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-base font-bold">Todas as conquistas</h3>
+                <button onClick={() => setShowConquistasSheet(false)} className="rounded-full p-1.5 text-muted-foreground hover:bg-card">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="mb-4 text-xs text-muted-foreground">
+                {(conquistasDesbloqueadas ?? []).length} de {TODAS_CONQUISTAS.length} desbloqueadas
+              </p>
+              <div className="grid grid-cols-4 gap-3">
+                {TODAS_CONQUISTAS.map(c => {
+                  const desbloqueada = (conquistasDesbloqueadas ?? []).find(x => x.slug === c.slug);
+                  return (
+                    <div key={c.slug} className="flex flex-col items-center gap-1.5">
+                      <div
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl transition-all ${desbloqueada ? "shadow-glow" : "opacity-30 grayscale"}`}
+                        style={desbloqueada
+                          ? { background: `${c.color}22`, border: `1px solid ${c.color}55` }
+                          : { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }
+                        }
+                      >
+                        {c.emoji}
+                      </div>
+                      <div className="w-14 text-center">
+                        <div className={`text-[9px] font-semibold leading-tight ${desbloqueada ? "text-foreground" : "text-muted-foreground"}`}>
+                          {c.label}
+                        </div>
+                        <div className="mt-0.5 text-[8px] leading-tight text-muted-foreground">
+                          {desbloqueada
+                            ? new Date(desbloqueada.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "2-digit" })
+                            : c.sub
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal: termos do árbitro */}
+      {showTermoArbitro && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
+          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-border bg-card p-5 pb-8">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+            <div className="mb-4 flex items-center gap-2">
+              <Shield size={20} className="text-primary-light" />
+              <h3 className="text-lg font-bold">Termos do Árbitro VRENN</h3>
+            </div>
+            <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
+              <p>Ao se tornar árbitro no VRENN, você concorda com as seguintes responsabilidades:</p>
+              <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+                {[
+                  "Você pode ser sorteado aleatoriamente para validar check-ins de metas e declarar resultados de duelos.",
+                  "Ao receber um convite de arbitragem, você tem 24 horas para aceitar ou recusar.",
+                  "Se aceitar, tem prazo para validar cada check-in. A omissão gera penalidade de -2 pts de reputação de árbitro.",
+                  "Árbitros devem agir com imparcialidade. Validações injustificadas podem resultar em suspensão.",
+                  "Como recompensa: +3 pts por check-in validado e +20 pts por resultado de duelo declarado.",
+                  "Você pode desativar o opt-in a qualquer momento. Arbitragens já aceitas continuam até o encerramento.",
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="shrink-0 font-bold text-primary-light">{i + 1}.</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground/70">
+                Ao clicar em "Aceitar e ativar", você declara ter lido e concordado com estas condições.
+              </p>
+            </div>
             {/* Resumo de atividade */}
             <section className="pb-2">
               <div className="mb-3 flex items-center justify-between">
