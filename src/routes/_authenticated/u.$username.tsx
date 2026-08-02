@@ -311,7 +311,7 @@ function PerfilPublico() {
               <div className="mt-1.5">
                 <NivelBadge nivel={nivelDoUsuario(profile.username, nivelNum, profile.id)} size="sm" />
               </div>
-              {profile.missao && <p className="mt-1.5 text-sm text-foreground/80">{profile.missao}</p>}
+              {profile.bio && <p className="mt-1.5 text-sm text-foreground/80">{profile.bio}</p>}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(`https://vrenn.app/@${profile.username}`);
@@ -851,3 +851,4 @@ const CONQUISTAS_CATALOGO = [
   { slug: "lenda",              emoji: "👑", label: "Lenda",          color: "#7B2EFF" },
   { slug: "master_concluido",   emoji: "🏆", label: "Master Season",  color: "#FFD700" },
 ] as const;
+
