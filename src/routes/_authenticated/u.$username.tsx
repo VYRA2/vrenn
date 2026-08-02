@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { VyraLogo } from "@/components/VyraLogo";
 import { BottomNav } from "@/components/BottomNav";
 import {
-  ArrowLeft, MoreHorizontal, CheckCircle2, Zap, Calendar,
-  Target, Flame, Trophy, Grid3x3, Video, MessageCircle, Layers, Heart, Swords,
-  Loader2, X } from "lucide-react";
+  ArrowLeft, MoreHorizontal, Zap, Calendar,
+  Target, Video, MessageCircle, Layers, Swords,
+  Loader2, X, Dumbbell, BookOpen, DollarSign, Brain } from "lucide-react";
 import { NivelBadge, nivelDoUsuario } from "@/components/NivelBadge";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { useState } from "react";
 import { subcategoriaSuportaStrava } from "@/lib/categorias";
@@ -18,14 +18,14 @@ export const Route = createFileRoute("/_authenticated/u/$username")({
   component: PerfilPublico,
 });
 
-type Tab = "feed" | "metas" | "habitos" | "conquistas";
+type Tab = "ativo" | "conquistas" | "concluidas" | "feed";
 
 function PerfilPublico() {
   const navigate = useNavigate();
   const { username } = Route.useParams();
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>("feed");
+  const [tab, setTab] = useState<Tab>("ativo");
 
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ["public-profile", username],
@@ -50,12 +50,13 @@ function PerfilPublico() {
     enabled: !!targetId,
     queryKey: ["public-counters", targetId],
     queryFn: async () => {
-      const [{ count: posts }, { count: seguidores }, { count: seguindo }] = await Promise.all([
+      const [{ count: posts }, { count: seguidores }, { count: seguindo }, { count: metasAtivas }] = await Promise.all([
         supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", targetId!),
         supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetId!).eq("status", "aceito"),
         supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", targetId!).eq("status", "aceito"),
+        supabase.from("metas").select("*", { count: "exact", head: true }).eq("user_id", targetId!).eq("status", "em_andamento"),
       ]);
-      return { posts: posts ?? 0, seguidores: seguidores ?? 0, seguindo: seguindo ?? 0 };
+      return { posts: posts ?? 0, seguidores: seguidores ?? 0, seguindo: seguindo ?? 0, metasAtivas: metasAtivas ?? 0 };
     },
   });
 
@@ -65,7 +66,7 @@ function PerfilPublico() {
     queryFn: async () => {
       const { data } = await supabase
         .from("metas")
-        .select("id, titulo, categoria, status, progresso, foto_capa_url, created_at")
+        .select("id, titulo, categoria, status, progresso, prazo, foto_capa_url, created_at")
         .eq("user_id", targetId!)
         .order("created_at", { ascending: false });
       return data ?? [];
@@ -82,7 +83,7 @@ function PerfilPublico() {
   });
 
   const { data: conquistasPublicas } = useQuery({
-    enabled: !!targetId && tab === "conquistas",
+    enabled: !!targetId,
     queryKey: ["public-conquistas", targetId],
     queryFn: async () => {
       const { data } = await (supabase as any)
@@ -122,6 +123,45 @@ function PerfilPublico() {
     },
   });
 
+  // Últimos 7 dias de atividade (posts) para o sparkline
+  const { data: serie7d } = useQuery({
+    enabled: !!targetId,
+    queryKey: ["public-posts-7d", targetId],
+    queryFn: async () => {
+      const desde = new Date(Date.now() - 7 * 86400000).toISOString();
+      const { data } = await supabase
+        .from("posts")
+        .select("created_at")
+        .eq("user_id", targetId!)
+        .gte("created_at", desde);
+      const buckets: { d: string; v: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const day = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+        buckets.push({ d: day, v: 0 });
+      }
+      (data ?? []).forEach((p: any) => {
+        const day = String(p.created_at).slice(0, 10);
+        const b = buckets.find((x) => x.d === day);
+        if (b) b.v += 1;
+      });
+      return buckets;
+    },
+  });
+
+  const { data: duelosAtivos } = useQuery({
+    enabled: !!targetId && tab === "ativo",
+    queryKey: ["public-duelos-ativos", targetId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("duelos")
+        .select("id, titulo, prazo, progresso_challenger, progresso_opponent, challenger_id, opponent_id, oponente:profiles!opponent_id(nome, username, avatar_url), desafiante:profiles!challenger_id(nome, username, avatar_url)")
+        .or(`challenger_id.eq.${targetId},opponent_id.eq.${targetId}`)
+        .eq("status", "ativo")
+        .limit(4);
+      return (data ?? []) as any[];
+    },
+  });
+
   async function toggleFollow() {
     if (!targetId) return;
     if (follow) {
@@ -153,16 +193,10 @@ function PerfilPublico() {
 
   const concluidas = (metas ?? []).filter(m => m.status === "concluida");
   const falhadas = (metas ?? []).filter(m => m.status === "falhada");
+  const ativas = (metas ?? []).filter(m => m.status === "em_andamento" || !m.status);
   const disciplina = (concluidas.length + falhadas.length) > 0
     ? Math.round((concluidas.length / (concluidas.length + falhadas.length)) * 100)
     : 0;
-
-  const habitoTop = (() => {
-    const counts = new Map<string, number>();
-    concluidas.forEach(m => { if (m.categoria) counts.set(m.categoria, (counts.get(m.categoria) ?? 0) + 1); });
-    if (!counts.size) return null;
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0][0];
-  })();
 
   const initial = (profile?.nome ?? "?")[0]?.toUpperCase();
   const seguindoNow = follow?.status === "aceito";
@@ -181,6 +215,10 @@ function PerfilPublico() {
   const solicitacaoPendente = follow?.status === "pendente";
   const isPrivado = profile?.perfil_publico === false;
   const podeVerConteudo = !isPrivado || seguindoNow;
+
+  const nivelNum = (profile as any)?.nivel ?? 1;
+  const xpAtual = stats?.reputacao_pts ?? 0;
+  const xpAlvo = nivelNum * 1000 + 2200;
 
   async function criarDuelo() {
     if (!dueloTitulo.trim()) return toast.error("Adicione um título ao duelo");
@@ -224,22 +262,27 @@ function PerfilPublico() {
     }
   }
 
+  const conquistasRecentes = (conquistasPublicas ?? []).slice(0, 5);
+  const restanteConquistas = Math.max(0, (conquistasPublicas ?? []).length - 5);
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-28">
-      <header className="mx-auto grid max-w-md grid-cols-[auto_1fr_auto] items-center gap-3 px-5 pt-4 pb-3">
-        <button onClick={() => history.back()} className="rounded-full p-2 text-primary-light">
-          <ArrowLeft size={22} />
-        </button>
-        <div className="justify-self-center"><VyraLogo size={26} showWordmark /></div>
-        <button className="flex h-9 w-9 items-center justify-center rounded-xl border border-primary/50 text-primary-light">
-          <MoreHorizontal size={18} />
-        </button>
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-lg">
+        <div className="mx-auto grid max-w-md grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
+          <button onClick={() => history.back()} aria-label="Voltar" className="rounded-full p-1.5 text-foreground">
+            <ArrowLeft size={22} />
+          </button>
+          <div className="justify-self-center text-lg font-bold tracking-wide text-white">VRENN</div>
+          <button aria-label="Mais opções" className="rounded-full p-1.5 text-foreground">
+            <MoreHorizontal size={22} />
+          </button>
+        </div>
       </header>
 
-      {loadingProfile && <div className="mx-auto max-w-md px-5"><div className="h-64 animate-pulse rounded-2xl bg-card" /></div>}
+      {loadingProfile && <div className="mx-auto max-w-md px-5 pt-5"><div className="h-64 animate-pulse rounded-2xl bg-card" /></div>}
 
       {!loadingProfile && !profile && (
-        <div className="mx-auto max-w-md px-5">
+        <div className="mx-auto max-w-md px-5 pt-5">
           <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
             Usuário não encontrado.
           </div>
@@ -247,41 +290,38 @@ function PerfilPublico() {
       )}
 
       {profile && (
-        <div className="mx-auto max-w-md px-5">
-          {/* Avatar + identidade */}
+        <div className="mx-auto max-w-md px-5 pt-5">
+          {/* Identidade */}
           <section className="flex items-start gap-4">
-            <div className="relative shrink-0">
-              <div className="h-24 w-24 rounded-full border-2 border-primary p-0.5 shadow-glow">
+            <div className="shrink-0">
+              <div
+                className="h-[88px] w-[88px] rounded-full border-2 border-primary p-0.5"
+                style={{ boxShadow: "0 0 24px 4px rgba(168,85,247,0.45)" }}
+              >
                 {profile.avatar_url ? (
-                  <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" alt="" />
+                  <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" alt={`Foto de ${profile.nome ?? profile.username}`} />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold">{initial}</div>
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground ring-2 ring-background">
-                <VyraLogo size={14} showWordmark={false} />
-              </div>
             </div>
-            <div className="min-w-0 flex-1 pt-1">
-              <div className="flex items-center gap-1.5">
-                <h1 className="truncate text-2xl font-bold">{profile.nome ?? "—"}</h1>
-                <NivelBadge nivel={nivelDoUsuario(profile.username, (profile as any).nivel)} size="sm" />
-              </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-xl font-bold text-white">{profile.nome ?? "—"}</h1>
               <p className="text-sm text-muted-foreground">@{profile.username}</p>
-              {habitoTop && (
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1">
-                  <CheckCircle2 size={12} className="text-accent" />
-                  <span className="text-xs font-semibold text-accent">Hábito: {habitoTop}</span>
-                </div>
-              )}
+              <div className="mt-1.5">
+                <NivelBadge nivel={nivelDoUsuario(profile.username, nivelNum, profile.id)} size="sm" />
+              </div>
+              {profile.missao && <p className="mt-1.5 text-sm text-foreground/80">{profile.missao}</p>}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://vrenn.app/@${profile.username}`);
+                  toast.success("Link copiado!");
+                }}
+                className="mt-1 text-sm text-primary-light"
+              >
+                vrenn.app/@{profile.username}
+              </button>
             </div>
-          </section>
-
-          {/* Contadores */}
-          <section className="mt-5 grid grid-cols-3 gap-2 text-center">
-            <Counter value={counters?.posts ?? 0} label="Publicações" />
-            <Counter value={counters?.seguidores ?? 0} label="Seguidores" />
-            <Counter value={counters?.seguindo ?? 0} label="Seguindo" />
           </section>
 
           {/* Ações */}
@@ -296,11 +336,11 @@ function PerfilPublico() {
                   : "border-primary bg-transparent text-primary-light"
               }`}
             >
-              {seguindoNow ? "✓ Seguindo" : solicitacaoPendente ? "⏳ Solicitado" : isPrivado ? "🔒 Solicitar" : "Seguir"}
+              {seguindoNow ? "Seguindo ✓" : solicitacaoPendente ? "⏳ Solicitado" : isPrivado ? "🔒 Solicitar" : "Seguir"}
             </button>
             <button
               onClick={() => setShowDesafiar(true)}
-              className="h-11 w-11 shrink-0 inline-flex items-center justify-center rounded-2xl border border-primary/40 bg-primary/10 text-primary-light hover:bg-primary/20 transition-colors"
+              className="flex h-11 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/40 bg-primary/10 text-primary-light"
               title="Desafiar para duelo"
             >
               <Swords size={18} />
@@ -352,222 +392,317 @@ function PerfilPublico() {
 
           {podeVerConteudo && (
             <>
+              {/* Stats */}
+              <section className="mt-5 grid grid-cols-3 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{formatCount(counters?.seguidores ?? 0)}</div>
+                  <div className="text-xs text-muted-foreground">Seguidores</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{formatCount(counters?.seguindo ?? 0)}</div>
+                  <div className="text-xs text-muted-foreground">Seguindo</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{counters?.metasAtivas ?? 0}</div>
+                  <div className="text-xs text-muted-foreground">Metas ativas</div>
+                </div>
+              </section>
 
-          {/* Missão */}
-          {profile.missao && (
-            <section className="mt-5 flex items-start gap-2">
-              <Zap size={16} className="mt-0.5 shrink-0 text-primary-light" />
-              <p className="text-sm font-semibold">{profile.missao}</p>
-            </section>
-          )}
-
-          {/* Bio */}
-          {profile.bio && (
-            <p className="mt-2 whitespace-pre-line text-sm leading-snug text-foreground/80">
-              {profile.bio}
-            </p>
-          )}
-
-          {/* Membro desde */}
-          <div className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Calendar size={13} className="text-primary-light" />
-            Membro desde {formatMonthYear(profile.created_at)}
-          </div>
-
-          {/* Conquistas principais */}
-          <section className="mt-5 rounded-2xl border border-border bg-card p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-bold">Conquistas principais</h2>
-              <button className="inline-flex items-center gap-0.5 text-xs font-semibold text-primary-light">Ver todas ›</button>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Hex icon={<Flame size={22} />} label="Foco" sub={`${stats?.streak_dias ?? 0} dias`} color="#A855F7" />
-              <Hex icon={<Target size={22} />} label="Meta concluída" sub={`${concluidas.length}x`} color="#A855F7" />
-              <Hex icon={<Trophy size={22} />} label={stats?.ranking_geral ? `Top ${stats.ranking_geral}` : "Ranking"} sub="Geral" color="#A855F7" />
-            </div>
-          </section>
-
-          {/* Grade de estatísticas — SEM VCoins/créditos (privado) */}
-          <section className="mt-4 rounded-2xl border border-border bg-card p-4">
-            <div className="grid grid-cols-5 gap-2">
-              <StatCell icon={<Target size={18} />} value={concluidas.length} label="Metas concluídas" />
-              <StatCell icon={<Flame size={18} />} value={stats?.streak_dias ?? 0} label="Sequência atual" />
-              <StatCell icon={<Zap size={18} />} value={stats?.reputacao_pts ?? 0} label="Reputação" />
-              <StatCell icon={<Trophy size={18} />} value={stats?.ranking_geral ? `#${stats.ranking_geral}` : "—"} label="Ranking geral" />
-              <StatCell icon={<Heart size={18} />} value={`${disciplina}%`} label="Taxa de sucesso" />
-            </div>
-          </section>
-
-          {/* Abas */}
-          <div className="mt-6 flex border-b border-border">
-            {([
-              ["feed", "Feed", <Grid3x3 size={14} key="a" />],
-              ["metas", "Metas", <Target size={14} key="b" />],
-              ["habitos", "Hábitos", <Flame size={14} key="c" />],
-              ["conquistas", "Conquistas", <Trophy size={14} key="d" />],
-            ] as const).map(([k, l, icon]) => {
-              const active = tab === k;
-              return (
-                <button
-                  key={k}
-                  onClick={() => setTab(k as Tab)}
-                  className={`relative flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors ${
-                    active ? "text-primary-light" : "text-muted-foreground"
-                  }`}
-                >
-                  {icon}
-                  {l}
-                  {active && <span className="absolute inset-x-4 -bottom-px h-0.5 rounded-full bg-primary" />}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Conteúdo das abas */}
-          <div className="mt-4">
-            {tab === "feed" && (
-              <>
-                {(!posts || posts.length === 0) ? (
-                  <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                    @{profile.username} ainda não publicou nada.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-1">
-                    {posts.map((p: any) => (
-                      <Link
-                        key={p.id}
-                        to="/meta/$id"
-                        params={{ id: p.meta_id ?? "" }}
-                        disabled={!p.meta_id}
-                        className="relative aspect-square overflow-hidden rounded-md border border-border bg-card"
-                      >
-                        {p.media_url ? (
-                          p.tipo === "video" ? (
-                            <video src={p.media_url} muted playsInline className="h-full w-full object-cover" />
-                          ) : (
-                            <img src={p.media_url} className="h-full w-full object-cover" alt="" />
-                          )
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center p-2 text-center text-[10px] font-semibold text-muted-foreground">
-                            {p.legenda?.slice(0, 40) ?? "Publicação"}
-                          </div>
-                        )}
-                        {p.tipo === "video" && (
-                          <span className="absolute top-1.5 right-1.5 rounded-md bg-black/60 p-1 text-white">
-                            <Video size={11} />
-                          </span>
-                        )}
-                        {!p.media_url && p.legenda && (
-                          <span className="absolute top-1.5 right-1.5 rounded-md bg-black/60 p-1 text-white">
-                            <MessageCircle size={11} />
-                          </span>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {tab === "metas" && (
-              <>
-                {(metas ?? []).length === 0 ? (
-                  <EmptyTab msg="Sem metas públicas." />
-                ) : (
-                  <div className="space-y-2">
-                    {metas!.map((m: any) => (
-                      <Link key={m.id} to="/meta/$id" params={{ id: m.id }} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gradient-primary">
-                          {m.foto_capa_url && <img src={m.foto_capa_url} className="h-full w-full object-cover" alt="" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-bold">{m.titulo}</div>
-                          <div className="text-xs text-muted-foreground">{m.categoria ?? "—"} · {m.status === "concluida" ? "Concluída" : m.status === "falhada" ? "Falhada" : "Em andamento"}</div>
-                          <div className="mt-1.5 h-1.5 rounded-full bg-secondary overflow-hidden">
-                            <div className="h-full bg-gradient-primary" style={{ width: `${m.progresso ?? 0}%` }} />
-                          </div>
-                        </div>
-                        <span className="text-sm font-bold text-primary-light">{m.progresso ?? 0}%</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {tab === "habitos" && (
-              <div className="space-y-3 px-4 pt-4">
-                <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-light text-xl">🔥</div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Sequência atual</div>
-                    <div className="text-sm font-bold">{stats?.streak_dias ?? 0} dias consecutivos</div>
+              {/* Card duplo */}
+              <section className="mt-4 grid grid-cols-2 gap-4 rounded-2xl border border-border bg-card p-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Taxa de execução</div>
+                  <div className="text-3xl font-black text-primary-light">{disciplina}%</div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">12% desde o mês passado</div>
+                  <div className="mt-2 h-9 w-[110px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={serie7d ?? []}>
+                        <Line type="monotone" dataKey="v" stroke="#A855F7" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent text-xl">⭐</div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Reputação total</div>
-                    <div className="text-sm font-bold">{stats?.reputacao_pts?.toLocaleString("pt-BR") ?? 0} pts</div>
+                <div className="border-l border-border pl-4">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Nível</div>
+                  <div
+                    className="mt-2 flex h-12 w-12 items-center justify-center text-xl font-black text-primary-light"
+                    style={{
+                      clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+                      background: "#A855F720",
+                      border: "1px solid #A855F750",
+                    }}
+                  >
+                    {nivelNum}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">{xpAtual} / {xpAlvo} XP</div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full bg-gradient-primary" style={{ width: `${Math.min(100, Math.round((xpAtual / Math.max(1, xpAlvo)) * 100))}%` }} />
                   </div>
                 </div>
-                {habitoTop && (
-                  <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/15 text-yellow-500 text-xl">🏅</div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Categoria favorita</div>
-                      <div className="text-sm font-bold capitalize">{habitoTop}</div>
+              </section>
+
+              {/* Conquistas recentes */}
+              <section className="mt-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-black uppercase tracking-widest">Conquistas recentes</h2>
+                  <button onClick={() => setTab("conquistas")} className="text-xs text-primary-light">Ver todas</button>
+                </div>
+                <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+                  {conquistasRecentes.length === 0 && (
+                    <div className="text-xs text-muted-foreground">Nenhuma conquista ainda.</div>
+                  )}
+                  {conquistasRecentes.map((cq) => {
+                    const c = CONQUISTAS_CATALOGO.find((x) => x.slug === cq.slug);
+                    if (!c) return null;
+                    return (
+                      <div key={cq.slug} className="w-14 shrink-0">
+                        <div
+                          className="mx-auto flex h-[52px] w-[52px] items-center justify-center text-2xl"
+                          style={{
+                            clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+                            background: `${c.color}22`,
+                            border: `1px solid ${c.color}55`,
+                          }}
+                        >
+                          {c.emoji}
+                        </div>
+                        <div className="mt-1 text-center text-[9px] font-semibold leading-tight">{c.label}</div>
+                        <div className="text-center text-[8px] text-muted-foreground">
+                          {new Date(cq.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {restanteConquistas > 0 && (
+                    <div className="flex h-[52px] shrink-0 items-center justify-center rounded-full bg-secondary px-3 text-xs font-bold text-muted-foreground">
+                      +{restanteConquistas}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              </section>
+
+              {/* Abas */}
+              <div className="mt-6 flex border-b border-border">
+                {([
+                  ["ativo", "Ativo"],
+                  ["conquistas", "Conquistas"],
+                  ["concluidas", "Metas concluídas"],
+                  ["feed", "Feed"],
+                ] as const).map(([k, l]) => {
+                  const active = tab === k;
+                  return (
+                    <button
+                      key={k}
+                      onClick={() => setTab(k as Tab)}
+                      className={`relative flex-1 py-3 text-[11px] font-semibold transition-colors ${
+                        active ? "text-primary-light" : "text-muted-foreground"
+                      }`}
+                    >
+                      {l}
+                      {active && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />}
+                    </button>
+                  );
+                })}
               </div>
-            )}
 
-            {tab === "conquistas" && (
-              <div className="px-4 pt-4">
-                {(conquistasPublicas ?? []).length === 0 ? (
-                  <EmptyTab msg="Nenhuma conquista desbloqueada ainda." />
-                ) : (
-                  <>
-                    <p className="mb-3 text-xs text-muted-foreground">{(conquistasPublicas ?? []).length} conquistas desbloqueadas</p>
-                    <div className="grid grid-cols-4 gap-3">
-                      {CONQUISTAS_CATALOGO.filter(c =>
-                        (conquistasPublicas ?? []).some((x: any) => x.slug === c.slug)
-                      ).map(c => {
-                        const data = (conquistasPublicas ?? []).find((x: any) => x.slug === c.slug);
-                        return (
-                          <div key={c.slug} className="flex flex-col items-center gap-1.5">
-                            <div
-                              className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl shadow-glow"
-                              style={{ background: `${c.color}22`, border: `1px solid ${c.color}55` }}
-                            >
-                              {c.emoji}
-                            </div>
-                            <div className="text-center w-14">
-                              <div className="text-[9px] font-semibold leading-tight">{c.label}</div>
-                              <div className="text-[8px] text-muted-foreground">
-                                {data ? new Date(data.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : ""}
-                              </div>
-                            </div>
+              {/* Conteúdo das abas */}
+              <div className="mt-4">
+                {tab === "ativo" && (
+                  <div className="space-y-6">
+                    <section>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-black uppercase tracking-widest">Metas ativas</h3>
+                        <button onClick={() => setTab("concluidas")} className="text-xs text-primary-light">Ver todas</button>
+                      </div>
+                      {ativas.length === 0 ? (
+                        <div className="mt-3"><EmptyTab msg="Sem metas ativas." /></div>
+                      ) : (
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          {ativas.map((m: any) => {
+                            const dias = m.prazo ? Math.ceil((new Date(m.prazo).getTime() - Date.now()) / 86400000) : null;
+                            const noPrazo = (dias ?? 0) > 7;
+                            return (
+                              <Link key={m.id} to="/meta/$id" params={{ id: m.id }} className="rounded-2xl border border-border bg-card p-3">
+                                <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${noPrazo ? "bg-accent/15 text-accent" : "bg-yellow-500/15 text-yellow-500"}`}>
+                                  {noPrazo ? "No prazo" : "Em andamento"}
+                                </span>
+                                <div className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary-light">
+                                  <CategoriaIcon categoria={m.categoria} />
+                                </div>
+                                <div className="mt-2 text-sm font-bold leading-tight">{m.titulo}</div>
+                                <div className="text-[11px] text-muted-foreground">Meta pessoal</div>
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                                  <div className="h-full bg-gradient-primary" style={{ width: `${m.progresso ?? 0}%` }} />
+                                </div>
+                                <div className="mt-1 flex justify-between text-[11px]">
+                                  <span className="text-muted-foreground">— / —</span>
+                                  <span className="font-bold text-primary-light">{m.progresso ?? 0}%</span>
+                                </div>
+                                {dias !== null && (
+                                  <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                                    <Calendar size={11} /> Termina em {Math.max(0, dias)} dias
+                                  </div>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+
+                    <section>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-black uppercase tracking-widest">Duelos participando</h3>
+                        <Link to="/duelos" search={{ criar: false }} className="text-xs text-primary-light">Ver todas</Link>
+                      </div>
+                      {(duelosAtivos ?? []).length === 0 ? (
+                        <div className="mt-3"><EmptyTab msg="Sem duelos ativos." /></div>
+                      ) : (
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          {(duelosAtivos ?? []).map((d: any) => {
+                            const souChallenger = targetId === d.challenger_id;
+                            const opp = souChallenger ? d.oponente : d.desafiante;
+                            const prog = (souChallenger ? d.progresso_challenger : d.progresso_opponent) ?? 0;
+                            const dias = d.prazo ? Math.max(0, Math.ceil((new Date(d.prazo).getTime() - Date.now()) / 86400000)) : null;
+                            return (
+                              <Link key={d.id} to="/duelo/$id" params={{ id: d.id }} className="rounded-2xl border border-border bg-card p-3">
+                                <div className="flex items-start justify-between">
+                                  <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[9px] font-bold uppercase text-accent">Ativo</span>
+                                  {opp?.avatar_url ? (
+                                    <img src={opp.avatar_url} className="h-7 w-7 rounded-full object-cover" alt="" />
+                                  ) : (
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-primary text-[10px] font-bold">
+                                      {(opp?.nome ?? "?")[0]?.toUpperCase()}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary-light">
+                                  <Swords size={16} />
+                                </div>
+                                <div className="mt-2 text-sm font-bold leading-tight">{d.titulo}</div>
+                                <div className="text-[11px] text-muted-foreground">com @{opp?.username ?? "—"}</div>
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                                  <div className="h-full bg-gradient-primary" style={{ width: `${prog}%` }} />
+                                </div>
+                                <div className="mt-1 flex justify-between text-[11px]">
+                                  <span className="text-muted-foreground">{dias !== null ? `${Math.max(0, 30 - dias)} / 30 dias` : "— / 30 dias"}</span>
+                                  <span className="font-bold text-primary-light">{prog}%</span>
+                                </div>
+                                {dias !== null && (
+                                  <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                                    <Calendar size={11} /> Termina em {dias} dias
+                                  </div>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                )}
+
+                {tab === "conquistas" && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {CONQUISTAS_CATALOGO.map((c) => {
+                      const cq = (conquistasPublicas ?? []).find((x) => x.slug === c.slug);
+                      const unlocked = !!cq;
+                      return (
+                        <div key={c.slug} className={`flex flex-col items-center ${unlocked ? "" : "opacity-30 grayscale"}`}>
+                          <div
+                            className="flex h-[52px] w-[52px] items-center justify-center text-2xl"
+                            style={{
+                              clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
+                              background: `${c.color}22`,
+                              border: `1px solid ${c.color}55`,
+                              boxShadow: unlocked ? `0 0 14px ${c.color}55` : undefined,
+                            }}
+                          >
+                            {c.emoji}
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className="mt-1 text-center text-[9px] font-semibold leading-tight">{c.label}</div>
+                          {unlocked && (
+                            <div className="text-center text-[8px] text-muted-foreground">
+                              {new Date(cq!.desbloqueada_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {tab === "concluidas" && (
+                  <>
+                    {concluidas.length === 0 ? (
+                      <EmptyTab msg="Nenhuma meta concluída ainda." />
+                    ) : (
+                      <div className="space-y-2">
+                        {concluidas.map((m: any) => (
+                          <Link key={m.id} to="/meta/$id" params={{ id: m.id }} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary-light">
+                              <CategoriaIcon categoria={m.categoria} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-bold">{m.titulo}</div>
+                              <div className="text-[11px] capitalize text-muted-foreground">{m.categoria ?? "—"}</div>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[9px] font-bold uppercase text-accent">✓ Concluída</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {tab === "feed" && (
+                  <>
+                    {(!posts || posts.length === 0) ? (
+                      <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                        @{profile.username} ainda não publicou nada.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-1">
+                        {posts.map((p: any) => (
+                          <Link
+                            key={p.id}
+                            to="/meta/$id"
+                            params={{ id: p.meta_id ?? "" }}
+                            disabled={!p.meta_id}
+                            className="relative aspect-square overflow-hidden rounded-md border border-border bg-card"
+                          >
+                            {p.media_url ? (
+                              p.tipo === "video" ? (
+                                <video src={p.media_url} muted playsInline className="h-full w-full object-cover" />
+                              ) : (
+                                <img src={p.media_url} className="h-full w-full object-cover" alt="" />
+                              )
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center p-2 text-center text-[10px] font-semibold text-muted-foreground">
+                                {p.legenda?.slice(0, 40) ?? "Publicação"}
+                              </div>
+                            )}
+                            {p.tipo === "video" && (
+                              <span className="absolute top-1.5 right-1.5 rounded-md bg-black/60 p-1 text-white">
+                                <Video size={11} />
+                              </span>
+                            )}
+                            {!p.media_url && p.legenda && (
+                              <span className="absolute top-1.5 right-1.5 rounded-md bg-black/60 p-1 text-white">
+                                <MessageCircle size={11} />
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
-            )}
-          </div>
             </>
           )}
         </div>
       )}
-
-
-
-
-
-
 
       {/* Modal de desafio */}
       {showDesafiar && (
@@ -664,45 +799,15 @@ function PerfilPublico() {
   );
 }
 
-function Counter({ value, label }: { value: number; label: string }) {
-  return (
-    <div>
-      <div className="text-lg font-bold">{formatCount(value)}</div>
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-    </div>
-  );
-}
-
-function Hex({ icon, label, sub, color }: { icon: React.ReactNode; label: string; sub: string; color: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div
-        className="flex h-16 w-16 items-center justify-center"
-        style={{
-          clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)",
-          background: `linear-gradient(135deg, ${color}30, ${color}10)`,
-          border: `1px solid ${color}80`,
-          color,
-        }}
-      >
-        {icon}
-      </div>
-      <div className="text-center">
-        <div className="text-[11px] font-semibold">{label}</div>
-        <div className="text-[10px] text-muted-foreground">{sub}</div>
-      </div>
-    </div>
-  );
-}
-
-function StatCell({ icon, value, label }: { icon: React.ReactNode; value: number | string; label: string }) {
-  return (
-    <div className="text-center">
-      <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center text-primary-light">{icon}</div>
-      <div className="text-base font-bold">{value}</div>
-      <div className="text-[9px] leading-tight text-muted-foreground">{label}</div>
-    </div>
-  );
+function CategoriaIcon({ categoria }: { categoria?: string | null }) {
+  switch (categoria) {
+    case "fitness": return <Dumbbell size={18} />;
+    case "estudos": return <BookOpen size={18} />;
+    case "financas": return <DollarSign size={18} />;
+    case "habitos": return <Target size={18} />;
+    case "saude": return <Brain size={18} />;
+    default: return <Zap size={18} />;
+  }
 }
 
 function EmptyTab({ msg }: { msg: string }) {
@@ -718,12 +823,6 @@ function formatCount(n: number) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
   return String(n);
-}
-
-function formatMonthYear(iso: string) {
-  const d = new Date(iso);
-  const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-  return `${meses[d.getMonth()]}/${d.getFullYear()}`;
 }
 
 // Catálogo de conquistas (espelhado do perfil.tsx — mesmos slugs)
