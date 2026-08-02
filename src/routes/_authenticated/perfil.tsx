@@ -486,24 +486,6 @@ function Perfil() {
         {/* ABA SOBRE */}
         {tab === "sobre" && (
           <div className="mt-5 space-y-6">
-            {/* Missão */}
-            <section className="rounded-2xl border border-border bg-card p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
-                  <Target size={18} className="text-primary-light" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold text-primary-light">{profile?.missao ? `Missão: ${profile.missao}` : "Missão: defina sua missão pessoal."}</h3>
-                    <Link to="/perfil/editar" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary-light">
-                      Editar <Edit3 size={12} />
-                    </Link>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">Foco · Disciplina · Consistência</p>
-                </div>
-              </div>
-            </section>
-
             {/* Árbitro */}
             <section>
               <div className="mb-3 flex items-center justify-between">
