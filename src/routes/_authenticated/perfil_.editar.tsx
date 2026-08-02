@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { VyraLogo } from "@/components/VyraLogo";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, User as UserIcon, AtSign, Pencil, Target, Shield } from "lucide-react";
+import { ArrowLeft, Camera, User as UserIcon, AtSign, Pencil, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/perfil_/editar")({
   component: EditarPerfil,
@@ -25,7 +25,6 @@ function EditarPerfil() {
   const [nome, setNome] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [missao, setMissao] = useState("");
   const [publico, setPublico] = useState(true);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +34,6 @@ function EditarPerfil() {
       setNome(profile.nome ?? "");
       setUsername(profile.username ?? "");
       setBio(profile.bio ?? "");
-      setMissao(profile.missao ?? "");
       setPublico(profile.perfil_publico ?? true);
     }
   }, [profile]);
@@ -65,11 +63,10 @@ function EditarPerfil() {
     const clean = username.trim().replace(/^@/, "").toLowerCase();
     if (!/^[a-z0-9_.]{3,20}$/.test(clean)) return toast.error("Username: 3-20 caracteres, letras/números/_/.");
     if (bio.length > 150) return toast.error("Bio máx 150 caracteres");
-    if (missao.length > 150) return toast.error("Missão máx 150 caracteres");
     const { data: exists } = await supabase.from("profiles").select("id").eq("username", clean).neq("id", user.id).maybeSingle();
     if (exists) return toast.error("Username já em uso");
     const { error } = await supabase.from("profiles").update({
-      nome, username: clean, bio, missao, perfil_publico: publico,
+      nome, username: clean, bio, perfil_publico: publico,
     }).eq("id", user.id);
     if (error) return toast.error(error.message);
     toast.success("Perfil atualizado");
@@ -125,7 +122,6 @@ function EditarPerfil() {
           <IconField icon={<UserIcon size={18}/>} label="Nome completo" value={nome} onChange={setNome} />
           <IconField icon={<AtSign size={18}/>} label="Username" value={username} onChange={setUsername} prefix="@" />
           <IconTextarea icon={<Pencil size={18}/>} label="Bio" value={bio} onChange={setBio} max={150} />
-          <IconTextarea icon={<Target size={18}/>} label="Missão pessoal" value={missao} onChange={setMissao} max={150} />
 
           <div className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
