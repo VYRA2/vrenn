@@ -257,7 +257,7 @@ function Perfil() {
               <p className="truncate text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
               <NivelBadge nivel={nivelDoUsuario(profile?.username, nivel)} size="sm" />
             </div>
-            {profile?.missao && <p className="mt-2 text-sm text-foreground">{profile.missao}</p>}
+            {profile?.bio && <p className="mt-2 text-sm text-foreground">{profile.bio}</p>}
             <button onClick={copiarLink} className="mt-1.5 block max-w-full truncate text-sm font-medium text-primary-light">
               vrenn.app/{profile?.username ?? "—"}
             </button>
@@ -961,3 +961,4 @@ function ActivityTile({ icon, value, label, color }: { icon: React.ReactNode; va
     </div>
   );
 }
+
