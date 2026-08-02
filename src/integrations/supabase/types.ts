@@ -1955,6 +1955,7 @@ export type Database = {
         Returns: string
       }
       processar_eliminacoes_diarias: { Args: never; Returns: undefined }
+      recusar_duelo: { Args: { p_duelo_id: string }; Returns: undefined }
       resetar_streaks_quebrados: { Args: never; Returns: undefined }
       responder_convite_arbitro_duelo: {
         Args: { _aceitar: boolean; _duelo_id: string }

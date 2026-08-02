@@ -29,7 +29,9 @@ function DueloConvite() {
   });
 
   async function responder(aceitar: boolean) {
-    const { error } = await (supabase as any).rpc("duelo_respond", { _duelo_id: id, _accept: aceitar });
+    const { error } = aceitar
+      ? await (supabase as any).rpc("duelo_respond", { _duelo_id: id, _accept: true })
+      : await (supabase as any).rpc("recusar_duelo", { p_duelo_id: id });
     if (error) return toast.error(error.message);
     await supabase.from("notificacoes").update({ lida: true }).eq("link_id", id).eq("user_id", user.id);
     toast.success(aceitar ? "Duelo aceito!" : "Duelo recusado");
