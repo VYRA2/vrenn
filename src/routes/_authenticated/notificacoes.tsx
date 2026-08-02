@@ -122,7 +122,7 @@ function Notificacoes() {
                 const Icon = style.icon;
                 const isConvite = n.tipo === "convite_arbitro" && !n.lida;
                 const isDueloConvite = n.tipo === "convite_duelo";
-                const isDueloAtivo = n.tipo === "justificativa_pendente" && n.link_id && !n.mensagem?.includes("equipe");
+                const isDueloAtivo = (n.tipo === "justificativa_pendente" || n.tipo === "duelo_recusado") && n.link_id && !n.mensagem?.includes("equipe");
                 const isEquipeNav = n.tipo === "novo_desafio_equipe" || n.tipo === "equipe_atualizada" || (n.tipo === "justificativa_pendente" && n.mensagem?.includes("equipe"));
                 const isResultadoDuelo = n.tipo === "justificativa_resultado" && n.link_id && !n.mensagem?.includes("equipe");
                 const isResultadoEquipe = n.tipo === "justificativa_resultado" && n.mensagem?.includes("equipe");
