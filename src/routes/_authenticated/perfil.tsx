@@ -257,7 +257,9 @@ function Perfil() {
               <p className="truncate text-sm text-muted-foreground">@{profile?.username ?? "—"}</p>
               <NivelBadge nivel={nivelDoUsuario(profile?.username, nivel)} size="sm" />
             </div>
-            {profile?.bio && <p className="mt-2 text-sm text-foreground">{profile.bio}</p>}
+            {profile?.bio && (
+              <p className="mt-2 text-sm text-foreground whitespace-pre-line">{profile.bio}</p>
+            )}
             <button onClick={copiarLink} className="mt-1.5 block max-w-full truncate text-sm font-medium text-primary-light">
               vrenn.app/{profile?.username ?? "—"}
             </button>
