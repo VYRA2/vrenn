@@ -1908,6 +1908,16 @@ export type Database = {
           username: string
         }[]
       }
+      get_local_geo: {
+        Args: { _local_id: string }
+        Returns: {
+          id: string
+          latitude: number
+          longitude: number
+          nome: string
+          raio_geofence_metros: number
+        }[]
+      }
       get_local_qrcode_token: { Args: { _local_id: string }; Returns: string }
       get_meta_motivacao: { Args: { _meta_id: string }; Returns: string }
       get_meta_valor_custodia: { Args: { _meta_id: string }; Returns: number }
