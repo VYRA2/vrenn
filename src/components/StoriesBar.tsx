@@ -32,12 +32,17 @@ const GRADIENTS = [
   "linear-gradient(135deg,#111827,#374151)",
 ];
 
-async function signIfNeeded(url: string | null): Promise<string | null> {
+async function signIfNeeded(url: string | null, expiresAt?: string | null): Promise<string | null> {
   if (!url) return null;
   if (url.startsWith("http")) return url;
-  const { data } = await supabase.storage.from("stories").createSignedUrl(url, 60 * 60 * 6);
+  const remainingMs = expiresAt ? new Date(expiresAt).getTime() - Date.now() : 0;
+  if (expiresAt && remainingMs <= 0) return null;
+  const maxSeconds = 5 * 60;
+  const seconds = expiresAt ? Math.max(30, Math.min(maxSeconds, Math.floor(remainingMs / 1000))) : maxSeconds;
+  const { data } = await supabase.storage.from("stories").createSignedUrl(url, seconds);
   return data?.signedUrl ?? null;
 }
+
 
 export function StoriesBar({ userId }: { userId: string }) {
   const qc = useQueryClient();
