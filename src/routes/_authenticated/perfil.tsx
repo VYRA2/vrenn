@@ -704,7 +704,6 @@ function Perfil() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Modal: termos do árbitro */}
       {showTermoArbitro && (
