@@ -104,6 +104,22 @@ function DueloDetalhe() {
     enabled: !!duelo && duelo.status === "ativo",
   });
 
+  // Check-ins do vencedor — usado no card de resultado
+  const { data: checkinData } = useQuery({
+    queryKey: ["duelo-checkins-count", id, duelo?.winner_id],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("checkins")
+        .select("*", { count: "exact", head: true })
+        .eq("duelo_id", id)
+        .eq("user_id", duelo!.winner_id!);
+      return count ?? 0;
+    },
+    enabled: !!duelo?.winner_id && duelo?.status === "concluido",
+  });
+
+
+
   if (isLoading) return <main className="min-h-screen bg-background" />;
   if (!duelo) return (
     <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
