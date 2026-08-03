@@ -121,7 +121,8 @@ export function DueloResultadoCard({ duelo, challenger, opponent, checkinCount, 
   return (
     <section className="flex flex-col items-center">
       <div className="w-full overflow-hidden" style={{ display: "flex", justifyContent: "center" }}>
-        <div className="origin-top scale-[0.7] sm:scale-100" style={{ marginBottom: 0 }}>
+        <div className="h-[672px] origin-top scale-[0.7] sm:h-auto sm:scale-100">
+
           <div
             id="duelo-resultado-card"
             ref={cardRef}
