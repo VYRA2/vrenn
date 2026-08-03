@@ -162,8 +162,8 @@ function Feed() {
         {!isLoading && (!posts || posts.length === 0) && (
           <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
             <Camera size={48} className="text-muted-foreground" />
-            <h2 className="text-lg font-bold">Ninguém publicou ainda.</h2>
-            <p className="text-sm text-muted-foreground">Seja o primeiro a mostrar que está na corrida.</p>
+            <h2 className="text-lg font-bold">Seja o primeiro a mostrar.</h2>
+            <p className="text-sm text-muted-foreground">Publique sua primeira prova e apareça no feed de todo mundo.</p>
             <button
               onClick={() => setShowPublish(true)}
               className="mt-2 rounded-2xl bg-gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow"
@@ -172,11 +172,15 @@ function Feed() {
             </button>
           </div>
         )}
-        {posts?.map((p: any) => (
-          <div key={p.id} className="px-4 mb-3">
-            <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
+        {posts?.map((p: any, i: number) => (
+          <div key={p.id}>
+            <div className="px-4">
+              <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
+            </div>
+            {i < posts.length - 1 && <div className="my-4 h-px bg-border" />}
           </div>
         ))}
+
       </div>
 
       <button
