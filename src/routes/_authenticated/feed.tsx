@@ -146,7 +146,7 @@ function Feed() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === t.id ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"}`}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-200 ${tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               {t.label}
             </button>
@@ -162,8 +162,8 @@ function Feed() {
         {!isLoading && (!posts || posts.length === 0) && (
           <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
             <Camera size={48} className="text-muted-foreground" />
-            <h2 className="text-lg font-bold">Seja o primeiro a mostrar.</h2>
-            <p className="text-sm text-muted-foreground">Publique sua primeira prova e apareça no feed de todo mundo.</p>
+            <h2 className="text-lg font-bold">Ninguém publicou ainda.</h2>
+            <p className="text-sm text-muted-foreground">Seja o primeiro a mostrar que está na corrida.</p>
             <button
               onClick={() => setShowPublish(true)}
               className="mt-2 rounded-2xl bg-gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow"
@@ -172,12 +172,9 @@ function Feed() {
             </button>
           </div>
         )}
-        {posts?.map((p: any, i: number) => (
-          <div key={p.id}>
-            <div className="px-4">
-              <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
-            </div>
-            {i < posts.length - 1 && <div className="h-px bg-border mx-4 my-4" />}
+        {posts?.map((p: any) => (
+          <div key={p.id} className="px-4 mb-3">
+            <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
           </div>
         ))}
       </div>
@@ -308,11 +305,6 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           </div>
           <div className="text-xs text-muted-foreground">@{p?.username ?? "—"} · {formatWhen(post.created_at)}</div>
         </div>
-        {post.user_id !== userId && (
-          <button onClick={toggleFollow} className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${stats?.following ? "border-primary bg-primary text-primary-foreground" : "border-primary text-primary-light"}`}>
-            {stats?.following ? "Seguindo" : "Seguir"}
-          </button>
-        )}
         <div className="relative">
           <button onClick={() => setShowMenu((v) => !v)} aria-label="Opções da publicação" className="text-muted-foreground"><MoreHorizontal size={18} /></button>
           {showMenu && isOwner && (
@@ -331,9 +323,9 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
 
       {m && (
         <Link to="/meta/$id" params={{ id: post.meta_id }} className="mt-3 flex items-center gap-2 text-xs">
-          <span className="text-muted-foreground">🔒 Compromisso:</span>
+          <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary-light uppercase tracking-wide shrink-0">META</span>
           <span className="font-semibold truncate">{m.titulo}</span>
-          <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${cumprido ? "text-accent" : "text-amber-400"}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0 ${cumprido ? "text-accent" : "text-amber-400"}`}>
             {cumprido ? <><CheckCircle2 size={11} /> Cumprido</> : <><Clock size={11} /> Em andamento</>}
           </span>
         </Link>
@@ -381,20 +373,20 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-6 border-t border-border pt-3">
+      <div className="mt-3 flex items-center gap-5 border-t border-border pt-3">
         <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
-          <Heart size={22} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground"} />
+          <Heart size={24} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground/80"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
         </button>
-        <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 text-sm text-foreground">
-          <MessageCircle size={22} />
+        <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 text-sm text-foreground/80">
+          <MessageCircle size={24} />
           <span className="font-semibold">{stats?.comments ?? 0}</span>
         </button>
-        <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 text-sm text-foreground">
-          <Send size={22} />
+        <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 text-sm text-foreground/80">
+          <Send size={24} />
         </button>
         <button onClick={toggleSave} className="ml-auto">
-          <Bookmark size={22} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground"} />
+          <Bookmark size={24} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground/80"} />
         </button>
       </div>
 
@@ -529,5 +521,6 @@ function formatWhen(iso: string) {
   if (d <= 30) return `${d}d`;
   return new Date(iso).toLocaleDateString("pt-BR");
 }
+
 
 
