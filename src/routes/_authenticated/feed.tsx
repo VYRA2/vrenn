@@ -276,11 +276,12 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const cumprido = m?.status === "concluida";
 
   const cardBorder = isConquista
-    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40"
-    : "border-border bg-card";
+    ? "rounded-2xl border border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-4"
+    : "";
 
   return (
-    <article className={`rounded-2xl p-4 ${isConquista ? "" : "border"} ${cardBorder}`}>
+    <article className={cardBorder}>
+
 
       {isConquista && (
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
