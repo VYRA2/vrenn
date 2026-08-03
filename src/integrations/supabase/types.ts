@@ -1394,6 +1394,48 @@ export type Database = {
         }
         Relationships: []
       }
+      story_cleanup_state: {
+        Row: {
+          id: boolean
+          last_run_at: string | null
+          running: boolean
+          started_at: string | null
+        }
+        Insert: {
+          id?: boolean
+          last_run_at?: string | null
+          running?: boolean
+          started_at?: string | null
+        }
+        Update: {
+          id?: boolean
+          last_run_at?: string | null
+          running?: boolean
+          started_at?: string | null
+        }
+        Relationships: []
+      }
+      story_storage_cleanup_queue: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path: string
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       story_views: {
         Row: {
           id: string
@@ -1896,6 +1938,7 @@ export type Database = {
         Args: { p_admin_id: string; p_temporada_id: string }
         Returns: Json
       }
+      end_story_cleanup: { Args: never; Returns: undefined }
       entrar_na_equipe: { Args: { p_equipe_id: string }; Returns: Json }
       get_equipe_membros: {
         Args: { p_equipe_id: string }
@@ -1974,6 +2017,7 @@ export type Database = {
       sortear_arbitro_duelo: { Args: { _duelo_id: string }; Returns: undefined }
       sortear_arbitro_meta: { Args: { _meta_id: string }; Returns: undefined }
       teste_desafio_equipe_financeiro: { Args: never; Returns: Json }
+      try_begin_story_cleanup: { Args: never; Returns: boolean }
       validar_qrcode_local: {
         Args: { _local_id: string; _token: string }
         Returns: boolean

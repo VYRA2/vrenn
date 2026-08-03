@@ -32,12 +32,17 @@ const GRADIENTS = [
   "linear-gradient(135deg,#111827,#374151)",
 ];
 
-async function signIfNeeded(url: string | null): Promise<string | null> {
+async function signIfNeeded(url: string | null, expiresAt?: string | null): Promise<string | null> {
   if (!url) return null;
   if (url.startsWith("http")) return url;
-  const { data } = await supabase.storage.from("stories").createSignedUrl(url, 60 * 60 * 6);
+  const remainingMs = expiresAt ? new Date(expiresAt).getTime() - Date.now() : 0;
+  if (expiresAt && remainingMs <= 0) return null;
+  const maxSeconds = 5 * 60;
+  const seconds = expiresAt ? Math.max(30, Math.min(maxSeconds, Math.floor(remainingMs / 1000))) : maxSeconds;
+  const { data } = await supabase.storage.from("stories").createSignedUrl(url, seconds);
   return data?.signedUrl ?? null;
 }
+
 
 export function StoriesBar({ userId }: { userId: string }) {
   const qc = useQueryClient();
@@ -214,7 +219,12 @@ function CreateStoryModal({ userId, onClose, onCreated }: { userId: string; onCl
           media_type: file.type.startsWith("video") ? "video" : "photo",
           media_url: path,
         });
-        if (error) throw error;
+        if (error) {
+          // Evita arquivo órfão no bucket quando o registro não é criado
+          try { await supabase.storage.from("stories").remove([path]); } catch { /* fila do cron cuida */ }
+          throw error;
+        }
+
       }
       toast.success("Story publicado!");
       onCreated();
@@ -299,7 +309,7 @@ function StoryViewer({ groups, startIndex, userId, onClose }: { groups: Group[];
   useEffect(() => {
     if (!story) return;
     setMediaUrl(null);
-    signIfNeeded(story.media_url).then(setMediaUrl);
+    signIfNeeded(story.media_url, story.expires_at).then(setMediaUrl);
     (supabase as any).from("story_views").upsert(
       { story_id: story.id, viewer_id: userId },
       { onConflict: "story_id,viewer_id", ignoreDuplicates: true },
@@ -331,10 +341,15 @@ function StoryViewer({ groups, startIndex, userId, onClose }: { groups: Group[];
 
   async function excluir() {
     if (!story) return;
+    // Tenta remover o arquivo antes; se falhar, o trigger enfileira o caminho para a rotina automática
+    if (story.media_url && !story.media_url.startsWith("http")) {
+      try { await supabase.storage.from("stories").remove([story.media_url]); } catch { /* fila do cron cuida */ }
+    }
     await (supabase as any).from("stories").delete().eq("id", story.id);
     toast.success("Story excluído");
     next();
   }
+
 
   if (!story) return null;
 
