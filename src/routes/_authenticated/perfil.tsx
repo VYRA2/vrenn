@@ -736,47 +736,8 @@ function Perfil() {
                 Ao clicar em "Aceitar e ativar", você declara ter lido e concordado com estas condições.
               </p>
             </div>
-                {/* Strava */}
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-sm font-bold">
-                  <Activity size={14} className="text-[#FC4C02]" /> Strava
-                </h2>
-                <Link to="/strava-connect" className="text-xs font-semibold text-primary-light">
-                  {stravaConn ? "Gerenciar →" : "Conectar →"}
-                </Link>
-              </div>
-              <Link to="/strava-connect" className="block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
-                {stravaConn ? (
-                  <div className="flex items-center gap-3">
-                    {stravaConn.athlete_photo ? (
-                      <img src={stravaConn.athlete_photo} alt="Strava" className="h-10 w-10 rounded-full border border-green-500/40 object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FC4C02]/20 text-xl">🏃</div>
-                    )}
-                    <div>
-                      <div className="text-sm font-bold text-foreground">{stravaConn.athlete_name}</div>
-                      <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-semibold text-green-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> Conectado
-                      </div>
-                      {stravaConn.ultima_atividade_tipo && (
-                        <div className="mt-1 text-xs capitalize text-muted-foreground">
-                          Última: {stravaConn.ultima_atividade_tipo} {stravaConn.ultima_atividade_km ? `— ${Number(stravaConn.ultima_atividade_km).toFixed(1)} km` : ""}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FC4C02] text-lg font-black text-white">S</div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">Conectar Strava</div>
-                      <div className="text-xs text-muted-foreground">Valide corridas e atividades automaticamente</div>
-                    </div>
-                  </div>
-                )}
-              </Link>
-            </section>
+
+
 
 
         <div className="mt-5 flex gap-2">
