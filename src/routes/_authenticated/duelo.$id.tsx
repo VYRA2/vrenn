@@ -193,6 +193,17 @@ function DueloDetalhe() {
           )}
         </section>
 
+        {duelo.status === "concluido" && (
+          <DueloResultadoCard
+            duelo={duelo}
+            challenger={duelo.challenger}
+            opponent={duelo.opponent}
+            checkinCount={checkinData ?? 0}
+          />
+        )}
+
+
+
         {/* Progresso */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
           <h3 className="text-sm font-bold">Progresso</h3>
