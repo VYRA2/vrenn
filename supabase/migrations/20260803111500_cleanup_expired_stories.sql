@@ -57,7 +57,6 @@ before delete on public.stories
 for each row
 execute function public.queue_story_storage_cleanup();
 
--- A Edge Function usa esta função para evitar execuções simultâneas ou abusivas.
 create or replace function public.claim_story_cleanup_run(min_interval_seconds integer default 300)
 returns boolean
 language plpgsql
@@ -93,7 +92,6 @@ $$;
 revoke all on function public.claim_story_cleanup_run(integer) from public, anon, authenticated;
 grant execute on function public.claim_story_cleanup_run(integer) to service_role;
 
--- Substitui um agendamento anterior com o mesmo nome, caso exista.
 do $$
 declare
   existing_job bigint;
@@ -113,12 +111,16 @@ select cron.schedule(
   $$
     select net.http_post(
       url := 'https://pitgdiekkshtrvlkdnvg.supabase.co/functions/v1/cleanup-expired-stories',
-      headers := jsonb_build_object('Content-Type', 'application/json', 'x-cleanup-source', 'pg_cron'),
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'apikey', 'sb_publishable_WKygjpu9wiB4aRJCpSMPMA_SV98Lvh0',
+        'Authorization', 'Bearer sb_publishable_WKygjpu9wiB4aRJCpSMPMA_SV98Lvh0',
+        'x-cleanup-source', 'pg_cron'
+      ),
       body := jsonb_build_object('source', 'pg_cron')
     );
   $$
 );
 
--- O primeiro ciclo da função também limpará estes registros e seus arquivos.
 comment on table public.story_storage_cleanup_queue is
   'Fila interna de arquivos de stories que precisam ser removidos do Storage.';
