@@ -140,8 +140,8 @@ function Feed() {
 
       <div className="mx-auto max-w-md">
         <StoriesBar userId={user.id} />
-        <div className="h-px bg-border" />
-        <nav className="flex gap-2 overflow-x-auto px-4 py-3" aria-label="Filtros do feed">
+        <nav className="flex gap-3 px-4 py-3" aria-label="Filtros do feed">
+
           {([{ id: "feed", label: "Para você" }, { id: "seguindo", label: "Seguindo" }] as const).map((t) => (
             <button
               key={t.id}
