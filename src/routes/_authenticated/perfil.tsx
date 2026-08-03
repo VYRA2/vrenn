@@ -610,54 +610,66 @@ function Perfil() {
             </div>
           </div>
         )}
+
+        {/* Resumo de atividade */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold">Resumo de atividade</h2>
+            <Link to="/ranking" className="text-xs font-semibold text-primary-light">Ver ranking</Link>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            <Link to="/perfil/publicacoes" className="block"><ActivityTile icon={<CheckCircle2 size={20} />} value={profileStats?.publicacoes ?? 0} label="Publicações" color="#A855F7" /></Link>
+            <ActivityTile icon={<MessageCircle size={20} />} value={profileStats?.comentarios ?? 0} label="Comentários" color="#22D3A1" />
+            <ActivityTile icon={<HeartIcon size={20} />} value={profileStats?.curtidasRecebidas ?? 0} label="Curtidas recebidas" color="#F59E0B" />
+            <Link to="/perfil/seguidores" className="block"><ActivityTile icon={<Users size={20} />} value={profileStats?.seguidores ?? 0} label="Seguidores" color="#38BDF8" /></Link>
+            <Link to="/perfil/seguindo" className="block"><ActivityTile icon={<TrendingUp size={20} />} value={profileStats?.seguindo ?? 0} label="Seguindo" color="#A855F7" /></Link>
+          </div>
+        </section>
+
+        {/* Strava */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-bold">
+              <Activity size={14} className="text-[#FC4C02]" /> Strava
+            </h2>
+            <Link to="/strava-connect" className="text-xs font-semibold text-primary-light">
+              {stravaConn ? "Gerenciar →" : "Conectar →"}
+            </Link>
+          </div>
+          <Link to="/strava-connect" className="block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+            {stravaConn ? (
+              <div className="flex items-center gap-3">
+                {stravaConn.athlete_photo ? (
+                  <img src={stravaConn.athlete_photo} alt="Strava" className="h-10 w-10 rounded-full border border-green-500/40 object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FC4C02]/20 text-xl">🏃</div>
+                )}
+                <div>
+                  <div className="text-sm font-bold text-foreground">{stravaConn.athlete_name}</div>
+                  <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-semibold text-green-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> Conectado
+                  </div>
+                  {stravaConn.ultima_atividade_tipo && (
+                    <div className="mt-1 text-xs capitalize text-muted-foreground">
+                      Última: {stravaConn.ultima_atividade_tipo} {stravaConn.ultima_atividade_km ? `— ${Number(stravaConn.ultima_atividade_km).toFixed(1)} km` : ""}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FC4C02] text-lg font-black text-white">S</div>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">Conectar Strava</div>
+                  <div className="text-xs text-muted-foreground">Valide corridas e atividades automaticamente</div>
+                </div>
+              </div>
+            )}
+          </Link>
+        </section>
       </div>
 
-      {/* Modal: termos do árbitro */}
-      {showTermoArbitro && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
-          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-border bg-card p-5 pb-8">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-            <div className="mb-4 flex items-center gap-2">
-              <Shield size={20} className="text-primary-light" />
-              <h3 className="text-lg font-bold">Termos do Árbitro VRENN</h3>
-            </div>
-            <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
-              <p>Ao se tornar árbitro no VRENN, você concorda com as seguintes responsabilidades:</p>
-              <div className="space-y-2 rounded-xl border border-border bg-background p-3">
-                {[
-                  "Você pode ser sorteado aleatoriamente para validar check-ins de metas e declarar resultados de duelos.",
-                  "Ao receber um convite de arbitragem, você tem 24 horas para aceitar ou recusar.",
-                  "Se aceitar, tem prazo para validar cada check-in. A omissão gera penalidade de -2 pts de reputação de árbitro.",
-                  "Árbitros devem agir com imparcialidade. Validações injustificadas podem resultar em suspensão.",
-                  "Como recompensa: +3 pts por check-in validado e +20 pts por resultado de duelo declarado.",
-                  "Você pode desativar o opt-in a qualquer momento. Arbitragens já aceitas continuam até o encerramento.",
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-2">
-                    <span className="shrink-0 font-bold text-primary-light">{i + 1}.</span>
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground/70">
-                Ao clicar em "Aceitar e ativar", você declara ter lido e concordado com estas condições.
-              </p>
-            </div>
-            {/* Resumo de atividade */}
-            <section className="pb-2">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-bold">Resumo de atividade</h2>
-                <Link to="/ranking" className="text-xs font-semibold text-primary-light">Ver ranking</Link>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
-                <Link to="/perfil/publicacoes" className="block"><ActivityTile icon={<CheckCircle2 size={20} />} value={profileStats?.publicacoes ?? 0} label="Publicações" color="#A855F7" /></Link>
-                <ActivityTile icon={<MessageCircle size={20} />} value={profileStats?.comentarios ?? 0} label="Comentários" color="#22D3A1" />
-                <ActivityTile icon={<HeartIcon size={20} />} value={profileStats?.curtidasRecebidas ?? 0} label="Curtidas recebidas" color="#F59E0B" />
-                <Link to="/perfil/seguidores" className="block"><ActivityTile icon={<Users size={20} />} value={profileStats?.seguidores ?? 0} label="Seguidores" color="#38BDF8" /></Link>
-                <Link to="/perfil/seguindo" className="block"><ActivityTile icon={<TrendingUp size={20} />} value={profileStats?.seguindo ?? 0} label="Seguindo" color="#A855F7" /></Link>
-              </div>
-            </section>
-          </div>
-        )}
+
 
         {/* Sheet — todas as conquistas */}
         {showConquistasSheet && (
@@ -704,7 +716,6 @@ function Perfil() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Modal: termos do árbitro */}
       {showTermoArbitro && (
@@ -736,47 +747,8 @@ function Perfil() {
                 Ao clicar em "Aceitar e ativar", você declara ter lido e concordado com estas condições.
               </p>
             </div>
-                {/* Strava */}
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-sm font-bold">
-                  <Activity size={14} className="text-[#FC4C02]" /> Strava
-                </h2>
-                <Link to="/strava-connect" className="text-xs font-semibold text-primary-light">
-                  {stravaConn ? "Gerenciar →" : "Conectar →"}
-                </Link>
-              </div>
-              <Link to="/strava-connect" className="block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
-                {stravaConn ? (
-                  <div className="flex items-center gap-3">
-                    {stravaConn.athlete_photo ? (
-                      <img src={stravaConn.athlete_photo} alt="Strava" className="h-10 w-10 rounded-full border border-green-500/40 object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FC4C02]/20 text-xl">🏃</div>
-                    )}
-                    <div>
-                      <div className="text-sm font-bold text-foreground">{stravaConn.athlete_name}</div>
-                      <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-[10px] font-semibold text-green-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> Conectado
-                      </div>
-                      {stravaConn.ultima_atividade_tipo && (
-                        <div className="mt-1 text-xs capitalize text-muted-foreground">
-                          Última: {stravaConn.ultima_atividade_tipo} {stravaConn.ultima_atividade_km ? `— ${Number(stravaConn.ultima_atividade_km).toFixed(1)} km` : ""}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FC4C02] text-lg font-black text-white">S</div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">Conectar Strava</div>
-                      <div className="text-xs text-muted-foreground">Valide corridas e atividades automaticamente</div>
-                    </div>
-                  </div>
-                )}
-              </Link>
-            </section>
+
+
 
 
         <div className="mt-5 flex gap-2">
