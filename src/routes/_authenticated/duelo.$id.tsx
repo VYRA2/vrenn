@@ -7,6 +7,8 @@ import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { StravaCheckinModal } from "@/components/StravaCheckinModal";
+import { DueloResultadoCard } from "@/components/DueloResultadoCard";
+
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -104,6 +106,22 @@ function DueloDetalhe() {
     enabled: !!duelo && duelo.status === "ativo",
   });
 
+  // Check-ins do vencedor — usado no card de resultado
+  const { data: checkinData } = useQuery({
+    queryKey: ["duelo-checkins-count", id, duelo?.winner_id],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("checkins")
+        .select("*", { count: "exact", head: true })
+        .eq("duelo_id", id)
+        .eq("user_id", duelo!.winner_id!);
+      return count ?? 0;
+    },
+    enabled: !!duelo?.winner_id && duelo?.status === "concluido",
+  });
+
+
+
   if (isLoading) return <main className="min-h-screen bg-background" />;
   if (!duelo) return (
     <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -176,6 +194,17 @@ function DueloDetalhe() {
             </div>
           )}
         </section>
+
+        {duelo.status === "concluido" && (
+          <DueloResultadoCard
+            duelo={duelo}
+            challenger={duelo.challenger}
+            opponent={duelo.opponent}
+            checkinCount={checkinData ?? 0}
+          />
+        )}
+
+
 
         {/* Progresso */}
         <section className="rounded-2xl border border-border bg-card p-4 space-y-3">

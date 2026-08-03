@@ -140,8 +140,8 @@ function Feed() {
 
       <div className="mx-auto max-w-md">
         <StoriesBar userId={user.id} />
-        <div className="h-px bg-border" />
-        <nav className="flex gap-2 overflow-x-auto px-4 py-3" aria-label="Filtros do feed">
+        <nav className="flex gap-3 px-4 py-3" aria-label="Filtros do feed">
+
           {([{ id: "feed", label: "Para você" }, { id: "seguindo", label: "Seguindo" }] as const).map((t) => (
             <button
               key={t.id}
@@ -162,8 +162,8 @@ function Feed() {
         {!isLoading && (!posts || posts.length === 0) && (
           <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
             <Camera size={48} className="text-muted-foreground" />
-            <h2 className="text-lg font-bold">Ninguém publicou ainda.</h2>
-            <p className="text-sm text-muted-foreground">Seja o primeiro a mostrar que está na corrida.</p>
+            <h2 className="text-lg font-bold">Seja o primeiro a mostrar.</h2>
+            <p className="text-sm text-muted-foreground">Publique sua primeira prova e apareça no feed de todo mundo.</p>
             <button
               onClick={() => setShowPublish(true)}
               className="mt-2 rounded-2xl bg-gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-glow"
@@ -172,11 +172,15 @@ function Feed() {
             </button>
           </div>
         )}
-        {posts?.map((p: any) => (
-          <div key={p.id} className="px-4 mb-3">
-            <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
+        {posts?.map((p: any, i: number) => (
+          <div key={p.id}>
+            <div className="px-4">
+              <PostCard post={p} userId={user.id} onChange={() => qc.invalidateQueries({ queryKey: ["feed-posts"] })} />
+            </div>
+            {i < posts.length - 1 && <div className="my-4 h-px bg-border" />}
           </div>
         ))}
+
       </div>
 
       <button
@@ -272,11 +276,12 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const cumprido = m?.status === "concluida";
 
   const cardBorder = isConquista
-    ? "border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40"
-    : "border-border bg-card";
+    ? "rounded-2xl border border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-4"
+    : "";
 
   return (
-    <article className={`rounded-2xl p-4 ${isConquista ? "" : "border"} ${cardBorder}`}>
+    <article className={cardBorder}>
+
 
       {isConquista && (
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
@@ -373,22 +378,23 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-5 border-t border-border pt-3">
+      <div className="mt-3 flex items-center gap-6 pt-1">
         <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
-          <Heart size={24} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground/80"} />
+          <Heart size={22} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground/80"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
         </button>
         <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 text-sm text-foreground/80">
-          <MessageCircle size={24} />
+          <MessageCircle size={22} />
           <span className="font-semibold">{stats?.comments ?? 0}</span>
         </button>
         <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 text-sm text-foreground/80">
-          <Send size={24} />
+          <Send size={22} />
         </button>
         <button onClick={toggleSave} className="ml-auto">
-          <Bookmark size={24} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground/80"} />
+          <Bookmark size={22} className={stats?.saved ? "fill-primary-light text-primary-light" : "text-foreground/80"} />
         </button>
       </div>
+
 
       {showComments && <CommentsModal postId={post.id} userId={userId} onClose={() => setShowComments(false)} onCountChange={() => refetch()} />}
       {showShare && (
