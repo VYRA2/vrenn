@@ -7,6 +7,8 @@ import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { StravaCheckinModal } from "@/components/StravaCheckinModal";
+import { DueloResultadoCard } from "@/components/DueloResultadoCard";
+
 import { toast } from "sonner";
 import { useState } from "react";
 import {
