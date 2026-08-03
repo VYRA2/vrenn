@@ -50,7 +50,7 @@ export function ValidacaoStep({ tipoValidacao, onChangeTipo, localId, onChangeLo
   const { data: locais } = useQuery({
     queryKey: ["locais-validacao", busca],
     queryFn: async () => {
-      let q = supabase.from("locais_validacao").select("id, nome, latitude, longitude, raio_geofence_metros").limit(20);
+      let q = supabase.from("locais_validacao").select("id, nome, raio_geofence_metros").limit(20);
       if (busca.trim()) q = q.ilike("nome", `%${busca.trim()}%`);
       const { data } = await q;
       return data ?? [];

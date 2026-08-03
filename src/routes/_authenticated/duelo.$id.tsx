@@ -57,10 +57,8 @@ function DueloDetalhe() {
   const { data: local } = useQuery({
     queryKey: ["duelo-local", duelo?.local_id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("locais_validacao")
-        .select("id, nome, latitude, longitude, raio_geofence_metros")
-        .eq("id", duelo!.local_id)
+      const { data } = await (supabase as any)
+        .rpc("get_local_geo", { _local_id: duelo!.local_id })
         .maybeSingle();
       return data;
     },
