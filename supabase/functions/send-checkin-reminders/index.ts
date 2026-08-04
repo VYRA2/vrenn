@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const VAPID_PUBLIC_KEY = "BMDw8Frw-C-qbo2PNosbg2kIYy-Eh04MDPZlc2o0DV7u-OtOh2C9CZFt6wWDxG8EAA17JSzjxQQ9zfooD347qoc";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
-const CRON_SECRET = Deno.env.get("CHECKIN_REMINDER_CRON_SECRET") ?? "";
 
 webpush.setVapidDetails("mailto:contato@vrenn.app", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
@@ -81,9 +80,16 @@ Deno.serve(async (req) => {
     const now = new Date();
 
     const suppliedSecret = req.headers.get("x-cron-secret") ?? "";
-    const isCron = Boolean(CRON_SECRET) && suppliedSecret === CRON_SECRET;
-    let selfTestUserId: string | null = null;
+    let isCron = false;
+    if (suppliedSecret) {
+      const { data, error } = await admin.rpc("verify_checkin_reminder_cron_secret", {
+        _secret: suppliedSecret,
+      });
+      if (error) console.error("Falha ao validar segredo do cron", error);
+      isCron = data === true;
+    }
 
+    let selfTestUserId: string | null = null;
     if (!isCron) {
       const authorization = req.headers.get("Authorization") ?? "";
       const token = authorization.replace(/^Bearer\s+/i, "");
