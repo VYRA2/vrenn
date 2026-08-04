@@ -383,7 +383,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-6 pt-1">
+      <div className={`mt-3 flex items-center gap-6 ${isConquista ? "" : "border-t border-border pt-3"}`}>
         <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
           <Heart size={22} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground/80"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
