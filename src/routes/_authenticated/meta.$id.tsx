@@ -97,8 +97,8 @@ function MetaDetail() {
   const { data: valorCustodia } = useQuery({
     queryKey: ["meta-valor-custodia", id],
     queryFn: async () => {
-      // valor_custodia já vem na query principal — evitar RPC extra que pode não existir
-      const { data } = await supabase.from("metas").select("valor_custodia").eq("id", id).maybeSingle();
+      // Somente o dono consegue ler o valor via RPC (coluna protegida por RLS/GRANT)
+      const { data } = await (supabase as any).rpc("get_meta_valor_custodia", { _meta_id: id });
       return Number(data ?? 0);
     },
   });
