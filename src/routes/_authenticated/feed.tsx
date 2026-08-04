@@ -276,7 +276,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const cumprido = m?.status === "concluida";
 
   const cardBorder = isConquista
-    ? "rounded-2xl border border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-4"
+    ? "rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a0f2e] via-[#2a1040] to-[#0F0F17] overflow-hidden p-4"
     : "";
 
   return (
@@ -284,8 +284,10 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
 
 
       {isConquista && (
-        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
-          {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
+        <div className="mb-3 flex justify-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
+            {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
+          </span>
         </div>
       )}
       <div className="flex items-center gap-3">
