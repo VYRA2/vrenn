@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Compass, Plus, User, X, Flag, Camera, Swords, Shield, UserPlus, Users } from "lucide-react";
+import { Home, Compass, Plus, User, X, Flag, Camera, Swords, Shield, UserPlus, Users, BellRing } from "lucide-react";
 import { useState } from "react";
 
 export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
@@ -56,7 +56,7 @@ export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
           <div className="w-full max-w-md rounded-t-3xl border-t border-border bg-card p-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] animate-in slide-in-from-bottom" onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border" />
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold">Criar</h3>
+              <h3 className="text-base font-bold">Criar e configurar</h3>
               <button onClick={() => setOpenSheet(false)} className="rounded-full p-1.5 text-muted-foreground hover:bg-background"><X size={18} /></button>
             </div>
             <div className="space-y-2">
@@ -65,6 +65,7 @@ export function BottomNav({ onPublish }: { onPublish?: () => void } = {}) {
               <SheetItem icon={<Swords size={20} />} title="Criar duelo" desc="Desafie alguém em uma meta" onClick={() => go("/duelos?criar=1")} color="#A855F7" />
               <SheetItem icon={<Shield size={20} />} title="Criar desafio de equipe" desc="Lance um desafio para sua equipe" onClick={() => go("/equipes")} color="#F59E0B" />
               <SheetItem icon={<UserPlus size={20} />} title="Criar equipe" desc="Reúna pessoas com o mesmo objetivo" onClick={() => go("/equipes/nova")} color="#22D3A1" />
+              <SheetItem icon={<BellRing size={20} />} title="Lembrete de check-in" desc="Defina o horário e envie um teste" onClick={() => go("/lembrete-checkin")} color="#7B3FF2" />
             </div>
           </div>
         </div>
