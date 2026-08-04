@@ -128,7 +128,7 @@ function Feed() {
             </Link>
             <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
               <Bell size={22} />
-              {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}
+              {!!unread && unread > 0 && <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />}
             </Link>
 
             <Link to="/wallet" className="rounded-full p-2 text-primary-light" aria-label="Carteira">
@@ -146,7 +146,7 @@ function Feed() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-200 ${tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`shrink-0 rounded-full px-5 py-1.5 text-sm font-bold transition-all duration-200 ${tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground"}`}
             >
               {t.label}
             </button>
@@ -276,7 +276,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
   const cumprido = m?.status === "concluida";
 
   const cardBorder = isConquista
-    ? "rounded-2xl border border-transparent bg-gradient-to-br from-yellow-500/40 to-primary/40 p-4"
+    ? "rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a0f2e] via-[#2a1040] to-[#0F0F17] overflow-hidden p-4"
     : "";
 
   return (
@@ -284,8 +284,10 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
 
 
       {isConquista && (
-        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
-          {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
+        <div className="mb-3 flex justify-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-[11px] font-bold text-yellow-300">
+            {isConquistaMeta ? <><Trophy size={12} /> Meta concluída!</> : <><Swords size={12} /> Duelo vencido!</>}
+          </span>
         </div>
       )}
       <div className="flex items-center gap-3">
@@ -328,9 +330,9 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
 
       {m && (
         <Link to="/meta/$id" params={{ id: post.meta_id }} className="mt-3 flex items-center gap-2 text-xs">
-          <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary-light uppercase tracking-wide shrink-0">META</span>
+          <span className="rounded-full bg-primary/15 border border-primary/30 px-2 py-0.5 text-[10px] font-black text-primary-light uppercase tracking-wide shrink-0">META</span>
           <span className="font-semibold truncate">{m.titulo}</span>
-          <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0 ${cumprido ? "text-accent" : "text-amber-400"}`}>
+          <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${cumprido ? "border-accent/50 text-accent" : "border-amber-500/50 text-amber-400"}`}>
             {cumprido ? <><CheckCircle2 size={11} /> Cumprido</> : <><Clock size={11} /> Em andamento</>}
           </span>
         </Link>
@@ -348,20 +350,23 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           )}
         </button>
       ) : isConquista ? (
-        <button type="button" onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl block relative bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17]">
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+        <button type="button" onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-black/40 p-4 text-left">
+          <div className="flex w-[40%] shrink-0 items-center justify-center">
             <Trophy size={72} className="text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]" />
-            <div className="mt-4 text-lg font-black text-white">{m?.titulo ?? post.legenda ?? "Conquista"}</div>
-            <div className="mt-2 text-xs text-white/70">{isConquistaMeta ? "Meta concluída" : "Duelo vencido"}</div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-2xl font-black leading-tight text-white">{m?.titulo ?? post.legenda ?? "Conquista"}</div>
+            <div className="mt-1.5 text-sm font-bold text-amber-400">{isConquistaMeta ? "Meta concluída" : "Duelo vencido"}</div>
           </div>
         </button>
       ) : null}
 
       {isConquista && (
-        <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 w-full rounded-xl bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 py-2.5 text-xs font-bold text-yellow-200">
-          Ver conquista completa
+        <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500/20 to-primary/20 border border-amber-500/40 py-2.5 text-xs font-bold text-yellow-200">
+          Ver conquista completa ›
         </button>
       )}
+
 
       {post.legenda && (
         <div className="mt-3">
@@ -378,7 +383,7 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-6 pt-1">
+      <div className={`mt-3 flex items-center gap-6 ${isConquista ? "" : "border-t border-border pt-3"}`}>
         <button onClick={toggleLike} className="flex items-center gap-1.5 text-sm">
           <Heart size={22} className={stats?.liked ? "fill-rose-500 text-rose-500" : "text-foreground/80"} />
           <span className="font-semibold">{stats?.likes ?? 0}</span>
