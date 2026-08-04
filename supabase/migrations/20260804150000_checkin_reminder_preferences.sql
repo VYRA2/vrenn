@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.checkin_reminder_deliveries (
   local_date date NOT NULL,
   sent_at timestamptz NOT NULL DEFAULT now(),
   push_sent boolean NOT NULL DEFAULT false,
-  notification_id uuid NULL,
+  notification_id uuid NULL REFERENCES public.notificacoes(id) ON DELETE SET NULL,
   UNIQUE (user_id, commitment_type, commitment_id, local_date)
 );
 
@@ -31,6 +31,8 @@ GRANT SELECT ON public.checkin_reminder_deliveries TO authenticated;
 CREATE INDEX IF NOT EXISTS checkin_reminder_deliveries_user_date_idx
   ON public.checkin_reminder_deliveries (user_id, local_date DESC);
 
+COMMENT ON TABLE public.checkin_reminder_deliveries IS
+  'Registra um único lembrete por compromisso, usuário e data local.';
 COMMENT ON COLUMN public.profiles.checkin_reminder_enabled IS
   'Controla o lembrete inteligente de check-in pendente.';
 COMMENT ON COLUMN public.profiles.checkin_reminder_time IS
