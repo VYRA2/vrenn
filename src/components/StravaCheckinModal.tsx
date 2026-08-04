@@ -15,11 +15,10 @@ interface Props {
   onCreated: () => void;
 }
 
-
 /**
  * Modal de check-in via Strava — usado em Meta, Duelo e Desafio em Equipe.
- * Chama a edge function `strava-validate-checkin` que valida janela de tempo (30 min)
- * e distância GPS (500 m) entre o check-in e o início da atividade no Strava.
+ * Chama a edge function `strava-validate-checkin`, que valida se a atividade
+ * terminou recentemente e se a localização atual está próxima do trajeto.
  */
 export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: Props) {
   const [buscando, setBuscando] = useState(false);
@@ -33,7 +32,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
     navigator.geolocation.getCurrentPosition(
       (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
       () => setPos(null),
-      { timeout: 10000 },
+      { timeout: 10000, enableHighAccuracy: true, maximumAge: 30000 },
     );
   }, []);
 
@@ -102,8 +101,8 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
         {!resultado && !erro && (
           <div className="rounded-2xl border border-border bg-background p-3 space-y-2 text-xs">
             <div className="font-bold text-primary-light mb-1">O que será validado</div>
-            <div className="flex items-start gap-2"><span>⏱️</span><span>Atividade iniciada há no máximo <strong>30 minutos</strong></span></div>
-            <div className="flex items-start gap-2"><span>📍</span><span>Início da atividade a no máximo <strong>500 metros</strong> daqui</span></div>
+            <div className="flex items-start gap-2"><span>⏱️</span><span>Atividade encerrada há no máximo <strong>30 minutos</strong></span></div>
+            <div className="flex items-start gap-2"><span>📍</span><span>Localização atual a no máximo <strong>500 metros do trajeto registrado</strong></span></div>
             <div className="flex items-start gap-2"><span>🏃</span><span>Corrida, caminhada, ciclismo ou natação registradas no Strava</span></div>
           </div>
         )}
@@ -118,7 +117,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
                 <div><strong className="text-foreground">{resultado.atividade.nome}</strong> · {resultado.atividade.tipo}</div>
                 <div>🏃 {resultado.atividade.distancia_km}km · ⏱️ {resultado.atividade.duracao_min}min</div>
                 {resultado.atividade.distancia_checkin_metros !== null && (
-                  <div>📍 {resultado.atividade.distancia_checkin_metros}m do local de check-in</div>
+                  <div>📍 {resultado.atividade.distancia_checkin_metros}m do trajeto registrado</div>
                 )}
               </div>
             )}
@@ -191,7 +190,6 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
         </div>
       </div>
       {cardData && <ExecutionCardModal data={cardData} onClose={() => setCardData(null)} />}
-
     </div>
   );
 }
