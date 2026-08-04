@@ -1,14 +1,11 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 const AUTH_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type CachedAuth = {
-  user: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] extends infer S
-    ? S extends { user: infer U }
-      ? U
-      : never
-    : never;
+  user: User;
   onboardingDone: boolean;
   checkedAt: number;
 };
