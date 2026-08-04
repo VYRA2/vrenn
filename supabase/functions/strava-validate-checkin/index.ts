@@ -9,15 +9,18 @@ const cors = {
 
 const STRAVA_CLIENT_ID = "268185";
 const STRAVA_CLIENT_SECRET = Deno.env.get("STRAVA_CLIENT_SECRET") ?? "";
-
-// A localização atual precisa estar próxima de qualquer ponto do trajeto registrado.
 const RAIO_TRAJETO_METROS = 500;
-
-// A atividade pode ser validada até X minutos depois de terminar.
 const JANELA_APOS_TERMINO_MINUTOS = 30;
 const TOLERANCIA_RELOGIO_MINUTOS = 5;
 
 type LatLng = [number, number];
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors, "Content-Type": "application/json" },
+  });
+}
 
 function isLatLng(value: unknown): value is LatLng {
   return Array.isArray(value)
@@ -37,15 +40,9 @@ function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function distanciaPontoSegmentoMetros(
-  lat: number,
-  lng: number,
-  inicio: LatLng,
-  fim: LatLng,
-): number {
+function distanciaPontoSegmentoMetros(lat: number, lng: number, inicio: LatLng, fim: LatLng): number {
   const metrosPorGrauLat = 111320;
   const metrosPorGrauLng = metrosPorGrauLat * Math.cos(lat * Math.PI / 180);
-
   const ax = (inicio[1] - lng) * metrosPorGrauLng;
   const ay = (inicio[0] - lat) * metrosPorGrauLat;
   const bx = (fim[1] - lng) * metrosPorGrauLng;
@@ -54,9 +51,7 @@ function distanciaPontoSegmentoMetros(
   const dy = by - ay;
   const comprimentoQuadrado = dx * dx + dy * dy;
 
-  if (comprimentoQuadrado === 0) {
-    return Math.sqrt(ax * ax + ay * ay);
-  }
+  if (comprimentoQuadrado === 0) return Math.sqrt(ax * ax + ay * ay);
 
   const t = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / comprimentoQuadrado));
   const px = ax + t * dx;
@@ -66,16 +61,11 @@ function distanciaPontoSegmentoMetros(
 
 function menorDistanciaAoTrajeto(lat: number, lng: number, pontos: LatLng[]): number | null {
   if (!pontos.length) return null;
-  if (pontos.length === 1) {
-    return distanciaMetros(lat, lng, pontos[0][0], pontos[0][1]);
-  }
+  if (pontos.length === 1) return distanciaMetros(lat, lng, pontos[0][0], pontos[0][1]);
 
   let menor = Number.POSITIVE_INFINITY;
   for (let i = 0; i < pontos.length - 1; i++) {
-    menor = Math.min(
-      menor,
-      distanciaPontoSegmentoMetros(lat, lng, pontos[i], pontos[i + 1]),
-    );
+    menor = Math.min(menor, distanciaPontoSegmentoMetros(lat, lng, pontos[i], pontos[i + 1]));
   }
   return Number.isFinite(menor) ? menor : null;
 }
@@ -84,28 +74,20 @@ function extrairPontosDoStream(payload: unknown): LatLng[] {
   const data = Array.isArray(payload)
     ? payload.find((stream: any) => stream?.type === "latlng")?.data
     : (payload as any)?.latlng?.data;
-
-  if (!Array.isArray(data)) return [];
-  return data.filter(isLatLng);
+  return Array.isArray(data) ? data.filter(isLatLng) : [];
 }
 
 async function buscarJsonStrava(url: string, accessToken: string): Promise<any> {
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   const data = await response.json();
-
   if (!response.ok || data?.errors) {
-    const message = data?.message ?? `Strava respondeu com status ${response.status}`;
-    throw new Error(message);
+    throw new Error(data?.message ?? `Strava respondeu com status ${response.status}`);
   }
-
   return data;
 }
 
 async function buscarPontosDoTrajeto(atividade: any, accessToken: string): Promise<LatLng[]> {
   let pontos: LatLng[] = [];
-
   try {
     const streams = await buscarJsonStrava(
       `https://www.strava.com/api/v3/activities/${atividade.id}/streams?keys=latlng&key_by_type=true`,
@@ -116,12 +98,10 @@ async function buscarPontosDoTrajeto(atividade: any, accessToken: string): Promi
     console.warn("Não foi possível carregar o stream GPS da atividade", error);
   }
 
-  // Fallback para atividades em que o stream não está disponível.
   if (!pontos.length) {
     if (isLatLng(atividade.start_latlng)) pontos.push(atividade.start_latlng);
     if (isLatLng(atividade.end_latlng)) pontos.push(atividade.end_latlng);
   }
-
   return pontos;
 }
 
@@ -137,12 +117,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const { data: userRes } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     const user = userRes?.user;
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
+    if (!user) return json({ error: "Não autorizado" }, 401);
 
     const {
       meta_id,
@@ -154,10 +129,7 @@ serve(async (req) => {
     } = await req.json();
 
     if (!meta_id && !duelo_id && !desafio_id) {
-      return new Response(JSON.stringify({ error: "meta_id, duelo_id ou desafio_id obrigatório" }), {
-        status: 400,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
+      return json({ error: "meta_id, duelo_id ou desafio_id obrigatório" }, 400);
     }
 
     const { data: conexao } = await supabase
@@ -166,12 +138,7 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (!conexao) {
-      return new Response(JSON.stringify({ error: "Strava não conectado", code: "not_connected" }), {
-        status: 400,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
+    if (!conexao) return json({ error: "Strava não conectado", code: "not_connected" }, 400);
 
     let accessToken = conexao.access_token;
     if (new Date(conexao.expires_at * 1000) < new Date()) {
@@ -186,46 +153,39 @@ serve(async (req) => {
         }),
       });
       const refreshData = await refreshRes.json();
-      if (!refreshRes.ok || !refreshData.access_token) {
-        throw new Error("Falha ao renovar token Strava");
-      }
+      if (!refreshRes.ok || !refreshData.access_token) throw new Error("Falha ao renovar token Strava");
 
       accessToken = refreshData.access_token;
-      await supabase.from("strava_connections").update({
+      const { error: tokenError } = await supabase.from("strava_connections").update({
         access_token: refreshData.access_token,
         refresh_token: refreshData.refresh_token,
         expires_at: refreshData.expires_at,
       }).eq("user_id", user.id);
+      if (tokenError) console.error("Falha ao salvar token renovado do Strava", tokenError);
     }
 
     let activityId = strava_activity_id;
     if (!activityId) {
-      // Não limitar pela hora de início: uma atividade longa pode ter começado há várias horas.
       const atividades = await buscarJsonStrava(
         "https://www.strava.com/api/v3/athlete/activities?per_page=10",
         accessToken,
       );
-
       if (!Array.isArray(atividades) || !atividades.length) {
-        return new Response(JSON.stringify({
+        return json({
           valido: false,
           motivo: "Nenhuma atividade recente encontrada no Strava",
           code: "no_activity",
-        }), { headers: { ...cors, "Content-Type": "application/json" } });
+        });
       }
-
       activityId = atividades[0].id;
     }
 
-    // Sempre buscar a representação detalhada para obter fim e mapa da atividade.
     const atividade = await buscarJsonStrava(
       `https://www.strava.com/api/v3/activities/${activityId}`,
       accessToken,
     );
 
     const erros: string[] = [];
-
-    // Validar 1: atividade concluída recentemente, não apenas iniciada recentemente.
     const inicioAtividade = new Date(atividade.start_date);
     const duracaoTotalSegundos = Number(atividade.elapsed_time ?? atividade.moving_time ?? 0);
     const fimAtividade = new Date(inicioAtividade.getTime() + duracaoTotalSegundos * 1000);
@@ -240,14 +200,11 @@ serve(async (req) => {
       erros.push("Horário da atividade no Strava está à frente do horário atual");
     }
 
-    // Validar 2: localização atual próxima de qualquer ponto do trajeto registrado.
     let distancia: number | null = null;
     const possuiLocalizacaoCheckin = Number.isFinite(lat_checkin) && Number.isFinite(lng_checkin);
-
     if (possuiLocalizacaoCheckin) {
       const pontosTrajeto = await buscarPontosDoTrajeto(atividade, accessToken);
       distancia = menorDistanciaAoTrajeto(lat_checkin, lng_checkin, pontosTrajeto);
-
       if (distancia === null) {
         erros.push("Atividade sem trajeto GPS no Strava — validação de localização não possível");
       } else if (distancia > RAIO_TRAJETO_METROS) {
@@ -259,25 +216,51 @@ serve(async (req) => {
     }
 
     const valido = erros.length === 0;
+    let checkinId: string | null = null;
 
     if (valido) {
       const msg = `Atividade Strava: ${atividade.name} (${(atividade.distance / 1000).toFixed(1)}km, ${Math.round(atividade.moving_time / 60)}min)`;
+
       if (desafio_id) {
-        await supabase.from("checkins_desafio_equipe").insert({
-          desafio_id,
-          user_id: user.id,
-          mensagem: msg,
-          foto_url: null,
-        });
+        const { data: checkin, error: insertError } = await supabase
+          .from("checkins_desafio_equipe")
+          .insert({ desafio_id, user_id: user.id, mensagem: msg, foto_url: null })
+          .select("id")
+          .single();
+
+        if (insertError) {
+          console.error("Erro ao registrar check-in do desafio:", insertError);
+          return json({
+            error: "A atividade foi validada, mas não foi possível registrar o check-in.",
+            code: "checkin_insert_failed",
+            details: insertError.message,
+          }, 500);
+        }
+        checkinId = checkin.id;
       } else {
-        await supabase.from("checkins").insert({
-          user_id: user.id,
-          meta_id: meta_id ?? null,
-          duelo_id: duelo_id ?? null,
-          wearable_activity_id: String(atividade.id),
-          validado: true,
-          mensagem: msg,
-        });
+        const { data: checkin, error: insertError } = await supabase
+          .from("checkins")
+          .insert({
+            user_id: user.id,
+            meta_id: meta_id ?? null,
+            duelo_id: duelo_id ?? null,
+            wearable_activity_id: String(atividade.id),
+            strava_activity_id: String(atividade.id),
+            validado: true,
+            mensagem: msg,
+          })
+          .select("id")
+          .single();
+
+        if (insertError) {
+          console.error("Erro ao registrar check-in:", insertError);
+          return json({
+            error: "A atividade foi validada, mas não foi possível registrar o check-in.",
+            code: "checkin_insert_failed",
+            details: insertError.message,
+          }, 500);
+        }
+        checkinId = checkin.id;
       }
     }
 
@@ -287,9 +270,10 @@ serve(async (req) => {
     const paceSec = Math.round(paceSecPerKm % 60);
     const ritmo = dstKm > 0 ? `${paceMin}'${String(paceSec).padStart(2, "0")}"` : null;
 
-    return new Response(JSON.stringify({
+    return json({
       valido,
       motivo: erros.join("; "),
+      checkin_id: checkinId,
       atividade: {
         id: atividade.id,
         nome: atividade.name,
@@ -312,11 +296,9 @@ serve(async (req) => {
         distancia_checkin_metros: distancia !== null ? Math.round(distancia) : null,
         localizacao_referencia: "trajeto",
       },
-    }), { headers: { ...cors, "Content-Type": "application/json" } });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
     });
+  } catch (e: any) {
+    console.error("Erro na validação do check-in Strava:", e);
+    return json({ error: e.message }, 500);
   }
 });
