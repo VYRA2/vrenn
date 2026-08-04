@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/lembrete-checkin")({
 
 const DEFAULT_TIME = "21:00";
 const DEFAULT_TIMEZONE = "America/Sao_Paulo";
+const db = supabase as any;
 
 function LembreteCheckinPage() {
   const { user } = Route.useRouteContext();
@@ -25,12 +26,11 @@ function LembreteCheckinPage() {
     const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || DEFAULT_TIMEZONE;
     setTimezone(detected);
 
-    supabase
-      .from("profiles")
+    db.from("profiles")
       .select("checkin_reminder_enabled, checkin_reminder_time, timezone")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) toast.error("Não foi possível carregar o lembrete.");
         if (data) {
           setEnabled(data.checkin_reminder_enabled ?? true);
@@ -43,7 +43,7 @@ function LembreteCheckinPage() {
 
   async function salvar() {
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await db
       .from("profiles")
       .update({
         checkin_reminder_enabled: enabled,
