@@ -330,9 +330,9 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
 
       {m && (
         <Link to="/meta/$id" params={{ id: post.meta_id }} className="mt-3 flex items-center gap-2 text-xs">
-          <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary-light uppercase tracking-wide shrink-0">META</span>
+          <span className="rounded-full bg-primary/15 border border-primary/30 px-2 py-0.5 text-[10px] font-black text-primary-light uppercase tracking-wide shrink-0">META</span>
           <span className="font-semibold truncate">{m.titulo}</span>
-          <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0 ${cumprido ? "text-accent" : "text-amber-400"}`}>
+          <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${cumprido ? "border-accent/50 text-accent" : "border-amber-500/50 text-amber-400"}`}>
             {cumprido ? <><CheckCircle2 size={11} /> Cumprido</> : <><Clock size={11} /> Em andamento</>}
           </span>
         </Link>
@@ -350,20 +350,23 @@ function PostCard({ post, userId, onChange }: { post: any; userId: string; onCha
           )}
         </button>
       ) : isConquista ? (
-        <button type="button" onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 aspect-[4/5] w-full overflow-hidden rounded-2xl block relative bg-gradient-to-br from-[#1a0f2e] via-[#2a0f3e] to-[#0F0F17]">
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+        <button type="button" onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-black/40 p-4 text-left">
+          <div className="flex w-[40%] shrink-0 items-center justify-center">
             <Trophy size={72} className="text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]" />
-            <div className="mt-4 text-lg font-black text-white">{m?.titulo ?? post.legenda ?? "Conquista"}</div>
-            <div className="mt-2 text-xs text-white/70">{isConquistaMeta ? "Meta concluída" : "Duelo vencido"}</div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-2xl font-black leading-tight text-white">{m?.titulo ?? post.legenda ?? "Conquista"}</div>
+            <div className="mt-1.5 text-sm font-bold text-amber-400">{isConquistaMeta ? "Meta concluída" : "Duelo vencido"}</div>
           </div>
         </button>
       ) : null}
 
       {isConquista && (
-        <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 w-full rounded-xl bg-gradient-to-r from-yellow-500/20 to-primary/20 border border-yellow-500/40 py-2.5 text-xs font-bold text-yellow-200">
-          Ver conquista completa
+        <button onClick={() => navigate({ to: "/post/$id", params: { id: post.id } })} className="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500/20 to-primary/20 border border-amber-500/40 py-2.5 text-xs font-bold text-yellow-200">
+          Ver conquista completa ›
         </button>
       )}
+
 
       {post.legenda && (
         <div className="mt-3">
