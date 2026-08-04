@@ -66,7 +66,7 @@ function MetaDetail() {
       const { data, error } = await supabase
         .from("metas")
         .select(
-          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, frequencia_tipo, frequencia_quantidade, profiles:user_id (nome, username, avatar_url)",
+          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, frequencia_tipo, frequencia_quantidade, profiles:user_id (nome, username, avatar_url)",
         )
         .eq("id", id)
         .maybeSingle();
