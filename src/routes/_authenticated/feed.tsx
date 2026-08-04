@@ -128,7 +128,7 @@ function Feed() {
             </Link>
             <Link to="/notificacoes" aria-label="Notificações" className="relative rounded-full p-2 text-foreground/90">
               <Bell size={22} />
-              {!!unread && unread > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />}
+              {!!unread && unread > 0 && <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />}
             </Link>
 
             <Link to="/wallet" className="rounded-full p-2 text-primary-light" aria-label="Carteira">
