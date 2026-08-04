@@ -66,7 +66,7 @@ function MetaDetail() {
       const { data, error } = await supabase
         .from("metas")
         .select(
-          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, valor_custodia, frequencia_tipo, frequencia_quantidade, profiles:user_id (nome, username, avatar_url)",
+          "id, user_id, titulo, categoria, descricao, prazo, progresso, status, foto_capa_url, created_at, tipo_validacao, local_id, frequencia_tipo, frequencia_quantidade, profiles:user_id (nome, username, avatar_url)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -97,8 +97,8 @@ function MetaDetail() {
   const { data: valorCustodia } = useQuery({
     queryKey: ["meta-valor-custodia", id],
     queryFn: async () => {
-      // valor_custodia já vem na query principal — evitar RPC extra que pode não existir
-      const { data } = await supabase.from("metas").select("valor_custodia").eq("id", id).maybeSingle();
+      // Somente o dono consegue ler o valor via RPC (coluna protegida por RLS/GRANT)
+      const { data } = await (supabase as any).rpc("get_meta_valor_custodia", { _meta_id: id });
       return Number(data ?? 0);
     },
   });
@@ -420,6 +420,7 @@ function MetaDetail() {
       {showEditSheet && (
         <EditMetaSheet
           meta={meta}
+          valorCustodiaAtual={Number(valorCustodia ?? 0)}
           onClose={() => setShowEditSheet(false)}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["meta", id] });
@@ -460,14 +461,14 @@ function MetaDetail() {
 
 // ─── Edit Sheet ────────────────────────────────────────────────────────────────
 
-function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => void; onSaved: () => void }) {
+function EditMetaSheet({ meta, valorCustodiaAtual = 0, onClose, onSaved }: { meta: any; valorCustodiaAtual?: number; onClose: () => void; onSaved: () => void }) {
   const [titulo, setTitulo] = useState(meta.titulo ?? "");
   const [categoria, setCategoria] = useState(meta.categoria ?? "");
   const [descricao, setDescricao] = useState(meta.descricao ?? "");
   const [motivacao, setMotivacao] = useState(meta.motivacao ?? "");
   const [prazo, setPrazo] = useState(meta.prazo ? meta.prazo.slice(0, 10) : "");
   const [valorCustodia, setValorCustodia] = useState(
-    meta.valor_custodia ? String(meta.valor_custodia).replace(".", ",") : "",
+    valorCustodiaAtual ? String(valorCustodiaAtual).replace(".", ",") : "",
   );
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>(meta.tipo_validacao ?? "foto_arbitro");
   const [localId, setLocalId] = useState<string | null>(meta.local_id ?? null);
