@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.cleanup-expired-stories]
 verify_jwt = false
+
+[functions.send-checkin-reminders]
+verify_jwt = false
