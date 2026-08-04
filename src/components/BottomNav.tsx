@@ -88,7 +88,12 @@ function SheetItem({ icon, title, desc, onClick, color }: { icon: React.ReactNod
 
 function NavItem({ to, Icon, label, active }: { to: string; Icon: typeof Home; label: string; active: boolean }) {
   return (
-    <Link to={to} className={`flex flex-col items-center gap-1 px-1 transition-colors ${active ? "text-primary-light" : "text-muted-foreground"}`}>
+    <Link
+      to={to}
+      preload="intent"
+      preloadDelay={0}
+      className={`flex flex-col items-center gap-1 px-1 transition-colors ${active ? "text-primary-light" : "text-muted-foreground"}`}
+    >
       <Icon size={22} strokeWidth={active ? 2.4 : 2} />
       <span className="text-[10px] font-medium leading-none">{label}</span>
     </Link>
