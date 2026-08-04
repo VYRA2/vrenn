@@ -11,15 +11,33 @@ type CachedAuth = {
 };
 
 let cachedAuth: CachedAuth | null = null;
+let authListenerStarted = false;
 
 export function clearAuthenticatedRouteCache() {
   cachedAuth = null;
+}
+
+function ensureAuthCacheInvalidation() {
+  if (authListenerStarted || typeof window === "undefined") return;
+  authListenerStarted = true;
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "PASSWORD_RECOVERY") {
+      clearAuthenticatedRouteCache();
+      return;
+    }
+
+    if (event === "SIGNED_IN" && cachedAuth?.user.id !== session?.user.id) {
+      clearAuthenticatedRouteCache();
+    }
+  });
 }
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   staleTime: AUTH_CACHE_TTL_MS,
   beforeLoad: async () => {
+    ensureAuthCacheInvalidation();
     const now = Date.now();
 
     if (cachedAuth && now - cachedAuth.checkedAt < AUTH_CACHE_TTL_MS) {
@@ -33,7 +51,7 @@ export const Route = createFileRoute("/_authenticated")({
     const user = data.session?.user;
 
     if (error || !user) {
-      cachedAuth = null;
+      clearAuthenticatedRouteCache();
       throw redirect({ to: "/auth" });
     }
 
