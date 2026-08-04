@@ -420,6 +420,7 @@ function MetaDetail() {
       {showEditSheet && (
         <EditMetaSheet
           meta={meta}
+          valorCustodiaAtual={Number(valorCustodia ?? 0)}
           onClose={() => setShowEditSheet(false)}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["meta", id] });
