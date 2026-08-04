@@ -461,14 +461,14 @@ function MetaDetail() {
 
 // ─── Edit Sheet ────────────────────────────────────────────────────────────────
 
-function EditMetaSheet({ meta, onClose, onSaved }: { meta: any; onClose: () => void; onSaved: () => void }) {
+function EditMetaSheet({ meta, valorCustodiaAtual = 0, onClose, onSaved }: { meta: any; valorCustodiaAtual?: number; onClose: () => void; onSaved: () => void }) {
   const [titulo, setTitulo] = useState(meta.titulo ?? "");
   const [categoria, setCategoria] = useState(meta.categoria ?? "");
   const [descricao, setDescricao] = useState(meta.descricao ?? "");
   const [motivacao, setMotivacao] = useState(meta.motivacao ?? "");
   const [prazo, setPrazo] = useState(meta.prazo ? meta.prazo.slice(0, 10) : "");
   const [valorCustodia, setValorCustodia] = useState(
-    meta.valor_custodia ? String(meta.valor_custodia).replace(".", ",") : "",
+    valorCustodiaAtual ? String(valorCustodiaAtual).replace(".", ",") : "",
   );
   const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>(meta.tipo_validacao ?? "foto_arbitro");
   const [localId, setLocalId] = useState<string | null>(meta.local_id ?? null);
