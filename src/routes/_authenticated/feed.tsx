@@ -146,7 +146,7 @@ function Feed() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold transition-all duration-200 ${tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`shrink-0 rounded-full px-5 py-1.5 text-sm font-bold transition-all duration-200 ${tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground"}`}
             >
               {t.label}
             </button>
