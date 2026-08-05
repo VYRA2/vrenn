@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Target, FileText, Shield, Flag, Heart, DollarSign, Trophy, Users, ChevronRight, ChevronDown, Lock, Loader2, MessageCircle, Calendar, Award, BarChart2, Star } from "lucide-react";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
+import { ObjetivoKmPicker } from "@/components/ObjetivoKmPicker";
+import { subcategoriaSuportaStrava } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/equipes/$id/desafio/novo")({
   component: NovoDesafio,
@@ -33,6 +35,8 @@ function NovoDesafio() {
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("saude");
   const [subcategoria, setSubcategoria] = useState<string | null>(null);
+  const [objetivoKm, setObjetivoKm] = useState<number | null>(null);
+  const [modoLivre, setModoLivre] = useState(false);
   const [duracao, setDuracao] = useState(30);
   const [valor, setValor] = useState("50,00");
   const [premiacao, setPremiacao] = useState("");
@@ -61,7 +65,8 @@ function NovoDesafio() {
       const soma = customDist.reduce((a, b) => a + b.pct, 0);
       if (Math.abs(soma - 100) > 0.5) return toast.error(`Soma dos percentuais deve ser 100% (atual: ${soma.toFixed(0)}%)`);
     }
-    if (step === 5 && tipoValidacao !== "foto_arbitro" && !localId) return toast.error("Selecione ou cadastre um local");
+    if (step === 5 && ["qrcode", "geolocalizacao"].includes(tipoValidacao) && !localId) return toast.error("Selecione ou cadastre um local");
+    if (step === 5 && tipoValidacao === "strava" && subcategoriaSuportaStrava(subcategoria) && !modoLivre && !objetivoKm) return toast.error("Defina a distância que o Strava deve validar");
     setStep((s) => Math.min(6, s + 1));
   }
 
@@ -75,6 +80,8 @@ function NovoDesafio() {
       descricao: descricao.trim(),
       categoria,
       subcategoria,
+      modalidade: subcategoria,
+      objetivo_km: subcategoriaSuportaStrava(subcategoria) && !modoLivre ? objetivoKm : null,
       duracao_dias: duracao,
       data_inicio: inicio.toISOString().slice(0, 10),
       data_fim: fim.toISOString().slice(0, 10),
@@ -83,7 +90,7 @@ function NovoDesafio() {
       regras: { ...regras, consequencias, personalizadas: [] },
       criador_id: user.id,
       tipo_validacao: tipoValidacao,
-      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+      local_id: ["qrcode", "geolocalizacao"].includes(tipoValidacao) ? localId : null,
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
       modo_distribuicao: modoDistribuicao,
@@ -157,6 +164,14 @@ function NovoDesafio() {
             </div>
 
             <SubcategoriaPicker categoria={categoria} value={subcategoria} onChange={setSubcategoria} label="Modalidade" />
+            {subcategoriaSuportaStrava(subcategoria) && (
+              <ObjetivoKmPicker
+                subcategoria={subcategoria!}
+                objetivoKm={objetivoKm}
+                modoLivre={modoLivre}
+                onChange={(km, livre) => { setObjetivoKm(km); setModoLivre(livre); }}
+              />
+            )}
 
             <div className="rounded-2xl border border-border bg-card">
               <div className="p-4 flex items-start gap-3 border-b border-border">

@@ -10,6 +10,8 @@ import { QrCodeExportCard } from "@/components/QrCodeExportCard";
 import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { StravaCheckinModal } from "@/components/StravaCheckinModal";
+import { GeolocationCheckinModal } from "@/components/GeolocationCheckinModal";
+import { TeamChallengeValidationPanel } from "@/components/TeamChallengeValidationPanel";
 import {
   ArrowLeft, MoreHorizontal, Users, Calendar, BadgeCheck, Trophy, Coins, Target, Camera, MessageSquare,
   Dumbbell, BookOpen, Zap, Brain, ChevronRight, Shield, UserPlus, Sparkles, Copy, LogIn, CheckCircle2, Loader2,
@@ -251,24 +253,10 @@ function EquipeProfile() {
 
       const entrada = Number(desafio.valor_entrada ?? 0);
 
-      // 1. Verifica e trava saldo se houver valor de entrada
-      if (entrada > 0) {
-        const { data: wallet } = await (supabase as any)
-          .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
-        const saldo = Number(wallet?.balance ?? 0);
-        if (saldo < entrada) {
-          toast.error(`Saldo insuficiente. Você tem ${fmtMoeda(saldo)} e a entrada é ${fmtMoeda(entrada)}.`);
-          setEntrando(null);
-          return;
-        }
-        const { error: lockErr } = await (supabase as any).from("wallets").update({
-          balance: saldo - entrada,
-          locked_balance: Number(wallet?.locked_balance ?? 0) + entrada,
-        }).eq("user_id", user.id);
-        if (lockErr) throw new Error(lockErr.message);
-      }
+      // O banco verifica e trava a custódia de forma atômica ao inserir o participante.
+      // Isso evita dupla cobrança e impede manipulação pelo navegador.
 
-      // 2. Insere participação com ON CONFLICT — idempotente
+      // Insere participação com ON CONFLICT — idempotente
       const { error: insErr } = await (supabase as any).from("desafio_equipe_participantes").upsert({
         desafio_id: desafio.id,
         user_id: user.id,
@@ -282,15 +270,6 @@ function EquipeProfile() {
           refetchParticipacoes();
           setEntrando(null);
           return;
-        }
-        // Desfaz o lock se insert falhou por outro motivo
-        if (entrada > 0) {
-          const { data: wallet } = await (supabase as any)
-            .from("wallets").select("balance, locked_balance").eq("user_id", user.id).maybeSingle();
-          await (supabase as any).from("wallets").update({
-            balance: Number(wallet?.balance ?? 0) + entrada,
-            locked_balance: Math.max(0, Number(wallet?.locked_balance ?? 0) - entrada),
-          }).eq("user_id", user.id);
         }
         throw new Error(insErr.message);
       }
@@ -960,6 +939,8 @@ function EquipeProfile() {
         </div>
       )}
 
+      <TeamChallengeValidationPanel teamId={id} userId={user.id} />
+
       <BottomNav />
     </main>
   );
@@ -1128,7 +1109,7 @@ function EditDesafioSheet({ desafio, onClose, onSaved }: { desafio: any; onClose
       duracao_dias: parseInt(duracaoDias) || desafio.duracao_dias,
       premiacao: premiacao.trim() || null,
       tipo_validacao: tipoValidacao,
-      local_id: tipoValidacao === "foto_arbitro" ? null : localId,
+      local_id: ["qrcode", "geolocalizacao"].includes(tipoValidacao) ? localId : null,
     }).eq("id", desafio.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1246,12 +1227,15 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
     staleTime: 5 * 60 * 1000,
   });
 
-  async function registrarQr(_raw: string) {
-    const { error } = await (supabase as any).from("checkins_desafio_equipe").insert({
-      desafio_id: desafio.id,
-      user_id: userId,
-      mensagem: `Check-in validado por QR Code em ${local?.nome ?? "local"}.`,
-      foto_url: null,
+  async function registrarQr(raw: string) {
+    const { error } = await (supabase as any).rpc("registrar_checkin_validado", {
+      _entidade: "desafio_equipe",
+      _entidade_id: desafio.id,
+      _metodo: "qrcode",
+      _qrcode_token: raw,
+      _latitude: null,
+      _longitude: null,
+      _mensagem: `Check-in validado por QR Code em ${local?.nome ?? "local"}.`,
     });
     if (error) throw error;
     toast.success("Check-in validado por QR Code!");
@@ -1295,6 +1279,10 @@ function CheckinDesafioModal({ desafio, userId, onClose, onCreated }: {
   // ─── Strava: valida atividade recente via edge function ───
   if (desafio.tipo_validacao === "strava") {
     return <StravaCheckinModal tipo="desafio_equipe" refId={desafio.id} userId={userId} onClose={onClose} onCreated={onCreated} />;
+  }
+
+  if (desafio.tipo_validacao === "geolocalizacao") {
+    return <GeolocationCheckinModal entityType="desafio_equipe" entityId={desafio.id} local={local} onClose={onClose} onCreated={onCreated} />;
   }
 
   // ─── QR Code: exige leitura da câmera ───

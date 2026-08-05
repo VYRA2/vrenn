@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { SubcategoriaPicker } from "@/components/SubcategoriaPicker";
 import { ObjetivoKmPicker } from "@/components/ObjetivoKmPicker";
 import { subcategoriaSuportaStrava } from "@/lib/categorias";
+import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { toast } from "sonner";
 import { ArrowLeft, Info, Swords, Trophy, Users, Loader2, X, Flame } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -248,11 +249,15 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
   const [aberto, setAberto] = useState(false);
   const [frequenciaTipo, setFrequenciaTipo] = useState<"diario"|"semanal"|"total">("total");
   const [frequenciaQtd, setFrequenciaQtd] = useState(1);
+  const [tipoValidacao, setTipoValidacao] = useState<TipoValidacao>("foto_arbitro");
+  const [localId, setLocalId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const findUser = useServerFn(findUserForInvite);
 
   async function criar() {
     if (!titulo) return toast.error("Defina o título");
+    if (["qrcode", "geolocalizacao"].includes(tipoValidacao) && !localId) return toast.error("Selecione o local de validação");
+    if (tipoValidacao === "strava" && subcategoriaSuportaStrava(subcategoria) && !modoLivre && !objetivoKm) return toast.error("Defina a distância que o Strava deve validar");
     setLoading(true);
     try {
       let opponentId: string | null = null;
@@ -281,7 +286,9 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         valor_custodia: parseFloat(valorCustodia) || 0,
         frequencia_tipo: frequenciaTipo,
         frequencia_quantidade: frequenciaQtd,
-        status: opponentId ? "em_andamento" : "pendente",
+        tipo_validacao: tipoValidacao,
+        local_id: ["qrcode", "geolocalizacao"].includes(tipoValidacao) ? localId : null,
+        status: "pendente",
       }).select().single();
 
       if (error) throw error;
@@ -373,6 +380,18 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
               ))}
             </div>
           )}
+        </div>
+
+        <div>
+          <span className="mb-2 block text-xs font-medium text-muted-foreground">Como o resultado será validado</span>
+          <ValidacaoStep
+            tipoValidacao={tipoValidacao}
+            onChangeTipo={setTipoValidacao}
+            localId={localId}
+            onChangeLocalId={setLocalId}
+            userId={userId}
+            subcategoria={subcategoria}
+          />
         </div>
 
         {/* Tipo: duelo privado ou aberto */}

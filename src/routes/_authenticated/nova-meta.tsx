@@ -65,9 +65,8 @@ function NovaMeta() {
   });
 
   function proximoStep() {
-    // Geolocalização usa coordenadas em tempo real — não precisa de local cadastrado
-    if (step === 3 && tipoValidacao === "qrcode" && !localId) {
-      return toast.error("Selecione ou cadastre um local para QR Code");
+    if (step === 3 && ["qrcode", "geolocalizacao"].includes(tipoValidacao) && !localId) {
+      return toast.error("Selecione ou cadastre o local que será usado na validação");
     }
     setStep(step + 1);
   }
@@ -89,7 +88,7 @@ function NovaMeta() {
       prazo: prazo ? new Date(prazo).toISOString() : null,
       valor_custodia: valor,
       tipo_validacao: tipoValidacao,
-      local_id: tipoValidacao === "qrcode" ? localId : null,
+      local_id: ["qrcode", "geolocalizacao"].includes(tipoValidacao) ? localId : null,
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
     };
