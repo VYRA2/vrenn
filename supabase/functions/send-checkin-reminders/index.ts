@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
         });
 
         let sent = false;
-        await Promise.allSettled((subscriptions ?? []).map(async (subscription) => {
+        await Promise.allSettled((pushEnabled ? subscriptions ?? [] : []).map(async (subscription) => {
           try {
             await webpush.sendNotification(
               {
