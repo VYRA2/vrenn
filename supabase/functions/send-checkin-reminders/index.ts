@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    if (!VAPID_PRIVATE_KEY) throw new Error("VAPID_PRIVATE_KEY não configurada");
+    const pushEnabled = ensurePushConfigured();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
