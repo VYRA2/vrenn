@@ -88,6 +88,47 @@ export type Database = {
           },
         ]
       }
+      checkin_reminder_deliveries: {
+        Row: {
+          commitment_id: string
+          commitment_type: string
+          id: string
+          local_date: string
+          notification_id: string | null
+          push_sent: boolean
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          commitment_id: string
+          commitment_type: string
+          id?: string
+          local_date: string
+          notification_id?: string | null
+          push_sent?: boolean
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          commitment_id?: string
+          commitment_type?: string
+          id?: string
+          local_date?: string
+          notification_id?: string | null
+          push_sent?: boolean
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_reminder_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notificacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkin_validacoes: {
         Row: {
           arbitro_id: string
@@ -1224,6 +1265,8 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           categorias_interesse: string[] | null
+          checkin_reminder_enabled: boolean
+          checkin_reminder_time: string
           cpf: string | null
           created_at: string
           creditos: number
@@ -1238,6 +1281,7 @@ export type Database = {
           reputacao_arbitro: number
           reputacao_pts: number
           streak_dias: number
+          timezone: string
           unidades: string
           username: string
         }
@@ -1249,6 +1293,8 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           categorias_interesse?: string[] | null
+          checkin_reminder_enabled?: boolean
+          checkin_reminder_time?: string
           cpf?: string | null
           created_at?: string
           creditos?: number
@@ -1263,6 +1309,7 @@ export type Database = {
           reputacao_arbitro?: number
           reputacao_pts?: number
           streak_dias?: number
+          timezone?: string
           unidades?: string
           username: string
         }
@@ -1274,6 +1321,8 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           categorias_interesse?: string[] | null
+          checkin_reminder_enabled?: boolean
+          checkin_reminder_time?: string
           cpf?: string | null
           created_at?: string
           creditos?: number
@@ -1288,6 +1337,7 @@ export type Database = {
           reputacao_arbitro?: number
           reputacao_pts?: number
           streak_dias?: number
+          timezone?: string
           unidades?: string
           username?: string
         }
@@ -2023,6 +2073,10 @@ export type Database = {
         Returns: boolean
       }
       verificar_temporadas_encerradas: { Args: never; Returns: undefined }
+      verify_checkin_reminder_cron_secret: {
+        Args: { _secret: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
