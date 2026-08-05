@@ -326,6 +326,7 @@ Deno.serve(async (req) => {
       reminders_created: remindersCreated,
       pushes_sent: pushesSent,
       skipped_duplicates: skippedDuplicates,
+      push_enabled: pushEnabled,
     });
   } catch (error) {
     console.error("send-checkin-reminders error", error);
