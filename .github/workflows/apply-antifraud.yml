@@ -24,6 +24,40 @@ jobs:
           ref: fix/validated-automatic-outcomes
           fetch-depth: 0
 
+      - name: Ajustar transformador à versão atual
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/apply_antifraud.py')
+          text = p.read_text(encoding='utf-8')
+          old = '''# Remove a trava manual de saldo ao entrar; o trigger do banco já é atômico e autoritativo.
+          regex_once(
+              "src/routes/_authenticated/equipes.$id.index.tsx",
+              r''' + "'''" + r'''      // 1\. Verifica e trava saldo se houver valor[\s\S]*?      // 2\. Insere participante''' + "'''" + ''',
+              ''' + "'''" + '''      // O banco verifica e trava a custódia de forma atômica ao inserir o participante.
+                // Isso evita dupla cobrança e impede manipulação pelo navegador.
+
+                // Insere participante''' + "'''" + ''',
+          )'''
+          new = '''# Remove a trava manual de saldo ao entrar; o trigger do banco já é atômico e autoritativo.
+          regex_once(
+              "src/routes/_authenticated/equipes.$id.index.tsx",
+              r''' + "'''" + r'''      // 1\. Verifica e trava saldo se houver valor de entrada[\s\S]*?      // 2\. Insere participação com ON CONFLICT — idempotente''' + "'''" + ''',
+              ''' + "'''" + '''      // O banco verifica e trava a custódia de forma atômica ao inserir o participante.
+                // Isso evita dupla cobrança e impede manipulação pelo navegador.
+
+                // Insere participação com ON CONFLICT — idempotente''' + "'''" + ''',
+          )
+          regex_once(
+              "src/routes/_authenticated/equipes.$id.index.tsx",
+              r''' + "'''" + r'''        // Desfaz o lock se insert falhou por outro motivo\n        if \(entrada > 0\) \{[\s\S]*?        \}\n        throw new Error\(insErr\.message\);''' + "'''" + ''',
+              ''' + "'''" + '''        throw new Error(insErr.message);''' + "'''" + ''',
+          )'''
+          if old not in text:
+              raise SystemExit('bloco de compatibilidade não encontrado')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
       - name: Aplicar alterações
         run: python3 scripts/apply_antifraud.py
 
