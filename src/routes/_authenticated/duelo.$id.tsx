@@ -8,6 +8,7 @@ import { QrScanner } from "@/components/QrScanner";
 import { ValidacaoStep, type TipoValidacao } from "@/components/ValidacaoStep";
 import { StravaCheckinModal } from "@/components/StravaCheckinModal";
 import { DueloResultadoCard } from "@/components/DueloResultadoCard";
+import { GeolocationCheckinModal } from "@/components/GeolocationCheckinModal";
 
 import { toast } from "sonner";
 import { useState } from "react";
@@ -39,7 +40,6 @@ function DueloDetalhe() {
   const [showDelete, setShowDelete] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
   const [showJustificar, setShowJustificar] = useState(false);
-  const [showEncerrar, setShowEncerrar] = useState(false);
   const [showConvidarArbitro, setShowConvidarArbitro] = useState(false);
   const [showArbitroDeclarar, setShowArbitroDeclarar] = useState(false);
 
@@ -88,7 +88,7 @@ function DueloDetalhe() {
         .maybeSingle();
       return data;
     },
-    enabled: !!duelo && duelo.status === "ativo",
+    enabled: !!duelo && dueloAtivo,
   });
 
   // Justificativa pendente (enviada pelo oponente esperando minha aprovação)
@@ -103,7 +103,7 @@ function DueloDetalhe() {
         .maybeSingle();
       return data;
     },
-    enabled: !!duelo && duelo.status === "ativo",
+    enabled: !!duelo && dueloAtivo,
   });
 
   // Check-ins do vencedor — usado no card de resultado
@@ -141,9 +141,9 @@ function DueloDetalhe() {
   const isArbitro = duelo.arbitro_id === user.id;
   const temArbitro = !!duelo.arbitro_id && duelo.arbitro_status === 'aceito';
   const usaArbitro = duelo.tipo_validacao === 'foto_arbitro';
-  const podeEncerrarManual = isOwner && duelo.status === 'ativo' && !usaArbitro;
-  const podeConvidarArbitro = isOwner && duelo.status === 'ativo' && usaArbitro && !duelo.arbitro_id;
-  const podeArbitroDeclarar = isArbitro && duelo.arbitro_status === 'aceito' && duelo.status === 'ativo';
+  const podeConvidarArbitro = isOwner && dueloAtivo && usaArbitro && !duelo.arbitro_id;
+  const dueloAtivo = ['ativo', 'em_andamento'].includes(duelo.status);
+  const podeArbitroDeclarar = isArbitro && duelo.arbitro_status === 'aceito' && dueloAtivo;
 
   const frequenciaLabel = duelo.frequencia_tipo === "diario"
     ? `${duelo.frequencia_quantidade}x por dia`
@@ -268,7 +268,7 @@ function DueloDetalhe() {
         )}
 
         {/* Card árbitro — árbitro aceito, aguardando declaração */}
-        {isOwner && usaArbitro && temArbitro && duelo.status === 'ativo' && (
+        {isOwner && usaArbitro && temArbitro && dueloAtivo && (
           <section className="rounded-2xl border border-green-500/40 bg-green-500/5 p-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/15 text-lg">✅</div>
             <div className="flex-1">
@@ -291,23 +291,6 @@ function DueloDetalhe() {
             <button onClick={() => setShowArbitroDeclarar(true)}
               className="w-full rounded-xl bg-primary/10 border border-primary/40 py-2.5 text-sm font-bold text-primary-light">
               Declarar resultado do duelo 🏆
-            </button>
-          </section>
-        )}
-
-        {/* Encerrar manual — apenas QR/geo, sem árbitro */}
-        {podeEncerrarManual && (
-          <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-light">🏆</div>
-              <div className="flex-1">
-                <div className="text-sm font-bold">Encerrar duelo</div>
-                <div className="text-xs text-muted-foreground">O sistema detectou o prazo. Declare o resultado e libere as custódias.</div>
-              </div>
-            </div>
-            <button onClick={() => setShowEncerrar(true)}
-              className="w-full rounded-xl bg-primary/10 border border-primary/40 py-2.5 text-sm font-bold text-primary-light">
-              Declarar resultado 🏆
             </button>
           </section>
         )}
@@ -399,7 +382,7 @@ function DueloDetalhe() {
         )}
 
         {/* Botões de ação — check-in e justificar falta */}
-        {duelo.status === "ativo" && !euEliminado && (
+        {dueloAtivo && !euEliminado && (
           <div className="flex gap-2">
             <button
               onClick={() => setShowCheckin(true)}
@@ -481,14 +464,6 @@ function DueloDetalhe() {
           userId={user.id}
           onClose={() => setShowArbitroDeclarar(false)}
           onDone={() => { setShowArbitroDeclarar(false); qc.invalidateQueries({ queryKey: ["duelo", id] }); }}
-        />
-      )}
-      {showEncerrar && (
-        <EncerrarDueloModal
-          duelo={duelo}
-          userId={user.id}
-          onClose={() => setShowEncerrar(false)}
-          onDone={() => { setShowEncerrar(false); qc.invalidateQueries({ queryKey: ["duelo", id] }); }}
         />
       )}
       {showDelete && (
@@ -957,6 +932,10 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
     return <StravaCheckinModal tipo="duelo" refId={dueloId} userId={userId} onClose={onClose} onCreated={onDone} />;
   }
 
+  if (tipoValidacao === "geolocalizacao") {
+    return <GeolocationCheckinModal entityType="duelo" entityId={dueloId} local={local} onClose={onClose} onCreated={onDone} />;
+  }
+
   // ─── QR Code: escaneia obrigatoriamente antes de registrar ───
   if (tipoValidacao === "qrcode") {
     if (!local?.id) {
@@ -979,13 +958,15 @@ function CheckinDueloModal({ dueloId, userId, tipoValidacao, local, onClose, onD
         validateLocalId={local.id}
         onCancel={onClose}
         onValid={async (raw) => {
-          const { error } = await supabase.from("checkins").insert({
-            duelo_id: dueloId,
-            user_id: userId,
-            meta_id: null,
-            validado: true,
-            mensagem: `Check-in validado por QR Code em ${local.nome}.`,
-          } as any);
+          const { error } = await (supabase as any).rpc("registrar_checkin_validado", {
+            _entidade: "duelo",
+            _entidade_id: dueloId,
+            _metodo: "qrcode",
+            _qrcode_token: raw,
+            _latitude: null,
+            _longitude: null,
+            _mensagem: `Check-in validado por QR Code em ${local.nome}.`,
+          });
           if (error) throw error;
           toast.success("Check-in validado por QR Code!");
           onDone();

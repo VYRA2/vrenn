@@ -1474,3 +1474,43 @@ GRANT EXECUTE ON FUNCTION public.resolver_desafios_equipe_prazo_vencido() TO ser
 GRANT EXECUTE ON FUNCTION public.processar_eliminacoes_diarias() TO service_role;
 
 NOTIFY pgrst,'reload schema';
+
+
+-- Ajuste final: evita referência a OLD durante INSERT.
+CREATE OR REPLACE FUNCTION public.vrenn_after_validated_checkin()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.validado=true THEN
+      IF NEW.meta_id IS NOT NULL THEN PERFORM public.vrenn_evaluate_meta(NEW.meta_id);
+      ELSIF NEW.duelo_id IS NOT NULL THEN PERFORM public.vrenn_evaluate_duel(NEW.duelo_id,false); END IF;
+      PERFORM public.dar_reputacao(NEW.user_id,5,'checkin_validado',COALESCE(NEW.meta_id,NEW.duelo_id));
+    END IF;
+  ELSIF NEW.validado=true AND OLD.validado IS DISTINCT FROM true THEN
+    IF NEW.meta_id IS NOT NULL THEN PERFORM public.vrenn_evaluate_meta(NEW.meta_id);
+    ELSIF NEW.duelo_id IS NOT NULL THEN PERFORM public.vrenn_evaluate_duel(NEW.duelo_id,false); END IF;
+    PERFORM public.dar_reputacao(NEW.user_id,5,'checkin_validado',COALESCE(NEW.meta_id,NEW.duelo_id));
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.vrenn_after_validated_team_checkin()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.validado=true THEN
+      PERFORM public.vrenn_evaluate_team_participant(NEW.desafio_id,NEW.user_id,false);
+      PERFORM public.dar_reputacao(NEW.user_id,5,'checkin_desafio_validado',NEW.desafio_id);
+    END IF;
+  ELSIF NEW.validado=true AND OLD.validado IS DISTINCT FROM true THEN
+    PERFORM public.vrenn_evaluate_team_participant(NEW.desafio_id,NEW.user_id,false);
+    PERFORM public.dar_reputacao(NEW.user_id,5,'checkin_desafio_validado',NEW.desafio_id);
+  END IF;
+  RETURN NEW;
+END;
+$$;

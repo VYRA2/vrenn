@@ -57,7 +57,6 @@ function MetaDetail() {
   const [showCheckinModal, setShowCheckinModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [showConcluirModal, setShowConcluirModal] = useState(false);
   const [showJustificarModal, setShowJustificarModal] = useState(false);
 
   const { data: meta, isLoading } = useQuery({
@@ -349,12 +348,6 @@ function MetaDetail() {
             >
               <Camera size={16} /> Check-in
             </button>
-            <button
-              onClick={() => setShowConcluirModal(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-accent/60 bg-accent/10 px-4 py-3.5 text-sm font-bold text-accent"
-            >
-              <CheckCircle2 size={16} /> Concluir
-            </button>
             {/* Justificar falta — aparece só quando frequência diária e não fez check-in hoje */}
             {(meta as any).frequencia_tipo === "diario" && !checkinHoje && (
               justificativaHoje ? (
@@ -396,6 +389,7 @@ function MetaDetail() {
           onClose={() => setShowCheckinModal(false)}
           onCreated={() => {
             qc.invalidateQueries({ queryKey: ["checkins", id] });
+            qc.invalidateQueries({ queryKey: ["meta", id] });
             qc.invalidateQueries({ queryKey: ["feed-metas"] });
             setShowCheckinModal(false);
           }}
@@ -425,21 +419,6 @@ function MetaDetail() {
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["meta", id] });
             setShowEditSheet(false);
-          }}
-        />
-      )}
-
-      {showConcluirModal && (
-        <ConcluirMetaModal
-          metaId={id}
-          titulo={meta.titulo}
-          valorCustodia={Number(valorCustodia ?? 0)}
-          onClose={() => setShowConcluirModal(false)}
-          onConcluida={() => {
-            qc.invalidateQueries({ queryKey: ["meta", id] });
-            qc.invalidateQueries({ queryKey: ["my-metas-list"] });
-            qc.invalidateQueries({ queryKey: ["wallet"] });
-            setShowConcluirModal(false);
           }}
         />
       )}
@@ -848,14 +827,22 @@ function distanciaMetros(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function registrarCheckinAutomatico(metaId: string, userId: string, mensagem: string) {
-  const { error } = await supabase.from("checkins").insert({
-    meta_id: metaId,
-    user_id: userId,
-    mensagem,
-    foto_url: null,
-    validado: true,
-  } as any);
+async function registrarCheckinAutomatico(
+  metaId: string,
+  _userId: string,
+  mensagem: string,
+  metodo: "qrcode" | "geolocalizacao",
+  proof: { token?: string; latitude?: number; longitude?: number } = {},
+) {
+  const { error } = await (supabase as any).rpc("registrar_checkin_validado", {
+    _entidade: "meta",
+    _entidade_id: metaId,
+    _metodo: metodo,
+    _qrcode_token: proof.token ?? null,
+    _latitude: proof.latitude ?? null,
+    _longitude: proof.longitude ?? null,
+    _mensagem: mensagem,
+  });
   if (error) throw error;
 }
 
@@ -1070,7 +1057,7 @@ function CheckinQrCode({ metaId, userId, local, onClose, onCreated }: any) {
     setScanning(false);
     setLoading(true);
     try {
-      await registrarCheckinAutomatico(metaId, userId, `Check-in validado por QR Code em ${local.nome}.`);
+      await registrarCheckinAutomatico(metaId, userId, `Check-in validado por QR Code em ${local.nome}.`, "qrcode", { token: valor });
       toast.success("Check-in validado por QR Code!");
       onCreated();
     } catch (e: any) {
@@ -1149,7 +1136,7 @@ function CheckinGeolocalizacao({ metaId, userId, local, onClose, onCreated }: an
           return;
         }
         try {
-          await registrarCheckinAutomatico(metaId, userId, `Check-in validado por geolocalização em ${local.nome}.`);
+          await registrarCheckinAutomatico(metaId, userId, `Check-in validado por geolocalização em ${local.nome}.`, "geolocalizacao", { latitude: pos.coords.latitude, longitude: pos.coords.longitude });
           toast.success("Check-in validado!");
           onCreated();
         } catch (e: any) {
@@ -1202,19 +1189,13 @@ function CheckinItem({ checkin, validacoes, canValidate, userId, onChange }: any
   const questionados = validacoes.filter((v: any) => v.status === "questionado").length;
 
   async function validar(status: "validado" | "questionado") {
-    const { error } = await supabase.from("checkin_validacoes").upsert(
-      {
-        checkin_id: checkin.id,
-        arbitro_id: userId,
-        status,
-        comentario: comentario || null,
-      },
-      { onConflict: "checkin_id,arbitro_id" },
-    );
+    const { error } = await (supabase as any).rpc("validar_checkin_arbitro", {
+      _tipo_checkin: "geral",
+      _checkin_id: checkin.id,
+      _aprovar: status === "validado",
+      _comentario: comentario || null,
+    });
     if (error) return toast.error(error.message);
-    if (status === "validado") {
-      await supabase.from("checkins").update({ validado: true }).eq("id", checkin.id);
-    }
     await supabase.rpc("notify", {
       _user_id: checkin.user_id,
       _tipo: status === "validado" ? "apoio" : "cobranca",

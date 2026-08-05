@@ -132,6 +132,39 @@ serve(async (req) => {
       return json({ error: "meta_id, duelo_id ou desafio_id obrigatório" }, 400);
     }
 
+    const entityType = meta_id ? "meta" : duelo_id ? "duelo" : "desafio_equipe";
+    const entityId = meta_id ?? duelo_id ?? desafio_id;
+    let entity: any = null;
+
+    if (entityType === "meta") {
+      const { data } = await supabase.from("metas")
+        .select("id,user_id,status,tipo_validacao,subcategoria,modalidade,objetivo_km")
+        .eq("id", entityId).eq("user_id", user.id).maybeSingle();
+      entity = data;
+      if (!entity || entity.status !== "em_andamento") return json({ error: "Meta não encontrada ou inativa" }, 403);
+    } else if (entityType === "duelo") {
+      const { data } = await supabase.from("duelos")
+        .select("id,challenger_id,opponent_id,status,tipo_validacao,subcategoria,modalidade,objetivo_km,challenger_eliminado,opponent_eliminado")
+        .eq("id", entityId).maybeSingle();
+      entity = data;
+      const participant = entity && [entity.challenger_id, entity.opponent_id].includes(user.id);
+      const eliminated = entity && (user.id === entity.challenger_id ? entity.challenger_eliminado : entity.opponent_eliminado);
+      if (!participant || eliminated || !["ativo", "em_andamento"].includes(entity?.status)) return json({ error: "Duelo não encontrado, inativo ou usuário eliminado" }, 403);
+    } else {
+      const [{ data: challenge }, { data: participation }] = await Promise.all([
+        supabase.from("desafios_equipe")
+          .select("id,status,tipo_validacao,subcategoria,modalidade,objetivo_km")
+          .eq("id", entityId).maybeSingle(),
+        supabase.from("desafio_equipe_participantes")
+          .select("id,eliminado")
+          .eq("desafio_id", entityId).eq("user_id", user.id).maybeSingle(),
+      ]);
+      entity = challenge;
+      if (!entity || entity.status !== "ativo" || !participation || participation.eliminado) return json({ error: "Desafio não encontrado, inativo ou usuário eliminado" }, 403);
+    }
+
+    if (entity.tipo_validacao !== "strava") return json({ error: "Este compromisso não usa validação Strava" }, 403);
+
     const { data: conexao } = await supabase
       .from("strava_connections")
       .select("access_token, expires_at, refresh_token")
@@ -187,6 +220,19 @@ serve(async (req) => {
 
     const erros: string[] = [];
     const inicioAtividade = new Date(atividade.start_date);
+
+    const modality = String(entity.subcategoria ?? entity.modalidade ?? "").toLowerCase();
+    const activityType = String(atividade.sport_type ?? atividade.type ?? "").toLowerCase();
+    const allowedByModality: Record<string, string[]> = {
+      corrida: ["run", "trailrun", "virtualrun"], running: ["run", "trailrun", "virtualrun"],
+      caminhada: ["walk", "hike"], caminhada_corrida: ["walk", "hike", "run", "trailrun"],
+      ciclismo: ["ride", "virtualride", "ebikeride", "mountainbikeride"], bike: ["ride", "virtualride", "ebikeride", "mountainbikeride"],
+      natacao: ["swim"], swimming: ["swim"],
+    };
+    const allowedTypes = allowedByModality[modality];
+    if (allowedTypes && !allowedTypes.includes(activityType)) {
+      erros.push(`A atividade ${atividade.type ?? atividade.sport_type} não corresponde à modalidade ${entity.subcategoria ?? entity.modalidade}`);
+    }
     const duracaoTotalSegundos = Number(atividade.elapsed_time ?? atividade.moving_time ?? 0);
     const fimAtividade = new Date(inicioAtividade.getTime() + duracaoTotalSegundos * 1000);
     const minutosDesdeFim = (Date.now() - fimAtividade.getTime()) / 60000;
@@ -218,50 +264,29 @@ serve(async (req) => {
     const valido = erros.length === 0;
     let checkinId: string | null = null;
 
+    let entityResult: any = null;
     if (valido) {
-      const msg = `Atividade Strava: ${atividade.name} (${(atividade.distance / 1000).toFixed(1)}km, ${Math.round(atividade.moving_time / 60)}min)`;
-
-      if (desafio_id) {
-        const { data: checkin, error: insertError } = await supabase
-          .from("checkins_desafio_equipe")
-          .insert({ desafio_id, user_id: user.id, mensagem: msg, foto_url: null })
-          .select("id")
-          .single();
-
-        if (insertError) {
-          console.error("Erro ao registrar check-in do desafio:", insertError);
-          return json({
-            error: "A atividade foi validada, mas não foi possível registrar o check-in.",
-            code: "checkin_insert_failed",
-            details: insertError.message,
-          }, 500);
-        }
-        checkinId = checkin.id;
-      } else {
-        const { data: checkin, error: insertError } = await supabase
-          .from("checkins")
-          .insert({
-            user_id: user.id,
-            meta_id: meta_id ?? null,
-            duelo_id: duelo_id ?? null,
-            wearable_activity_id: String(atividade.id),
-            strava_activity_id: String(atividade.id),
-            validado: true,
-            mensagem: msg,
-          })
-          .select("id")
-          .single();
-
-        if (insertError) {
-          console.error("Erro ao registrar check-in:", insertError);
-          return json({
-            error: "A atividade foi validada, mas não foi possível registrar o check-in.",
-            code: "checkin_insert_failed",
-            details: insertError.message,
-          }, 500);
-        }
-        checkinId = checkin.id;
+      const dstKmValidated = Number(atividade.distance ?? 0) / 1000;
+      const msg = `Atividade Strava: ${atividade.name} (${dstKmValidated.toFixed(2)}km, ${Math.round(Number(atividade.moving_time ?? 0) / 60)}min)`;
+      const { data: registration, error: registrationError } = await supabase.rpc("registrar_checkin_strava", {
+        _user_id: user.id,
+        _entidade: entityType,
+        _entidade_id: entityId,
+        _activity_id: String(atividade.id),
+        _activity_started_at: atividade.start_date,
+        _km: dstKmValidated,
+        _mensagem: msg,
+      });
+      if (registrationError) {
+        const duplicate = registrationError.code === "23505" || /duplicate|unique/i.test(registrationError.message ?? "");
+        return json({
+          error: duplicate ? "Esta atividade do Strava já foi usada em um check-in." : "A atividade foi validada, mas o check-in não pôde ser registrado.",
+          code: duplicate ? "activity_already_used" : "checkin_insert_failed",
+          details: registrationError.message,
+        }, duplicate ? 409 : 500);
       }
+      checkinId = registration?.checkin_id ?? null;
+      entityResult = registration?.resultado ?? null;
     }
 
     const dstKm = atividade.distance / 1000;
@@ -274,6 +299,8 @@ serve(async (req) => {
       valido,
       motivo: erros.join("; "),
       checkin_id: checkinId,
+      resultado: entityResult,
+      entidade_concluida: Boolean(entityResult?.concluida || entityResult?.status === "concluido"),
       atividade: {
         id: atividade.id,
         nome: atividade.name,

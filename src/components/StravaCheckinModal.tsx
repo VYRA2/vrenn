@@ -166,7 +166,7 @@ export function StravaCheckinModal({ tipo, refId, userId, onClose, onCreated }: 
                     polyline: a.polyline ?? null,
                     data: a.inicio ? new Date(a.inicio) : new Date(),
                     repGanho: 250,
-                    metaConcluida: true,
+                    metaConcluida: Boolean(resultado?.entidade_concluida),
                     qrCodeUrl: null,
                   });
                 }}
