@@ -25,6 +25,7 @@ import { Route as AuthenticatedNovaMetaRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedLembreteCheckinRouteImport } from './routes/_authenticated/lembrete-checkin'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDuelosRouteImport } from './routes/_authenticated/duelos'
 import { Route as AuthenticatedDescobrirRouteImport } from './routes/_authenticated/descobrir'
@@ -138,6 +139,12 @@ const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
   path: '/mensagens',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLembreteCheckinRoute =
+  AuthenticatedLembreteCheckinRouteImport.update({
+    id: '/lembrete-checkin',
+    path: '/lembrete-checkin',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -334,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/lembrete-checkin': typeof AuthenticatedLembreteCheckinRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
@@ -382,6 +390,7 @@ export interface FileRoutesByTo {
   '/descobrir': typeof AuthenticatedDescobrirRoute
   '/duelos': typeof AuthenticatedDuelosRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/lembrete-checkin': typeof AuthenticatedLembreteCheckinRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
@@ -432,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/descobrir': typeof AuthenticatedDescobrirRoute
   '/_authenticated/duelos': typeof AuthenticatedDuelosRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/lembrete-checkin': typeof AuthenticatedLembreteCheckinRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/descobrir'
     | '/duelos'
     | '/feed'
+    | '/lembrete-checkin'
     | '/mensagens'
     | '/metas'
     | '/notificacoes'
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/descobrir'
     | '/duelos'
     | '/feed'
+    | '/lembrete-checkin'
     | '/mensagens'
     | '/metas'
     | '/notificacoes'
@@ -579,6 +591,7 @@ export interface FileRouteTypes {
     | '/_authenticated/descobrir'
     | '/_authenticated/duelos'
     | '/_authenticated/feed'
+    | '/_authenticated/lembrete-checkin'
     | '/_authenticated/mensagens'
     | '/_authenticated/metas'
     | '/_authenticated/notificacoes'
@@ -737,6 +750,13 @@ declare module '@tanstack/react-router' {
       path: '/mensagens'
       fullPath: '/mensagens'
       preLoaderRoute: typeof AuthenticatedMensagensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/lembrete-checkin': {
+      id: '/_authenticated/lembrete-checkin'
+      path: '/lembrete-checkin'
+      fullPath: '/lembrete-checkin'
+      preLoaderRoute: typeof AuthenticatedLembreteCheckinRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/feed': {
@@ -968,6 +988,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDescobrirRoute: typeof AuthenticatedDescobrirRoute
   AuthenticatedDuelosRoute: typeof AuthenticatedDuelosRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedLembreteCheckinRoute: typeof AuthenticatedLembreteCheckinRoute
   AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
@@ -1005,6 +1026,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDescobrirRoute: AuthenticatedDescobrirRoute,
   AuthenticatedDuelosRoute: AuthenticatedDuelosRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedLembreteCheckinRoute: AuthenticatedLembreteCheckinRoute,
   AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,

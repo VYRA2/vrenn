@@ -2,14 +2,38 @@ import webpush from "npm:web-push@3.6.7";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const VAPID_PUBLIC_KEY = "BMDw8Frw-C-qbo2PNosbg2kIYy-Eh04MDPZlc2o0DV7u-OtOh2C9CZFt6wWDxG8EAA17JSzjxQQ9zfooD347qoc";
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
 
-webpush.setVapidDetails("mailto:contato@vrenn.app", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+/** Normaliza a chave para base64url (sem padding), aceitando base64 padrão. */
+function toBase64Url(value: string) {
+  return value.trim().replace(/\s+/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+let pushReady: boolean | null = null;
+
+/** Configura o web-push sob demanda; nunca derruba a função se a chave for inválida. */
+function ensurePushConfigured(): boolean {
+  if (pushReady !== null) return pushReady;
+  const privateKey = toBase64Url(Deno.env.get("VAPID_PRIVATE_KEY") ?? "");
+  if (!privateKey) {
+    console.error("VAPID_PRIVATE_KEY não configurada — push desativado nesta execução");
+    pushReady = false;
+    return pushReady;
+  }
+  try {
+    webpush.setVapidDetails("mailto:contato@vrenn.app", toBase64Url(VAPID_PUBLIC_KEY), privateKey);
+    pushReady = true;
+  } catch (error) {
+    console.error("VAPID inválida — push desativado nesta execução", (error as Error).message);
+    pushReady = false;
+  }
+  return pushReady;
+}
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, x-cron-secret",
 };
+
 
 type Commitment = {
   type: "meta" | "duelo" | "desafio_equipe";
@@ -72,7 +96,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    if (!VAPID_PRIVATE_KEY) throw new Error("VAPID_PRIVATE_KEY não configurada");
+    const pushEnabled = ensurePushConfigured();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -268,7 +292,7 @@ Deno.serve(async (req) => {
         });
 
         let sent = false;
-        await Promise.allSettled((subscriptions ?? []).map(async (subscription) => {
+        await Promise.allSettled((pushEnabled ? subscriptions ?? [] : []).map(async (subscription) => {
           try {
             await webpush.sendNotification(
               {
@@ -302,6 +326,7 @@ Deno.serve(async (req) => {
       reminders_created: remindersCreated,
       pushes_sent: pushesSent,
       skipped_duplicates: skippedDuplicates,
+      push_enabled: pushEnabled,
     });
   } catch (error) {
     console.error("send-checkin-reminders error", error);
