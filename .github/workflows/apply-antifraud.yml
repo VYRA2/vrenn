@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - fix/validated-automatic-outcomes
-    paths:
-      - scripts/apply_antifraud.py
-      - .github/workflows/apply-antifraud.yml
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: write
