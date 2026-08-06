@@ -69,7 +69,7 @@ Quando o tipo de validação for por foto + árbitro, o resultado é declarado p
     titulo: "Como funcionam os desafios de equipe",
     conteudo: `Desafios de equipe são criados por um admin e abertos para os membros entrarem. Cada participante coloca um valor em custódia. O resultado individual segue estas regras:
 
-• Concluiu o desafio: recebe 97% da custódia de volta. 3% vai para o VRENN.
+• Concluiu o desafio: recebe 100% da própria custódia de volta e também pode receber sua participação no prêmio acumulado. Não há taxa sobre a custódia de quem concluiu.
 • Falhou ou foi eliminado: perde o valor total. 75% vai para o pool de prêmios do desafio (distribuído entre os vencedores ao final), 12,5% vai para o fundo da temporada ativa e 12,5% para o VRENN.
 
 Se ninguém concluir o desafio, o pool de prêmios inteiro escoa para o fundo da temporada global — não fica "órfão".
@@ -104,7 +104,7 @@ Duelo:
 • Empate sem sucesso → 75% de cada um vai para o fundo da temporada, 25% para o VRENN.
 
 Desafio de equipe:
-• Concluiu → 97% de volta, 3% para o VRENN.
+• Concluiu → 100% da própria custódia de volta, sem taxa, mais eventual participação no prêmio acumulado.
 • Falhou/eliminado → 75% vai para o pool de prêmios do desafio, 12,5% para o fundo da temporada e 12,5% para o VRENN.
 
 O fundo da temporada alimenta o prêmio do VRENN Master Season — a competição sazonal da plataforma.`,

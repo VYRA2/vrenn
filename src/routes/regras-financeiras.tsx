@@ -33,6 +33,8 @@ export const Route = createFileRoute("/regras-financeiras")({
           title: "Desafios de equipe",
           items: [
             "Cada membro possui entrada e resultado individual.",
+            "Quem conclui recebe 100% da própria custódia de volta, sem taxa, além da participação no prêmio acumulado quando houver.",
+            "Quem falha destina 75% ao prêmio do desafio, 12,5% ao fundo da temporada e 12,5% ao VRENN.",
             "O prêmio do desafio é distribuído conforme o regulamento previamente publicado.",
             "Nenhuma premiação é calculada a partir de prova não validada.",
           ],
