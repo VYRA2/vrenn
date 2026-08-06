@@ -261,22 +261,15 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
     setLoading(true);
     try {
       let opponentId: string | null = null;
-      let opponentEmail: string | null = null;
-
       if (!aberto && oponente.trim()) {
-        try {
-          const u: any = await findUser({ data: { identifier: oponente } });
-          opponentId = u.id;
-        } catch {
-          if (oponente.includes("@")) opponentEmail = oponente;
-          else throw new Error("Oponente não encontrado. Verifique o @username ou email.");
-        }
+        const u: any = await findUser({ data: { identifier: oponente } });
+        opponentId = u.id;
       }
 
       const { data: duelo, error } = await (supabase as any).from("duelos").insert({
         challenger_id: userId,
         opponent_id: opponentId,
-        opponent_email: opponentEmail,
+        opponent_email: null,
         titulo,
         categoria,
         subcategoria,
@@ -412,7 +405,7 @@ function CreateDueloModal({ userId, onClose, onCreated }: { userId: string; onCl
         </div>
 
         {!aberto && (
-          <Input label="Oponente (@username ou email)" value={oponente} onChange={setOponente} placeholder="@joao ou joao@email.com"/>
+          <Input label="Oponente (@username)" value={oponente} onChange={setOponente} placeholder="@joao"/>
         )}
 
         <button onClick={criar} disabled={loading}
