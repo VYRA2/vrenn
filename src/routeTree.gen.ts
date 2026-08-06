@@ -9,13 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as StravaCallbackRouteImport } from './routes/strava-callback'
+import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SegurancaRouteImport } from './routes/seguranca'
+import { Route as RegrasFinanceirasRouteImport } from './routes/regras-financeiras'
+import { Route as RegrasDeValidacaoRouteImport } from './routes/regras-de-validacao'
 import { Route as PoliticaPrivacidadeRouteImport } from './routes/politica-privacidade'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as DiretrizesDaComunidadeRouteImport } from './routes/diretrizes-da-comunidade'
+import { Route as ContatoRouteImport } from './routes/contato'
+import { Route as CarreirasRouteImport } from './routes/carreiras'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AjudaRouteImport } from './routes/ajuda'
+import { Route as AcessibilidadeRouteImport } from './routes/acessibilidade'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStravaConnectRouteImport } from './routes/_authenticated/strava-connect'
@@ -38,7 +49,9 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedWalletIndexRouteImport } from './routes/_authenticated/wallet.index'
 import { Route as AuthenticatedEquipesIndexRouteImport } from './routes/_authenticated/equipes.index'
+import { Route as AuthenticatedComunidadesIndexRouteImport } from './routes/_authenticated/comunidades.index'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
+import { Route as AuthenticatedStoriesIdRouteImport } from './routes/_authenticated/stories.$id'
 import { Route as AuthenticatedPostIdRouteImport } from './routes/_authenticated/post.$id'
 import { Route as AuthenticatedPerfilSeguindoRouteImport } from './routes/_authenticated/perfil_.seguindo'
 import { Route as AuthenticatedPerfilSeguidoresRouteImport } from './routes/_authenticated/perfil_.seguidores'
@@ -49,6 +62,7 @@ import { Route as AuthenticatedMensagensIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedEquipesNovaRouteImport } from './routes/_authenticated/equipes.nova'
 import { Route as AuthenticatedDueloIdRouteImport } from './routes/_authenticated/duelo.$id'
 import { Route as AuthenticatedDueloConviteIdRouteImport } from './routes/_authenticated/duelo-convite.$id'
+import { Route as AuthenticatedComunidadesIdRouteImport } from './routes/_authenticated/comunidades.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedWalletWithdrawIndexRouteImport } from './routes/_authenticated/wallet.withdraw.index'
@@ -58,14 +72,39 @@ import { Route as AuthenticatedWalletDepositPixRouteImport } from './routes/_aut
 import { Route as AuthenticatedWalletDepositCardRouteImport } from './routes/_authenticated/wallet.deposit.card'
 import { Route as AuthenticatedEquipesIdDesafioNovoRouteImport } from './routes/_authenticated/equipes.$id.desafio.novo'
 
+const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
+  id: '/termos-de-uso',
+  path: '/termos-de-uso',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StravaCallbackRoute = StravaCallbackRouteImport.update({
   id: '/strava-callback',
   path: '/strava-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SobreRoute = SobreRouteImport.update({
+  id: '/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SegurancaRoute = SegurancaRouteImport.update({
+  id: '/seguranca',
+  path: '/seguranca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegrasFinanceirasRoute = RegrasFinanceirasRouteImport.update({
+  id: '/regras-financeiras',
+  path: '/regras-financeiras',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegrasDeValidacaoRoute = RegrasDeValidacaoRouteImport.update({
+  id: '/regras-de-validacao',
+  path: '/regras-de-validacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PoliticaPrivacidadeRoute = PoliticaPrivacidadeRouteImport.update({
@@ -83,6 +122,26 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiretrizesDaComunidadeRoute = DiretrizesDaComunidadeRouteImport.update({
+  id: '/diretrizes-da-comunidade',
+  path: '/diretrizes-da-comunidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContatoRoute = ContatoRouteImport.update({
+  id: '/contato',
+  path: '/contato',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CarreirasRoute = CarreirasRouteImport.update({
+  id: '/carreiras',
+  path: '/carreiras',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth-callback',
   path: '/auth-callback',
@@ -91,6 +150,16 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AjudaRoute = AjudaRouteImport.update({
+  id: '/ajuda',
+  path: '/ajuda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcessibilidadeRoute = AcessibilidadeRouteImport.update({
+  id: '/acessibilidade',
+  path: '/acessibilidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -212,9 +281,20 @@ const AuthenticatedEquipesIndexRoute =
     path: '/equipes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComunidadesIndexRoute =
+  AuthenticatedComunidadesIndexRouteImport.update({
+    id: '/comunidades/',
+    path: '/comunidades/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStoriesIdRoute = AuthenticatedStoriesIdRouteImport.update({
+  id: '/stories/$id',
+  path: '/stories/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPostIdRoute = AuthenticatedPostIdRouteImport.update({
@@ -274,6 +354,12 @@ const AuthenticatedDueloConviteIdRoute =
     path: '/duelo-convite/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComunidadesIdRoute =
+  AuthenticatedComunidadesIdRouteImport.update({
+    id: '/comunidades/$id',
+    path: '/comunidades/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -324,13 +410,24 @@ const AuthenticatedEquipesIdDesafioNovoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acessibilidade': typeof AcessibilidadeRoute
+  '/ajuda': typeof AjudaRoute
   '/auth': typeof AuthRoute
   '/auth-callback': typeof AuthCallbackRoute
+  '/blog': typeof BlogRoute
+  '/carreiras': typeof CarreirasRoute
+  '/contato': typeof ContatoRoute
+  '/diretrizes-da-comunidade': typeof DiretrizesDaComunidadeRoute
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
+  '/regras-de-validacao': typeof RegrasDeValidacaoRoute
+  '/regras-financeiras': typeof RegrasFinanceirasRoute
+  '/seguranca': typeof SegurancaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sobre': typeof SobreRoute
   '/strava-callback': typeof StravaCallbackRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/arbitro': typeof AuthenticatedArbitroRoute
@@ -351,6 +448,7 @@ export interface FileRoutesByFullPath {
   '/strava-connect': typeof AuthenticatedStravaConnectRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/comunidades/$id': typeof AuthenticatedComunidadesIdRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/duelo/$id': typeof AuthenticatedDueloIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
@@ -361,7 +459,9 @@ export interface FileRoutesByFullPath {
   '/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
   '/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
   '/post/$id': typeof AuthenticatedPostIdRoute
+  '/stories/$id': typeof AuthenticatedStoriesIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
+  '/comunidades/': typeof AuthenticatedComunidadesIndexRoute
   '/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/wallet/': typeof AuthenticatedWalletIndexRoute
   '/wallet/deposit/card': typeof AuthenticatedWalletDepositCardRoute
@@ -373,13 +473,24 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acessibilidade': typeof AcessibilidadeRoute
+  '/ajuda': typeof AjudaRoute
   '/auth': typeof AuthRoute
   '/auth-callback': typeof AuthCallbackRoute
+  '/blog': typeof BlogRoute
+  '/carreiras': typeof CarreirasRoute
+  '/contato': typeof ContatoRoute
+  '/diretrizes-da-comunidade': typeof DiretrizesDaComunidadeRoute
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
+  '/regras-de-validacao': typeof RegrasDeValidacaoRoute
+  '/regras-financeiras': typeof RegrasFinanceirasRoute
+  '/seguranca': typeof SegurancaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sobre': typeof SobreRoute
   '/strava-callback': typeof StravaCallbackRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/arbitro': typeof AuthenticatedArbitroRoute
@@ -400,6 +511,7 @@ export interface FileRoutesByTo {
   '/strava-connect': typeof AuthenticatedStravaConnectRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/comunidades/$id': typeof AuthenticatedComunidadesIdRoute
   '/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/duelo/$id': typeof AuthenticatedDueloIdRoute
   '/equipes/nova': typeof AuthenticatedEquipesNovaRoute
@@ -410,7 +522,9 @@ export interface FileRoutesByTo {
   '/perfil/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
   '/perfil/seguindo': typeof AuthenticatedPerfilSeguindoRoute
   '/post/$id': typeof AuthenticatedPostIdRoute
+  '/stories/$id': typeof AuthenticatedStoriesIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
+  '/comunidades': typeof AuthenticatedComunidadesIndexRoute
   '/equipes': typeof AuthenticatedEquipesIndexRoute
   '/wallet': typeof AuthenticatedWalletIndexRoute
   '/wallet/deposit/card': typeof AuthenticatedWalletDepositCardRoute
@@ -424,13 +538,24 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/acessibilidade': typeof AcessibilidadeRoute
+  '/ajuda': typeof AjudaRoute
   '/auth': typeof AuthRoute
   '/auth-callback': typeof AuthCallbackRoute
+  '/blog': typeof BlogRoute
+  '/carreiras': typeof CarreirasRoute
+  '/contato': typeof ContatoRoute
+  '/diretrizes-da-comunidade': typeof DiretrizesDaComunidadeRoute
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/politica-privacidade': typeof PoliticaPrivacidadeRoute
+  '/regras-de-validacao': typeof RegrasDeValidacaoRoute
+  '/regras-financeiras': typeof RegrasFinanceirasRoute
+  '/seguranca': typeof SegurancaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sobre': typeof SobreRoute
   '/strava-callback': typeof StravaCallbackRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/arbitro': typeof AuthenticatedArbitroRoute
@@ -451,6 +576,7 @@ export interface FileRoutesById {
   '/_authenticated/strava-connect': typeof AuthenticatedStravaConnectRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/comunidades/$id': typeof AuthenticatedComunidadesIdRoute
   '/_authenticated/duelo-convite/$id': typeof AuthenticatedDueloConviteIdRoute
   '/_authenticated/duelo/$id': typeof AuthenticatedDueloIdRoute
   '/_authenticated/equipes/nova': typeof AuthenticatedEquipesNovaRoute
@@ -461,7 +587,9 @@ export interface FileRoutesById {
   '/_authenticated/perfil_/seguidores': typeof AuthenticatedPerfilSeguidoresRoute
   '/_authenticated/perfil_/seguindo': typeof AuthenticatedPerfilSeguindoRoute
   '/_authenticated/post/$id': typeof AuthenticatedPostIdRoute
+  '/_authenticated/stories/$id': typeof AuthenticatedStoriesIdRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
+  '/_authenticated/comunidades/': typeof AuthenticatedComunidadesIndexRoute
   '/_authenticated/equipes/': typeof AuthenticatedEquipesIndexRoute
   '/_authenticated/wallet/': typeof AuthenticatedWalletIndexRoute
   '/_authenticated/wallet/deposit/card': typeof AuthenticatedWalletDepositCardRoute
@@ -475,13 +603,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acessibilidade'
+    | '/ajuda'
     | '/auth'
     | '/auth-callback'
+    | '/blog'
+    | '/carreiras'
+    | '/contato'
+    | '/diretrizes-da-comunidade'
     | '/mcp'
     | '/onboarding'
     | '/politica-privacidade'
+    | '/regras-de-validacao'
+    | '/regras-financeiras'
+    | '/seguranca'
     | '/sitemap.xml'
+    | '/sobre'
     | '/strava-callback'
+    | '/termos-de-uso'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/arbitro'
@@ -502,6 +641,7 @@ export interface FileRouteTypes {
     | '/strava-connect'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/comunidades/$id'
     | '/duelo-convite/$id'
     | '/duelo/$id'
     | '/equipes/nova'
@@ -512,7 +652,9 @@ export interface FileRouteTypes {
     | '/perfil/seguidores'
     | '/perfil/seguindo'
     | '/post/$id'
+    | '/stories/$id'
     | '/u/$username'
+    | '/comunidades/'
     | '/equipes/'
     | '/wallet/'
     | '/wallet/deposit/card'
@@ -524,13 +666,24 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/acessibilidade'
+    | '/ajuda'
     | '/auth'
     | '/auth-callback'
+    | '/blog'
+    | '/carreiras'
+    | '/contato'
+    | '/diretrizes-da-comunidade'
     | '/mcp'
     | '/onboarding'
     | '/politica-privacidade'
+    | '/regras-de-validacao'
+    | '/regras-financeiras'
+    | '/seguranca'
     | '/sitemap.xml'
+    | '/sobre'
     | '/strava-callback'
+    | '/termos-de-uso'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/arbitro'
@@ -551,6 +704,7 @@ export interface FileRouteTypes {
     | '/strava-connect'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/comunidades/$id'
     | '/duelo-convite/$id'
     | '/duelo/$id'
     | '/equipes/nova'
@@ -561,7 +715,9 @@ export interface FileRouteTypes {
     | '/perfil/seguidores'
     | '/perfil/seguindo'
     | '/post/$id'
+    | '/stories/$id'
     | '/u/$username'
+    | '/comunidades'
     | '/equipes'
     | '/wallet'
     | '/wallet/deposit/card'
@@ -574,13 +730,24 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/acessibilidade'
+    | '/ajuda'
     | '/auth'
     | '/auth-callback'
+    | '/blog'
+    | '/carreiras'
+    | '/contato'
+    | '/diretrizes-da-comunidade'
     | '/mcp'
     | '/onboarding'
     | '/politica-privacidade'
+    | '/regras-de-validacao'
+    | '/regras-financeiras'
+    | '/seguranca'
     | '/sitemap.xml'
+    | '/sobre'
     | '/strava-callback'
+    | '/termos-de-uso'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/arbitro'
@@ -601,6 +768,7 @@ export interface FileRouteTypes {
     | '/_authenticated/strava-connect'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/comunidades/$id'
     | '/_authenticated/duelo-convite/$id'
     | '/_authenticated/duelo/$id'
     | '/_authenticated/equipes/nova'
@@ -611,7 +779,9 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil_/seguidores'
     | '/_authenticated/perfil_/seguindo'
     | '/_authenticated/post/$id'
+    | '/_authenticated/stories/$id'
     | '/_authenticated/u/$username'
+    | '/_authenticated/comunidades/'
     | '/_authenticated/equipes/'
     | '/_authenticated/wallet/'
     | '/_authenticated/wallet/deposit/card'
@@ -625,13 +795,24 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AcessibilidadeRoute: typeof AcessibilidadeRoute
+  AjudaRoute: typeof AjudaRoute
   AuthRoute: typeof AuthRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  BlogRoute: typeof BlogRoute
+  CarreirasRoute: typeof CarreirasRoute
+  ContatoRoute: typeof ContatoRoute
+  DiretrizesDaComunidadeRoute: typeof DiretrizesDaComunidadeRoute
   McpRoute: typeof McpRoute
   OnboardingRoute: typeof OnboardingRoute
   PoliticaPrivacidadeRoute: typeof PoliticaPrivacidadeRoute
+  RegrasDeValidacaoRoute: typeof RegrasDeValidacaoRoute
+  RegrasFinanceirasRoute: typeof RegrasFinanceirasRoute
+  SegurancaRoute: typeof SegurancaRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SobreRoute: typeof SobreRoute
   StravaCallbackRoute: typeof StravaCallbackRoute
+  TermosDeUsoRoute: typeof TermosDeUsoRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -640,6 +821,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termos-de-uso': {
+      id: '/termos-de-uso'
+      path: '/termos-de-uso'
+      fullPath: '/termos-de-uso'
+      preLoaderRoute: typeof TermosDeUsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/strava-callback': {
       id: '/strava-callback'
       path: '/strava-callback'
@@ -647,11 +835,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StravaCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sobre': {
+      id: '/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seguranca': {
+      id: '/seguranca'
+      path: '/seguranca'
+      fullPath: '/seguranca'
+      preLoaderRoute: typeof SegurancaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/regras-financeiras': {
+      id: '/regras-financeiras'
+      path: '/regras-financeiras'
+      fullPath: '/regras-financeiras'
+      preLoaderRoute: typeof RegrasFinanceirasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/regras-de-validacao': {
+      id: '/regras-de-validacao'
+      path: '/regras-de-validacao'
+      fullPath: '/regras-de-validacao'
+      preLoaderRoute: typeof RegrasDeValidacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/politica-privacidade': {
@@ -675,6 +891,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diretrizes-da-comunidade': {
+      id: '/diretrizes-da-comunidade'
+      path: '/diretrizes-da-comunidade'
+      fullPath: '/diretrizes-da-comunidade'
+      preLoaderRoute: typeof DiretrizesDaComunidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contato': {
+      id: '/contato'
+      path: '/contato'
+      fullPath: '/contato'
+      preLoaderRoute: typeof ContatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/carreiras': {
+      id: '/carreiras'
+      path: '/carreiras'
+      fullPath: '/carreiras'
+      preLoaderRoute: typeof CarreirasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth-callback': {
       id: '/auth-callback'
       path: '/auth-callback'
@@ -687,6 +931,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ajuda': {
+      id: '/ajuda'
+      path: '/ajuda'
+      fullPath: '/ajuda'
+      preLoaderRoute: typeof AjudaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/acessibilidade': {
+      id: '/acessibilidade'
+      path: '/acessibilidade'
+      fullPath: '/acessibilidade'
+      preLoaderRoute: typeof AcessibilidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -843,11 +1101,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/comunidades/': {
+      id: '/_authenticated/comunidades/'
+      path: '/comunidades'
+      fullPath: '/comunidades/'
+      preLoaderRoute: typeof AuthenticatedComunidadesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/u/$username': {
       id: '/_authenticated/u/$username'
       path: '/u/$username'
       fullPath: '/u/$username'
       preLoaderRoute: typeof AuthenticatedUUsernameRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stories/$id': {
+      id: '/_authenticated/stories/$id'
+      path: '/stories/$id'
+      fullPath: '/stories/$id'
+      preLoaderRoute: typeof AuthenticatedStoriesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/post/$id': {
@@ -918,6 +1190,13 @@ declare module '@tanstack/react-router' {
       path: '/duelo-convite/$id'
       fullPath: '/duelo-convite/$id'
       preLoaderRoute: typeof AuthenticatedDueloConviteIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/comunidades/$id': {
+      id: '/_authenticated/comunidades/$id'
+      path: '/comunidades/$id'
+      fullPath: '/comunidades/$id'
+      preLoaderRoute: typeof AuthenticatedComunidadesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/.mcp/invoke-tool/$tool': {
@@ -996,6 +1275,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
   AuthenticatedStravaConnectRoute: typeof AuthenticatedStravaConnectRoute
+  AuthenticatedComunidadesIdRoute: typeof AuthenticatedComunidadesIdRoute
   AuthenticatedDueloConviteIdRoute: typeof AuthenticatedDueloConviteIdRoute
   AuthenticatedDueloIdRoute: typeof AuthenticatedDueloIdRoute
   AuthenticatedEquipesNovaRoute: typeof AuthenticatedEquipesNovaRoute
@@ -1006,7 +1286,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerfilSeguidoresRoute: typeof AuthenticatedPerfilSeguidoresRoute
   AuthenticatedPerfilSeguindoRoute: typeof AuthenticatedPerfilSeguindoRoute
   AuthenticatedPostIdRoute: typeof AuthenticatedPostIdRoute
+  AuthenticatedStoriesIdRoute: typeof AuthenticatedStoriesIdRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
+  AuthenticatedComunidadesIndexRoute: typeof AuthenticatedComunidadesIndexRoute
   AuthenticatedEquipesIndexRoute: typeof AuthenticatedEquipesIndexRoute
   AuthenticatedWalletIndexRoute: typeof AuthenticatedWalletIndexRoute
   AuthenticatedWalletDepositCardRoute: typeof AuthenticatedWalletDepositCardRoute
@@ -1034,6 +1316,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
   AuthenticatedStravaConnectRoute: AuthenticatedStravaConnectRoute,
+  AuthenticatedComunidadesIdRoute: AuthenticatedComunidadesIdRoute,
   AuthenticatedDueloConviteIdRoute: AuthenticatedDueloConviteIdRoute,
   AuthenticatedDueloIdRoute: AuthenticatedDueloIdRoute,
   AuthenticatedEquipesNovaRoute: AuthenticatedEquipesNovaRoute,
@@ -1044,7 +1327,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilSeguidoresRoute: AuthenticatedPerfilSeguidoresRoute,
   AuthenticatedPerfilSeguindoRoute: AuthenticatedPerfilSeguindoRoute,
   AuthenticatedPostIdRoute: AuthenticatedPostIdRoute,
+  AuthenticatedStoriesIdRoute: AuthenticatedStoriesIdRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,
+  AuthenticatedComunidadesIndexRoute: AuthenticatedComunidadesIndexRoute,
   AuthenticatedEquipesIndexRoute: AuthenticatedEquipesIndexRoute,
   AuthenticatedWalletIndexRoute: AuthenticatedWalletIndexRoute,
   AuthenticatedWalletDepositCardRoute: AuthenticatedWalletDepositCardRoute,
@@ -1063,13 +1348,24 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AcessibilidadeRoute: AcessibilidadeRoute,
+  AjudaRoute: AjudaRoute,
   AuthRoute: AuthRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  BlogRoute: BlogRoute,
+  CarreirasRoute: CarreirasRoute,
+  ContatoRoute: ContatoRoute,
+  DiretrizesDaComunidadeRoute: DiretrizesDaComunidadeRoute,
   McpRoute: McpRoute,
   OnboardingRoute: OnboardingRoute,
   PoliticaPrivacidadeRoute: PoliticaPrivacidadeRoute,
+  RegrasDeValidacaoRoute: RegrasDeValidacaoRoute,
+  RegrasFinanceirasRoute: RegrasFinanceirasRoute,
+  SegurancaRoute: SegurancaRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SobreRoute: SobreRoute,
   StravaCallbackRoute: StravaCallbackRoute,
+  TermosDeUsoRoute: TermosDeUsoRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
