@@ -48,6 +48,7 @@ function NovoDesafio() {
   const [localId, setLocalId] = useState<string | null>(null);
   const [frequenciaTipo, setFrequenciaTipo] = useState<"diario" | "semanal" | "total">("total");
   const [frequenciaQtd, setFrequenciaQtd] = useState(1);
+  const [modoArbitragem, setModoArbitragem] = useState<"admin_equipe" | "sorteio_vrenn">("admin_equipe");
 
   // Distribuição
   const [modoDistribuicao, setModoDistribuicao] = useState<"igual" | "proporcional" | "personalizado">("proporcional");
@@ -90,6 +91,7 @@ function NovoDesafio() {
       regras: { ...regras, consequencias, personalizadas: [] },
       criador_id: user.id,
       tipo_validacao: tipoValidacao,
+      modo_arbitragem: tipoValidacao === "foto_arbitro" ? modoArbitragem : "admin_equipe",
       local_id: ["qrcode", "geolocalizacao"].includes(tipoValidacao) ? localId : null,
       frequencia_tipo: frequenciaTipo,
       frequencia_quantidade: frequenciaQtd,
@@ -332,6 +334,27 @@ function NovoDesafio() {
               userId={user.id}
               subcategoria={subcategoria}
             />
+
+            {tipoValidacao === "foto_arbitro" && (
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                <div>
+                  <div className="text-sm font-bold">Quem fará a arbitragem?</div>
+                  <p className="text-xs text-muted-foreground">A custódia fica bloqueada durante a análise e por 48 horas após a decisão, permitindo recurso.</p>
+                </div>
+                {([
+                  ["admin_equipe", "Administrador da equipe", "O criador da equipe avalia as comprovações e justifica cada resultado."],
+                  ["sorteio_vrenn", "Árbitro sorteado pelo VRENN", "O VRENN seleciona alguém elegível, sem vínculo com a equipe."],
+                ] as const).map(([value, title, desc]) => (
+                  <button key={value} type="button" onClick={() => setModoArbitragem(value)} className={`w-full rounded-xl border p-3 text-left transition ${modoArbitragem === value ? "border-primary bg-primary/10" : "border-border bg-background"}`}>
+                    <div className="text-sm font-semibold">{title}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">{desc}</div>
+                  </button>
+                ))}
+                <div className="rounded-xl bg-background p-3 text-[11px] text-muted-foreground">
+                  Se houver recurso, um novo painel de 3 árbitros sorteados analisa o caso. O árbitro original e membros da equipe ficam excluídos.
+                </div>
+              </div>
+            )}
 
             {/* Frequência de check-in */}
             <div className="mt-4">
