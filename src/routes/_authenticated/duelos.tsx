@@ -16,7 +16,7 @@ import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/duelos")({
   component: Duelos,
-  validateSearch: (s: Record<string, unknown>) => ({ criar: s.criar === "1" || s.criar === 1 }),
+  validateSearch: (s: Record<string, unknown>): { criar?: boolean } => ({ criar: s.criar === "1" || s.criar === 1 ? true : undefined }),
 });
 
 type Tab = "meus" | "disponiveis" | "historico";

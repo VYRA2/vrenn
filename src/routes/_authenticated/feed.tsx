@@ -17,7 +17,7 @@ import { subscribeToPush, isPushSupported } from "@/lib/push";
 type Tab = "feed" | "seguindo";
 
 export const Route = createFileRoute("/_authenticated/feed")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { publish?: number; tab?: Tab } => ({
     publish: s.publish ? 1 : undefined,
     tab: (["feed","seguindo"].includes(s.tab as string) ? s.tab : undefined) as Tab | undefined,
   }),
