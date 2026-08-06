@@ -108,13 +108,19 @@ function DesafioTemporada() {
   const { data: minha, refetch: refetchMinha } = useQuery({
     queryKey: ["temporada-minha", temporada?.id, user.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("temporada_participantes")
-        .select("*")
+        .select("id, temporada_id, user_id, status, eliminado, eliminado_em, faltas, total_checkins, ultimo_checkin, created_at")
         .eq("temporada_id", temporada!.id)
         .eq("user_id", user.id)
         .maybeSingle();
-      return data;
+      if (error) throw error;
+      if (!data) return null;
+      const { data: financeiro, error: rpcError } = await (supabase as any).rpc("get_my_temporada_participacao", {
+        _temporada_id: temporada!.id,
+      });
+      if (rpcError) throw rpcError;
+      return { ...data, ...(Array.isArray(financeiro) ? financeiro[0] : financeiro) };
     },
     enabled: !!temporada?.id,
   });
@@ -153,55 +159,8 @@ function DesafioTemporada() {
     if (!temporada) return;
     setEntrando(true);
     try {
-      const taxa = Number(temporada.taxa_entrada ?? 0);
-
-      // 1. Verificar saldo se há taxa de inscrição
-      if (taxa > 0) {
-        const { data: wallet } = await (supabase as any)
-          .from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
-        const saldo = Number(wallet?.balance ?? 0);
-        if (saldo < taxa) {
-          toast.error(`Saldo insuficiente. Você tem ${formatBRL(saldo)} e a taxa de inscrição é ${formatBRL(taxa)}. Deposite antes de entrar.`);
-          setEntrando(false);
-          setShowTermo(false);
-          return;
-        }
-        // 2. Debitar taxa — é receita do VRENN, não volta (nem para vencedores)
-        const { error: debitErr } = await (supabase as any).from("wallets").update({
-          balance: saldo - taxa,
-        }).eq("user_id", user.id);
-        if (debitErr) throw debitErr;
-
-        // 3. Registrar como transação de taxa
-        await (supabase as any).from("transactions").insert({
-          user_id: user.id,
-          amount: taxa,
-          type: "fee",
-          description: `Taxa de inscrição — VRENN Master Season ${temporada.numero}`,
-          reference_id: temporada.id,
-          status: "confirmed",
-        });
-      }
-
-      // 4. Inserir participante — valor_custodia = 0 (taxa não é custódia)
-      const { error } = await (supabase as any).from("temporada_participantes").insert({
-        temporada_id: temporada.id,
-        user_id: user.id,
-        taxa_paga: taxa,
-        valor_custodia: 0,
-        termo_aceito_em: new Date().toISOString(),
-      });
-      if (error) {
-        // Devolver taxa se insert falhou
-        if (taxa > 0) {
-          const { data: wallet } = await (supabase as any)
-            .from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
-          await (supabase as any).from("wallets").update({
-            balance: Number(wallet?.balance ?? 0) + taxa,
-          }).eq("user_id", user.id);
-        }
-        throw error;
-      }
+      const { error } = await (supabase as any).rpc("vrenn_join_temporada", { _temporada_id: temporada.id });
+      if (error) throw error;
 
       toast.success("Bem-vindo ao VRENN Master Season! 🏆");
       refetchMinha();

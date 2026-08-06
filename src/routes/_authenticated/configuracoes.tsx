@@ -269,6 +269,18 @@ function AdminSection() {
   const [confirmClean, setConfirmClean] = useState(false);
   const [testeFinanceiro, setTesteFinanceiro] = useState<null | "running" | "done" | "error">(null);
   const [testeResultado, setTesteResultado] = useState<any>(null);
+  const {
+    data: auditoria,
+    isFetching: auditando,
+    refetch: atualizarAuditoria,
+  } = useQuery({
+    queryKey: ["admin-financial-audit"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("vrenn_admin_financial_audit");
+      if (error) throw error;
+      return data as any;
+    },
+  });
 
   async function runTesteFinanceiro() {
     if (busy || testeFinanceiro === "running") return;
@@ -393,6 +405,45 @@ function AdminSection() {
           Emails dos fictícios: <code>seed-N@seed.vrenn.test</code> — senha padrão para permitir login nos testes
           automatizados.
         </p>
+      </div>
+      <div className="mt-4 rounded-2xl border border-border bg-background p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-bold">Auditoria financeira</div>
+            <div className="text-[11px] text-muted-foreground">Somente leitura: não movimenta saldos.</div>
+          </div>
+          <button
+            onClick={() => atualizarAuditoria()}
+            disabled={auditando}
+            className="rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-bold text-primary-light disabled:opacity-50"
+          >
+            {auditando ? "Verificando…" : "Atualizar"}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-xl border border-border bg-card p-3">
+            <div className="text-muted-foreground">Carteiras divergentes</div>
+            <div className="text-lg font-bold">{auditoria?.carteiras_divergentes?.length ?? 0}</div>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-3">
+            <div className="text-muted-foreground">Custódias pendentes</div>
+            <div className="text-lg font-bold">{auditoria?.custodias_pendentes?.length ?? 0}</div>
+          </div>
+        </div>
+        {(auditoria?.carteiras_divergentes ?? []).map((item: any) => (
+          <div key={item.user_id} className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs space-y-1">
+            <div className="font-bold">Carteira {String(item.user_id).slice(0, 8)}</div>
+            <div className="flex justify-between"><span>Bloqueado</span><span>R$ {Number(item.locked_balance).toFixed(2)}</span></div>
+            <div className="flex justify-between"><span>Compromissos encontrados</span><span>R$ {Number(item.esperado).toFixed(2)}</span></div>
+            <div className="flex justify-between font-bold text-amber-400"><span>Diferença</span><span>R$ {Number(item.diferenca).toFixed(2)}</span></div>
+          </div>
+        ))}
+        {(auditoria?.custodias_pendentes ?? []).map((item: any) => (
+          <div key={`${item.tipo}-${item.referencia_id}-${item.user_id}`} className="rounded-xl border border-border bg-card p-3 text-xs">
+            <div className="font-bold">{item.tipo} · R$ {Number(item.valor).toFixed(2)}</div>
+            <div className="text-muted-foreground">{item.motivo}</div>
+          </div>
+        ))}
       </div>
       {/* Card Teste Financeiro */}
       <div className="mt-4 rounded-2xl border border-border bg-background p-4 space-y-3">

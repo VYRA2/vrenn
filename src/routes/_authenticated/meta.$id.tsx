@@ -773,7 +773,7 @@ function ArbitrosSection({ metaId, isOwner, arbitros, onChange, ownerId }: any) 
           <input
             value={ident}
             onChange={(e) => setIdent(e.target.value)}
-            placeholder="@username ou email"
+            placeholder="@username"
             className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
           />
           <button
