@@ -1985,7 +1985,7 @@ export type Database = {
       }
       encerrar_temporada: { Args: { p_temporada_id: string }; Returns: Json }
       encerrar_temporada_manual: {
-        Args: { p_admin_id: string; p_temporada_id: string }
+        Args: { p_admin_id?: string; p_temporada_id: string }
         Returns: Json
       }
       end_story_cleanup: { Args: never; Returns: undefined }

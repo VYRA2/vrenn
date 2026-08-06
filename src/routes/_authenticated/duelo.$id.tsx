@@ -75,8 +75,11 @@ function DueloDetalhe() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const dueloAtivo = ['ativo', 'em_andamento'].includes(duelo?.status ?? '');
+
   // Check-in de hoje neste duelo
   const hoje = new Date().toISOString().split("T")[0];
+
   const { data: checkinHoje } = useQuery({
     queryKey: ["duelo-checkin-hoje", id, user.id],
     queryFn: async () => {
@@ -142,7 +145,7 @@ function DueloDetalhe() {
   const temArbitro = !!duelo.arbitro_id && duelo.arbitro_status === 'aceito';
   const usaArbitro = duelo.tipo_validacao === 'foto_arbitro';
   const podeConvidarArbitro = isOwner && dueloAtivo && usaArbitro && !duelo.arbitro_id;
-  const dueloAtivo = ['ativo', 'em_andamento'].includes(duelo.status);
+
   const podeArbitroDeclarar = isArbitro && duelo.arbitro_status === 'aceito' && dueloAtivo;
 
   const frequenciaLabel = duelo.frequencia_tipo === "diario"
