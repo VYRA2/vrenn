@@ -369,41 +369,192 @@ export type Database = {
           },
         ]
       }
+      desafio_equipe_arbitragens: {
+        Row: {
+          arbitro_original_id: string
+          created_at: string
+          decidida_em: string | null
+          decisao_central_motivo: string | null
+          decisao_original: boolean | null
+          desafio_id: string
+          evidencia_snapshot: Json
+          finalizada_em: string | null
+          id: string
+          modo: string
+          motivo_decisao: string | null
+          participante_id: string
+          recurso_anexos: Json
+          recurso_ate: string | null
+          recurso_motivo: string | null
+          resultado_final: boolean | null
+          selection_nonce: string
+          selection_proof: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arbitro_original_id: string
+          created_at?: string
+          decidida_em?: string | null
+          decisao_central_motivo?: string | null
+          decisao_original?: boolean | null
+          desafio_id: string
+          evidencia_snapshot?: Json
+          finalizada_em?: string | null
+          id?: string
+          modo: string
+          motivo_decisao?: string | null
+          participante_id: string
+          recurso_anexos?: Json
+          recurso_ate?: string | null
+          recurso_motivo?: string | null
+          resultado_final?: boolean | null
+          selection_nonce?: string
+          selection_proof?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arbitro_original_id?: string
+          created_at?: string
+          decidida_em?: string | null
+          decisao_central_motivo?: string | null
+          decisao_original?: boolean | null
+          desafio_id?: string
+          evidencia_snapshot?: Json
+          finalizada_em?: string | null
+          id?: string
+          modo?: string
+          motivo_decisao?: string | null
+          participante_id?: string
+          recurso_anexos?: Json
+          recurso_ate?: string | null
+          recurso_motivo?: string | null
+          resultado_final?: boolean | null
+          selection_nonce?: string
+          selection_proof?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desafio_equipe_arbitragens_arbitro_original_id_fkey"
+            columns: ["arbitro_original_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desafio_equipe_arbitragens_desafio_id_fkey"
+            columns: ["desafio_id"]
+            isOneToOne: false
+            referencedRelation: "desafios_equipe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desafio_equipe_arbitragens_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      desafio_equipe_painel_recurso: {
+        Row: {
+          arbitragem_id: string
+          arbitro_id: string
+          created_at: string
+          id: string
+          justificativa: string | null
+          votado_em: string | null
+          voto: boolean | null
+        }
+        Insert: {
+          arbitragem_id: string
+          arbitro_id: string
+          created_at?: string
+          id?: string
+          justificativa?: string | null
+          votado_em?: string | null
+          voto?: boolean | null
+        }
+        Update: {
+          arbitragem_id?: string
+          arbitro_id?: string
+          created_at?: string
+          id?: string
+          justificativa?: string | null
+          votado_em?: string | null
+          voto?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desafio_equipe_painel_recurso_arbitragem_id_fkey"
+            columns: ["arbitragem_id"]
+            isOneToOne: false
+            referencedRelation: "desafio_equipe_arbitragens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desafio_equipe_painel_recurso_arbitro_id_fkey"
+            columns: ["arbitro_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       desafio_equipe_participantes: {
         Row: {
+          concluiu: boolean
+          concluiu_em: string | null
           created_at: string
+          custodia_resolvida: boolean
+          custodia_resolvida_em: string | null
           desafio_id: string
           eliminado: boolean | null
           eliminado_em: string | null
           id: string
           km_acumulado: number | null
           motivo_eliminacao: string | null
+          premio_recebido: number
           progresso: number
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          concluiu?: boolean
+          concluiu_em?: string | null
           created_at?: string
+          custodia_resolvida?: boolean
+          custodia_resolvida_em?: string | null
           desafio_id: string
           eliminado?: boolean | null
           eliminado_em?: string | null
           id?: string
           km_acumulado?: number | null
           motivo_eliminacao?: string | null
+          premio_recebido?: number
           progresso?: number
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          concluiu?: boolean
+          concluiu_em?: string | null
           created_at?: string
+          custodia_resolvida?: boolean
+          custodia_resolvida_em?: string | null
           desafio_id?: string
           eliminado?: boolean | null
           eliminado_em?: string | null
           id?: string
           km_acumulado?: number | null
           motivo_eliminacao?: string | null
+          premio_recebido?: number
           progresso?: number
           status?: string
           updated_at?: string
@@ -435,6 +586,7 @@ export type Database = {
           is_seed: boolean
           local_id: string | null
           modalidade: string | null
+          modo_arbitragem: string
           objetivo_km: number | null
           premiacao: string | null
           premio_acumulado: number
@@ -460,6 +612,7 @@ export type Database = {
           is_seed?: boolean
           local_id?: string | null
           modalidade?: string | null
+          modo_arbitragem?: string
           objetivo_km?: number | null
           premiacao?: string | null
           premio_acumulado?: number
@@ -485,6 +638,7 @@ export type Database = {
           is_seed?: boolean
           local_id?: string | null
           modalidade?: string | null
+          modo_arbitragem?: string
           objetivo_km?: number | null
           premiacao?: string | null
           premio_acumulado?: number
@@ -522,6 +676,8 @@ export type Database = {
           challenger_eliminado_em: string | null
           challenger_id: string
           created_at: string
+          custodia_resolvida: boolean
+          custodia_resolvida_em: string | null
           frequencia_quantidade: number | null
           frequencia_tipo: string | null
           id: string
@@ -550,6 +706,8 @@ export type Database = {
           challenger_eliminado_em?: string | null
           challenger_id: string
           created_at?: string
+          custodia_resolvida?: boolean
+          custodia_resolvida_em?: string | null
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
@@ -578,6 +736,8 @@ export type Database = {
           challenger_eliminado_em?: string | null
           challenger_id?: string
           created_at?: string
+          custodia_resolvida?: boolean
+          custodia_resolvida_em?: string | null
           frequencia_quantidade?: number | null
           frequencia_tipo?: string | null
           id?: string
@@ -955,6 +1115,8 @@ export type Database = {
         Row: {
           categoria: string
           created_at: string
+          custodia_resolvida: boolean
+          custodia_resolvida_em: string | null
           descricao: string | null
           foto_capa_url: string | null
           frequencia_quantidade: number | null
@@ -980,6 +1142,8 @@ export type Database = {
         Insert: {
           categoria: string
           created_at?: string
+          custodia_resolvida?: boolean
+          custodia_resolvida_em?: string | null
           descricao?: string | null
           foto_capa_url?: string | null
           frequencia_quantidade?: number | null
@@ -1005,6 +1169,8 @@ export type Database = {
         Update: {
           categoria?: string
           created_at?: string
+          custodia_resolvida?: boolean
+          custodia_resolvida_em?: string | null
           descricao?: string | null
           foto_capa_url?: string | null
           frequencia_quantidade?: number | null
@@ -1768,7 +1934,9 @@ export type Database = {
           asaas_payment_id: string | null
           asaas_transfer_id: string | null
           created_at: string
+          desafio_equipe_id: string | null
           description: string | null
+          duelo_id: string | null
           id: string
           is_seed: boolean
           meta_id: string | null
@@ -1782,7 +1950,9 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_transfer_id?: string | null
           created_at?: string
+          desafio_equipe_id?: string | null
           description?: string | null
+          duelo_id?: string | null
           id?: string
           is_seed?: boolean
           meta_id?: string | null
@@ -1796,7 +1966,9 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_transfer_id?: string | null
           created_at?: string
+          desafio_equipe_id?: string | null
           description?: string | null
+          duelo_id?: string | null
           id?: string
           is_seed?: boolean
           meta_id?: string | null
@@ -2076,6 +2248,78 @@ export type Database = {
       verify_checkin_reminder_cron_secret: {
         Args: { _secret: string }
         Returns: boolean
+      }
+      vrenn_admin_financial_audit: { Args: never; Returns: Json }
+      vrenn_aplicar_resultado_arbitragem_equipe: {
+        Args: { _arbitragem_id: string; _resultado: boolean }
+        Returns: undefined
+      }
+      vrenn_decidir_arbitragem_equipe: {
+        Args: { _aprovado: boolean; _arbitragem_id: string; _motivo: string }
+        Returns: undefined
+      }
+      vrenn_decidir_revisao_central_equipe: {
+        Args: { _arbitragem_id: string; _motivo: string; _resultado: boolean }
+        Returns: undefined
+      }
+      vrenn_finalizar_arbitragem_equipe: {
+        Args: { _arbitragem_id: string }
+        Returns: undefined
+      }
+      vrenn_join_temporada: { Args: { _temporada_id: string }; Returns: Json }
+      vrenn_meta_custody_audit: {
+        Args: never
+        Returns: {
+          custodia_resolvida: boolean
+          meta_id: string
+          status: string
+          total_fee: number
+          total_lock: number
+          total_unlock: number
+          user_id: string
+          valor_custodia: number
+        }[]
+      }
+      vrenn_recorrer_arbitragem_equipe: {
+        Args: { _anexos?: Json; _arbitragem_id: string; _motivo: string }
+        Returns: undefined
+      }
+      vrenn_settle_meta_custody: { Args: { _meta_id: string }; Returns: Json }
+      vrenn_settle_team_participant: {
+        Args: { _desafio_id: string; _success: boolean; _user_id: string }
+        Returns: Json
+      }
+      vrenn_solicitar_arbitragem_equipe: {
+        Args: { _desafio_id: string }
+        Returns: string
+      }
+      vrenn_team_duel_custody_audit: {
+        Args: never
+        Returns: {
+          motivo: string
+          referencia_id: string
+          status: string
+          tipo: string
+          user_id: string
+          valor: number
+        }[]
+      }
+      vrenn_votar_recurso_equipe: {
+        Args: { _arbitragem_id: string; _justificativa: string; _voto: boolean }
+        Returns: undefined
+      }
+      vrenn_wallet_custody_reconciliation: {
+        Args: never
+        Returns: {
+          balance: number
+          diferenca: number
+          duelos: number
+          equipes: number
+          esperado: number
+          locked_balance: number
+          metas: number
+          user_id: string
+        }[]
       }
     }
     Enums: {
