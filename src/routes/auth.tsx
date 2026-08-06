@@ -50,6 +50,7 @@ function AuthPage() {
   const [confirm, setConfirm] = useState("");
   const [nome, setNome] = useState("");
   const [username, setUsername] = useState("");
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -83,13 +84,14 @@ function AuthPage() {
     if (!username.trim()) return toast.error("Escolha um nome de usuário");
     if (password.length < 6) return toast.error("Senha precisa de no mínimo 6 caracteres");
     if (password !== confirm) return toast.error("As senhas não coincidem");
+    if (!acceptedLegal) return toast.error("Aceite os Termos de Uso e a Política de Privacidade");
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/onboarding`,
-        data: { nome: nome.trim(), username: username.trim().toLowerCase() },
+        data: { nome: nome.trim(), username: username.trim().toLowerCase(), legal_version: "2026-08-05", legal_accepted_at: new Date().toISOString() },
       },
     });
     setLoading(false);
@@ -266,6 +268,10 @@ function AuthPage() {
 
                 />
               </FieldLabel>
+              <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-3 text-xs leading-relaxed text-muted-foreground">
+                <input type="checkbox" checked={acceptedLegal} onChange={(e)=>setAcceptedLegal(e.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+                <span>Li e aceito os <Link to="/termos-de-uso" className="font-bold text-primary-light underline">Termos de Uso</Link> e a <Link to="/politica-privacidade" className="font-bold text-primary-light underline">Política de Privacidade</Link>.</span>
+              </label>
               <PrimaryButton loading={loading}>Continuar</PrimaryButton>
             </form>
 

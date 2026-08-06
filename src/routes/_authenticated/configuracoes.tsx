@@ -218,14 +218,15 @@ function Configuracoes() {
           <Row
             icon={<HelpCircle size={18} />}
             label="Central de ajuda"
-            onClick={() => navigate({ to: "/como-funciona" })}
+            onClick={() => navigate({ to: "/ajuda" })}
           />
-          <Row icon={<FileText size={18} />} label="Termos de uso" />
-          <Row icon={<Shield size={18} />} label="Política de privacidade" />
+          <Row icon={<FileText size={18} />} label="Termos de uso" onClick={() => navigate({ to: "/termos-de-uso" })} />
+          <Row icon={<Shield size={18} />} label="Regras de validação" onClick={() => navigate({ to: "/regras-de-validacao" })} />
           <Row
             icon={<Info size={18} />}
             label="Sobre o VRENN"
             right={<span className="text-xs text-muted-foreground">v1.0</span>}
+            onClick={() => navigate({ to: "/sobre" })}
           />
         </Section>
 
