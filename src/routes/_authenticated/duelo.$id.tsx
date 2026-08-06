@@ -75,8 +75,11 @@ function DueloDetalhe() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const dueloAtivo = ['ativo', 'em_andamento'].includes(duelo?.status ?? '');
+
   // Check-in de hoje neste duelo
   const hoje = new Date().toISOString().split("T")[0];
+
   const { data: checkinHoje } = useQuery({
     queryKey: ["duelo-checkin-hoje", id, user.id],
     queryFn: async () => {
