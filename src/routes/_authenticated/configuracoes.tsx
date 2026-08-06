@@ -449,7 +449,7 @@ function AdminSection() {
                 { label: "Pool de prêmios (75% dos perdedores)", val: testeResultado.financeiro?.pool_premios },
                 { label: "Fundo temporada (12.5%)", val: testeResultado.financeiro?.fundo_temporada },
                 { label: "Taxa VRENN total", val: testeResultado.financeiro?.taxa_vrenn_total },
-                { label: "Devolução vencedores (97%)", val: testeResultado.financeiro?.devolucao_vencedores_total },
+                { label: "Devolução vencedores (100%)", val: testeResultado.financeiro?.devolucao_vencedores_total },
               ].map(({ label, val }) => (
                 <div key={label} className="flex justify-between">
                   <span className="text-muted-foreground">{label}</span>
