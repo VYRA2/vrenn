@@ -391,6 +391,8 @@ function MetaDetail() {
             qc.invalidateQueries({ queryKey: ["checkins", id] });
             qc.invalidateQueries({ queryKey: ["meta", id] });
             qc.invalidateQueries({ queryKey: ["feed-metas"] });
+            qc.invalidateQueries({ queryKey: ["wallet", user.id] });
+            qc.invalidateQueries({ queryKey: ["transactions", user.id] });
             setShowCheckinModal(false);
           }}
         />
